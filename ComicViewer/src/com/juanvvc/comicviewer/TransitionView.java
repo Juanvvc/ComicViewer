@@ -1,6 +1,7 @@
 package com.juanvvc.comicviewer;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.animation.Animation;
@@ -8,9 +9,10 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
-import com.juanvvc.comicviewer.readers.CBZReader;
 import com.juanvvc.comicviewer.readers.Reader;
+import com.juanvvc.comicviewer.readers.ReaderException;
 
 public class TransitionView extends RelativeLayout {
 	private final static int ANIMATION_DURATION=500;
@@ -21,15 +23,6 @@ public class TransitionView extends RelativeLayout {
 	private Reader reader=null;
 	private Animation anims[]={null, null, null, null};
 	
-	private final Integer[] _imageIds = {
-			R.drawable.pic01,
-			R.drawable.pic02,
-			R.drawable.pic03,
-			R.drawable.pic04,
-			R.drawable.pic05,
-			R.drawable.pic06
-	};
-
 	public TransitionView(Context context){
 		super(context);
 		this.customInit(context);
@@ -43,10 +36,7 @@ public class TransitionView extends RelativeLayout {
 		this.customInit(context);
 	}
 	
-	public void setReader(Reader reader){
-		this.reader = reader;
-	}
-	
+
 	public void configureAnimations(int inAnim, int outAnim, int inRevAnim, int outRevAnim, int duration){
 		anims[0]=AnimationUtils.loadAnimation(this.getContext(), inAnim);
 		anims[1]=AnimationUtils.loadAnimation(this.getContext(), outAnim);
@@ -82,38 +72,43 @@ public class TransitionView extends RelativeLayout {
 
 
 		_img1 = new ImageView(context);
-		_img1.setImageResource(_imageIds[this._currentImage]);
-
 		_img2 = new ImageView(context);
-		_img2.setImageResource(_imageIds[this._currentImage]);
 
 		LayoutParams fullScreenLayout = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
 		_imgs.addView(_img1, 0, fullScreenLayout);
 		_imgs.addView(_img2, 1, fullScreenLayout);
 		addView(_imgs, fullScreenLayout);
-		
-		this.reader = new CBZReader();
-		try{
-			this.reader.load("/mnt/sdcard/Paying For It (2011).cbz");
-			this.changePage(true);
-		}catch(Exception e){
-			this.reader = null;
-		}
-		
-
+	}
+	
+	public void setReader(Reader reader){
+		this.reader = reader;
+		this.changePage(true);
 	}
 
 	public void changePage(boolean pageRight){
 		if(this.reader==null)
 			return;
-		Drawable n=(pageRight?this.reader.next():this.reader.prev());
-		this.setAnimations(pageRight);
-		if(n!=null){
-			if(_imgs.getCurrentView()==this._img1)
-				_img2.setImageDrawable(n);
-			else
-				_img1.setImageDrawable(n);
-			_imgs.showNext();
+		try{
+			// drawable of the next page
+			Drawable n=(pageRight?this.reader.next():this.reader.prev());
+			// the ImageView that will hold the new drawable
+			ImageView newView=(_imgs.getCurrentView()==this._img1?this._img2:this._img1);
+			// the drawable that the ImageView is holding now
+			Drawable p=newView.getDrawable();
+			// set animations according to the movement
+			this.setAnimations(pageRight);
+			if(n!=null){
+				// release memory of the unused page
+				// Bitmaps must be explicitly removed from memory, or OutOfMemory errores appear very fast
+				// Try to remove the next line and load a file with large pages
+				if(p instanceof BitmapDrawable) ((BitmapDrawable)p).getBitmap().recycle();
+				// set the new page
+				newView.setImageDrawable(n);
+				// show the nee page, with an animation
+				_imgs.showNext();
+			}
+		}catch(ReaderException e){
+			Toast.makeText(this.getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 
 	}

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="hello">Hello World, ComicViewerActivity!</string>
     <string name="app_name">ComicViewer</string>
     <string name="explorer_name">Select comic</string>
     <string name="nodata">No data</string>
+    <string name="outofmemory">Out of memory</string>
+    <string name="encrypted_file">Encrypted file</string>
 
 </resources>
