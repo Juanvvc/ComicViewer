@@ -19,6 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="FileExplorer" android:label="@string/explorer_name"></activity>
     </application>
 
 </manifest>

@@ -3,5 +3,7 @@
 
     <string name="hello">Hello World, ComicViewerActivity!</string>
     <string name="app_name">ComicViewer</string>
+    <string name="explorer_name">Select comic</string>
+    <string name="nodata">No data</string>
 
 </resources>

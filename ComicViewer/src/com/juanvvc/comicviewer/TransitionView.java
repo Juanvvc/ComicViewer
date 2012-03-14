@@ -18,7 +18,8 @@ public class TransitionView extends RelativeLayout {
 	private ImageView _img2;
 	private ImageSwitcher _imgs;
 	private int _currentImage=0;
-	private Reader reader=null;;
+	private Reader reader=null;
+	private Animation anims[]={null, null, null, null};
 	
 	private final Integer[] _imageIds = {
 			R.drawable.pic01,
@@ -46,21 +47,38 @@ public class TransitionView extends RelativeLayout {
 		this.reader = reader;
 	}
 	
-	public void setAnimations(int inAnim, int outAnim, int duration){
-		if(this._imgs!=null){
-			Animation fadeIn = AnimationUtils.loadAnimation(this.getContext(), inAnim);
-			Animation fadeOut = AnimationUtils.loadAnimation(this.getContext(), outAnim);
-			fadeIn.setDuration(duration);
-			fadeOut.setDuration(duration);
-			this._imgs.setInAnimation(fadeIn);
-			this._imgs.setOutAnimation(fadeOut);
+	public void configureAnimations(int inAnim, int outAnim, int inRevAnim, int outRevAnim, int duration){
+		anims[0]=AnimationUtils.loadAnimation(this.getContext(), inAnim);
+		anims[1]=AnimationUtils.loadAnimation(this.getContext(), outAnim);
+		anims[2]=AnimationUtils.loadAnimation(this.getContext(), inRevAnim);
+		anims[3]=AnimationUtils.loadAnimation(this.getContext(), outRevAnim);
+		for(int i=0; i<anims.length; i++) anims[i].setDuration(duration);
+		this.lastChange=false;
+		this.setAnimations(true);
+	}
+	
+	private boolean lastChange=true;
+	
+	private void setAnimations(boolean forward){
+		if(this._imgs!=null && anims[0]!=null){
+			if(this.lastChange==forward) return;
+			if(forward){
+				this._imgs.setInAnimation(this.anims[0]);
+				this._imgs.setOutAnimation(this.anims[1]);
+			}else{
+				this._imgs.setInAnimation(this.anims[2]);
+				this._imgs.setOutAnimation(this.anims[3]);
+			}
+			this.lastChange=forward;
 		}
 	}
 
 	private void customInit(Context context){
 		_imgs = new ImageSwitcher(context);
-		//this.setAnimations(android.R.anim.fade_in, android.R.anim.fade_out, ANIMATION_DURATION);
-		this.setAnimations(R.anim.slide_in_right, R.anim.slide_out_left, ANIMATION_DURATION);
+		this.configureAnimations(
+				R.anim.slide_in_right, R.anim.slide_out_left,
+				android.R.anim.slide_in_left, android.R.anim.slide_out_right,
+				ANIMATION_DURATION);
 
 
 		_img1 = new ImageView(context);
@@ -86,22 +104,10 @@ public class TransitionView extends RelativeLayout {
 	}
 
 	public void changePage(boolean pageRight){
-//		_currentImage = (pageRight)?(_currentImage+1):(_currentImage-1);
-//		if (_currentImage<0)
-//			_currentImage=_imageIds.length-1;
-//		else if (_currentImage >=_imageIds.length)
-//			_currentImage = 0;
-//
-//		if(_imgs.getCurrentView() == _img1){
-//			_img2.setImageResource(_imageIds[_currentImage]);
-//			_imgs.showNext();
-//		}else{
-//			_img1.setImageResource(_imageIds[_currentImage]);
-//			_imgs.showNext();
-//		}
 		if(this.reader==null)
 			return;
 		Drawable n=(pageRight?this.reader.next():this.reader.prev());
+		this.setAnimations(pageRight);
 		if(n!=null){
 			if(_imgs.getCurrentView()==this._img1)
 				_img2.setImageDrawable(n);
