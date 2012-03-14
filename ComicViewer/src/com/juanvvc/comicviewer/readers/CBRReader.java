@@ -26,6 +26,7 @@ public class CBRReader implements Reader {
 	private Context context;
 	private int currentPage=-1;
 	List<? extends FileHeader> entries = null;
+	private String uri=null;
 	
 	public CBRReader(Context context){
 		this.context = context;
@@ -42,7 +43,8 @@ public class CBRReader implements Reader {
 		// tries to open the RAR file
 		try{
 			this.archive = new Archive(new File(uri));			
-		}catch(Exception e){			
+		}catch(Exception e){
+			this.uri = null;
 			throw new ReaderException(e.getMessage());
 		}
 		// throws an exception if the file is encrypted
@@ -70,6 +72,7 @@ public class CBRReader implements Reader {
 			}
 			
 		});
+		this.uri = uri;
 	}
 
 
@@ -127,6 +130,14 @@ public class CBRReader implements Reader {
 
 	public int currentPage() {
 		return this.currentPage;
+	}
+	
+	public void moveTo(int page) {
+		this.currentPage = page;
+	}
+	
+	public String getURI(){
+		return this.uri;
 	}
 
 }

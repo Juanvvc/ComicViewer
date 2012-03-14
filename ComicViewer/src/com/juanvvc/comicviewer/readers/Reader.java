@@ -10,4 +10,6 @@ public interface Reader {
 	public Drawable current() throws ReaderException;
 	public int countPages();
 	public int currentPage();
+	public void moveTo(int page);
+	public String getURI();
 }

@@ -17,6 +17,7 @@ public class CBZReader implements Reader {
 	ArrayList<? extends ZipEntry> entries = null;
 	private int currentPage = -1;
 	Context context=null;
+	private String uri;
 	
 	public CBZReader(Context context){
 		this.context = context;
@@ -50,7 +51,9 @@ public class CBZReader implements Reader {
 				}
 				
 			});
+			this.uri = uri;
 		}catch(IOException e){
+			this.uri = null;
 			throw new ReaderException("ZipFile cannot be read: "+e.toString());
 		}
 	}
@@ -104,5 +107,13 @@ public class CBZReader implements Reader {
 
 	public int currentPage() {
 		return this.currentPage;
+	}
+	
+	public void moveTo(int page) {
+		this.currentPage = page;
+	}
+	
+	public String getURI(){
+		return this.uri;
 	}
 }
