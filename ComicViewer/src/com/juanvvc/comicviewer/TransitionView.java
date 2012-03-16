@@ -2,9 +2,11 @@ package com.juanvvc.comicviewer;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageSwitcher;
@@ -72,8 +74,8 @@ public class TransitionView extends RelativeLayout {
 				ANIMATION_DURATION);
 
 
-		_img1 = new ImageView(context);
-		_img2 = new ImageView(context);
+		_img1 = new MyImageView(context);
+		_img2 = new MyImageView(context);
 
 		LayoutParams fullScreenLayout = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
 		_imgs.addView(_img1, 0, fullScreenLayout);
@@ -95,7 +97,6 @@ public class TransitionView extends RelativeLayout {
 			// the ImageView that will hold the new drawable
 			ImageView newView=(_imgs.getCurrentView()==this._img1?this._img2:this._img1);
 			// the drawable that the ImageView is holding now
-			System.gc();
 			Drawable p=newView.getDrawable();
 			// set animations according to the movement
 			this.setAnimations(pageRight);
@@ -112,9 +113,28 @@ public class TransitionView extends RelativeLayout {
 				// show the next page, with an animation
 				_imgs.showNext();
 			}
+			// we loaded large images: ask to system to clean the memory and avoid problems in the future
+			System.gc();
 		}catch(ReaderException e){
 			Toast.makeText(this.getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 
+	}
+
+}
+
+// This is a helper class to get an idea of the max image size
+// In my device, it outputs 2048x2048
+class MyImageView extends ImageView{
+	private final static String TAG="MyImageView";
+	public MyImageView(Context context){
+		super(context);
+		Log.w(TAG, "Using custom ImageView");
+	}
+	
+	@Override
+	public void onDraw(Canvas c){
+		Log.v("MyImageView", "max size: "+c.getMaximumBitmapWidth()+"x"+c.getMaximumBitmapHeight());
+		super.onDraw(c);
 	}
 }

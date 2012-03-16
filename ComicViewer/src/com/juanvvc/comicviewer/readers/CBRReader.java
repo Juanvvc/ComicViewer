@@ -14,6 +14,7 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import de.innosystec.unrar.Archive;
 import de.innosystec.unrar.rarfile.FileHeader;
 
@@ -23,24 +24,23 @@ import de.innosystec.unrar.rarfile.FileHeader;
  */
 public class CBRReader extends Reader {
 	private Archive archive=null;
-	private Context context;
-	private int currentPage=-1;
 	List<? extends FileHeader> entries = null;
-	private String uri=null;
-	private final static int MAX_BITMAP_SIZE=1024;
 	
 	public CBRReader(Context context){
-		this.context = context;
-		this.currentPage = -1;
+		super(context);
+		Log.v(TAG, "Usig CBRReader");
+		this.archive = null;
 	}
 	public CBRReader(Context context, String uri) throws ReaderException{
-		this.context = context;
-		this.currentPage = -1;
+		super(context);
+		Log.v(TAG, "Usig CBRReader");
+		this.archive = null;
 		this.load(uri);
 	}
 
 
 	public void load(String uri) throws ReaderException {
+		Log.i(TAG, "Loading URI"+uri);
 		// tries to open the RAR file
 		try{
 			this.archive = new Archive(new File(uri));			
@@ -53,8 +53,6 @@ public class CBRReader extends Reader {
 			this.archive = null;
 			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.encrypted_file));
 		}
-		// current page is -1, since user didn't turn over the page yet. First thing: call to next()
-		this.currentPage = -1;
 		this.entries=this.archive.getFileHeaders();
 		// removes files that are not .jpg or .png
 		Iterator<? extends FileHeader> itr=this.entries.iterator();
@@ -73,7 +71,7 @@ public class CBRReader extends Reader {
 			}
 			
 		});
-		this.uri = uri;
+		super.load(uri);
 	}
 
 
@@ -118,6 +116,7 @@ public class CBRReader extends Reader {
 	}
 
 	public Drawable current()  throws ReaderException {
+		if(this.currentPage<0 || this.currentPage>=this.countPages()) return null;
 		return this.getDrawableFromRarEntry(this.entries.get(this.currentPage));
 	}
 

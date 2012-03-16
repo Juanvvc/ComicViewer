@@ -13,24 +13,27 @@ import java.util.zip.ZipFile;
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 public class CBZReader extends Reader {
 	private ZipFile archive = null;
-	ArrayList<? extends ZipEntry> entries = null;
-	private int currentPage = -1;
-	Context context=null;
-	private String uri;
+	private ArrayList<? extends ZipEntry> entries = null;
 	
 	public CBZReader(Context context){
-		this.context = context;
+		super(context);
+		Log.v(TAG, "Using CBZReader");
+		this.archive = null;
 	}
 	public CBZReader(Context context, String uri) throws ReaderException{
-		this.context = context;
+		super(context);
+		Log.v(TAG, "Using CBZReader");
+		this.archive = null;
 		this.load(uri);
 	}
 
 	public void load(String uri) throws ReaderException{
 		try{
+			Log.i(TAG, "Loading URI"+uri);
 			this.archive = new ZipFile(uri);
 			// get the entries of the file and sort them alphabetically
 			this.entries = Collections.list(this.archive.entries());
@@ -92,6 +95,8 @@ public class CBZReader extends Reader {
 
 
 	public Drawable current()  throws ReaderException {
+		if(this.currentPage<0 || this.currentPage>=this.countPages())
+			return null;
 		return this.getDrawableFromZipEntry(this.entries.get(this.currentPage));
 	}
 

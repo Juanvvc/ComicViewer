@@ -47,10 +47,16 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
     
     /** Called when a screen button was pressed. Event binding is in XML */
     public void onClick(View sender){
-    	this._mainView.changePage(sender==this._right);
+    	if(this.reader!=null){
+    		this._mainView.changePage(sender==this._right);
+    		Toast.makeText(this.getApplicationContext(),
+    				this.reader.getCurrentPage()+"/"+this.reader.countPages(),
+    				Toast.LENGTH_SHORT).show();
+    	}
     }
     
     public void loadReader(String uri, int page){
+    	if(uri==null) return;
 		try{
 			this.reader=null;
 			if(uri.toLowerCase().endsWith(".cbz"))
@@ -68,7 +74,7 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
     public void onSaveInstanceState(Bundle savedInstanceState) {
     	if(this.reader!=null){
 	    	savedInstanceState.putString("uri", this.reader.getURI());
-	    	savedInstanceState.putInt("page", reader.currentPage());
+	    	savedInstanceState.putInt("page", reader.getCurrentPage());
     	}
     	super.onSaveInstanceState(savedInstanceState);
     }

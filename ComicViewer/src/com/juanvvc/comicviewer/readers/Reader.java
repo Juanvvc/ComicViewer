@@ -1,15 +1,24 @@
 package com.juanvvc.comicviewer.readers;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 public abstract class Reader {
-	protected String uri=null;
-	protected int currentPage = -1;
+	String uri=null;
+	int currentPage = -1;
 	public static final int MAX_BITMAP_SIZE=1024;
+	Context context;
+	final static String TAG="Reader";
+	
+	public Reader(Context context){
+		this.uri = null;
+		this.currentPage = -1;
+		this.context = context;
+	}
 	
 	public void load(String uri) throws ReaderException{
 		this.uri = uri;
@@ -21,7 +30,7 @@ public abstract class Reader {
 	public abstract Drawable current() throws ReaderException;
 
 
-	public int currentPage() {
+	public int getCurrentPage() {
 		return this.currentPage;
 	}
 	
@@ -66,12 +75,8 @@ public abstract class Reader {
 		 that the minimum is 2048. In my device, that does not work. 1024 does. TODO: set the minimum to the screen size.
 		 Conclusion: in current devices, you cannot load a bitmap larger (width or height) than MAX_BITMAP_SIZE pixels.
 		 Fact: many CBRs use images larger than that. OutOfMemory errors appear.
-		 Solution: Options.inSampleSize to the rescue: 
-		 1.- load the image information (inJustDecodeBounds=true)
-		 2.- read the image size
-		 3.- if larger than MAX_BITMAP_SIZE, apply a scale
-		 4.- load the image scaled
-		
+		 Solution: Options.inSampleSize to the rescue. 
+		 
 		 Remember: we have to do this with every image because is very common CBR files where pages have different sizes
 		 for example, double/single pages.
 		 
@@ -81,19 +86,46 @@ public abstract class Reader {
 	 * @return A Bitmap object
 	 */
 	protected Bitmap byteArrayToBitmap(byte[] ba){
+		/* First strategy:
+		 1.- load only the image information (inJustDecodeBounds=true)
+		 2.- read the image size
+		 3.- if larger than MAX_BITMAP_SIZE, apply a scale
+		 4.- load the image scaled
+		 Problem: in my experience, some images are unnecessarely scaled down and quality suffers
+		*/
+//		Options opts=new Options();
+//		opts.inSampleSize=1;
+//		opts.inJustDecodeBounds=true;
+//		BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+//		// now, set the scale according to the image size: 1, 2, 3...
+//		opts.inSampleSize = Math.max(opts.outHeight, opts.outWidth)/MAX_BITMAP_SIZE+1;
+//		//TODO: apply a smart scaler
+//		opts.inScaled=true;
+//		// set a high quality scale (did really works?)
+//		opts.inPreferQualityOverSpeed=true;
+//		opts.inJustDecodeBounds=false;
+//		// finally, load the scaled image
+//		return BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+
+		/* Second strategy:
+		  1.- load the complete image
+		  2.- if error, scale down and try again
+		  Problem: this method is slower, and sometimes a page does not throw an OutOfMemoryError, but a warning
+		  "bitmap too large" that cannot be caught and the image is not shown. Quality is much better.
+		 */
 		Options opts=new Options();
 		opts.inSampleSize=1;
-		opts.inJustDecodeBounds=true;
-		BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
-		// now, set the scale according to the image size: 1, 2, 3...
-		opts.inSampleSize = Math.max(opts.outHeight, opts.outWidth)/MAX_BITMAP_SIZE+1;
-		//TODO: apply a smart scaler
-		opts.inScaled=true;
-		// set a high quality scale (did really works?)
 		opts.inPreferQualityOverSpeed=true;
-		opts.inJustDecodeBounds=false;
 		// finally, load the scaled image
-		return BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);			
+		while(true){
+			try{
+				return BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+			}catch(OutOfMemoryError e){
+				System.gc();
+			}
+			opts.inSampleSize+=1;
+			Log.d(TAG, "Using scale "+opts.inSampleSize);
+		}
 	}
 	
 }
