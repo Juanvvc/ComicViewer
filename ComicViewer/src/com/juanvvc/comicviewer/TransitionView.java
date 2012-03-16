@@ -1,6 +1,7 @@
 package com.juanvvc.comicviewer;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -94,17 +95,21 @@ public class TransitionView extends RelativeLayout {
 			// the ImageView that will hold the new drawable
 			ImageView newView=(_imgs.getCurrentView()==this._img1?this._img2:this._img1);
 			// the drawable that the ImageView is holding now
+			System.gc();
 			Drawable p=newView.getDrawable();
 			// set animations according to the movement
 			this.setAnimations(pageRight);
 			if(n!=null){
 				// release memory of the unused page
-				// Bitmaps must be explicitly removed from memory, or OutOfMemory errores appear very fast
+				// Bitmaps must be explicitly removed from memory, or OutOfMemory errors appear very fast
 				// Try to remove the next line and load a file with large pages
-				if(p instanceof BitmapDrawable) ((BitmapDrawable)p).getBitmap().recycle();
+				if(p!=null && p instanceof BitmapDrawable){
+					Bitmap b=((BitmapDrawable)p).getBitmap();
+					if(b!=null) b.recycle();
+				}
 				// set the new page
 				newView.setImageDrawable(n);
-				// show the nee page, with an animation
+				// show the next page, with an animation
 				_imgs.showNext();
 			}
 		}catch(ReaderException e){

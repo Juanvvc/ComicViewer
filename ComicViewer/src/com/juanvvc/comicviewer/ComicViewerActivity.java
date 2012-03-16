@@ -34,14 +34,16 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
         _right = (Button) this.findViewById(R.id.buttonRight);
         _mainView = (TransitionView) this.findViewById(R.id.mainView);
         
-//        this.loadReader("/mnt/sdcard/Paying For It (2011).cbz", -1);
-//        //this.loadReader("/mnt/sdcard/STO (Ladroncorps).cbr", -1);
+//        this.loadReader("/mnt/sdcard/Creepy/Paying For It (2011).cbz", -1);
+        this.loadReader("/mnt/sdcard/Creepy/STO (Ladroncorps).cbr", -1);
         
         // show a file manager to choose a file:
-        Intent sharingIntent = new Intent(this, FileExplorer.class);
-        startActivityForResult(sharingIntent, REQUEST_FILE);
+//        Intent sharingIntent = new Intent(this, FileExplorer.class);
+//        startActivityForResult(sharingIntent, REQUEST_FILE);
         
     }
+
+    
     
     /** Called when a screen button was pressed. Event binding is in XML */
     public void onClick(View sender){

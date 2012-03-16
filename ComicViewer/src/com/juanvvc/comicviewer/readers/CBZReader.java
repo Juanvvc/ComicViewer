@@ -1,18 +1,20 @@
 package com.juanvvc.comicviewer.readers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
-public class CBZReader implements Reader {
+public class CBZReader extends Reader {
 	private ZipFile archive = null;
 	ArrayList<? extends ZipEntry> entries = null;
 	private int currentPage = -1;
@@ -30,8 +32,6 @@ public class CBZReader implements Reader {
 	public void load(String uri) throws ReaderException{
 		try{
 			this.archive = new ZipFile(uri);
-			// current page is -1, since user didn't turn over the page yet. First thing: call to next()
-			this.currentPage = -1;
 			// get the entries of the file and sort them alphabetically
 			this.entries = Collections.list(this.archive.entries());
 			// removes files that are not .jpg or .png
@@ -42,7 +42,7 @@ public class CBZReader implements Reader {
 				if(e.isDirectory() || !(name.endsWith(".jpg") || name.endsWith(".png")))
 					itr.remove();
 			}
-			// sort alphabetically the names
+			// sort the names alphabetically
 			Collections.sort(this.entries, new Comparator<ZipEntry>(){
 				public int compare(ZipEntry lhs, ZipEntry rhs) {
 					String n1=lhs.getName();
@@ -51,7 +51,7 @@ public class CBZReader implements Reader {
 				}
 				
 			});
-			this.uri = uri;
+			super.load(uri);
 		}catch(IOException e){
 			this.uri = null;
 			throw new ReaderException("ZipFile cannot be read: "+e.toString());
@@ -68,7 +68,20 @@ public class CBZReader implements Reader {
 	
 	private Drawable getDrawableFromZipEntry(ZipEntry entry) throws ReaderException{
 		try{
-			return Drawable.createFromStream(this.archive.getInputStream(entry), entry.getName());
+			// you cannot use:
+			//Drawable.createFromStream(this.archive.getInputStream(entry), entry.getName());
+			// this will trigger lots of OutOfMemory errors.
+			// see Reader.byteArrayBitmap for an explanation.
+			InputStream is = this.archive.getInputStream(entry);			
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] tmp = new byte[4096];
+			int ret = 0;
+
+			while((ret = is.read(tmp)) > 0)
+			    bos.write(tmp, 0, ret);
+			
+			return new BitmapDrawable(this.byteArrayToBitmap(bos.toByteArray()));
+
 		}catch(Exception ex){
 			throw new ReaderException(ex.getMessage());
 		}catch(OutOfMemoryError err){
@@ -76,23 +89,7 @@ public class CBZReader implements Reader {
 		}
 	}
 
-	public Drawable next() throws ReaderException{
-		if(this.archive==null)
-			return null;
-		if(this.currentPage<-1 || this.currentPage>=this.entries.size())
-			return null;
-		this.currentPage += 1;
-		return this.current();
-	}
 
-	public Drawable prev() throws ReaderException{
-		if(this.archive==null)
-			return null;
-		if(this.currentPage<=0)
-			return null;
-		this.currentPage -= 1;
-		return this.current();
-	}
 
 	public Drawable current()  throws ReaderException {
 		return this.getDrawableFromZipEntry(this.entries.get(this.currentPage));
@@ -102,18 +99,7 @@ public class CBZReader implements Reader {
 		if(this.archive!=null)
 			return this.entries.size();
 		else
-			return -1;
+			return -100;
 	}
 
-	public int currentPage() {
-		return this.currentPage;
-	}
-	
-	public void moveTo(int page) {
-		this.currentPage = page;
-	}
-	
-	public String getURI(){
-		return this.uri;
-	}
 }

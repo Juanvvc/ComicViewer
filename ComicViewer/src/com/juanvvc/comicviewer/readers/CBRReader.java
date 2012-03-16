@@ -3,7 +3,6 @@
  */
 package com.juanvvc.comicviewer.readers;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import de.innosystec.unrar.Archive;
 import de.innosystec.unrar.rarfile.FileHeader;
@@ -21,12 +21,13 @@ import de.innosystec.unrar.rarfile.FileHeader;
  * @author juanvi
  *
  */
-public class CBRReader implements Reader {
+public class CBRReader extends Reader {
 	private Archive archive=null;
 	private Context context;
 	private int currentPage=-1;
 	List<? extends FileHeader> entries = null;
 	private String uri=null;
+	private final static int MAX_BITMAP_SIZE=1024;
 	
 	public CBRReader(Context context){
 		this.context = context;
@@ -63,7 +64,7 @@ public class CBRReader implements Reader {
 			if(e.isDirectory() || !(name.endsWith(".jpg") || name.endsWith(".png")))
 				itr.remove();
 		}
-		// sort alphabetically the names
+		// sort the names alphabetically
 		Collections.sort(this.entries, new Comparator<FileHeader>(){
 			public int compare(FileHeader lhs, FileHeader rhs) {
 				String n1=lhs.getFileNameString();
@@ -90,8 +91,7 @@ public class CBRReader implements Reader {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			this.archive.extractFile(entry, baos);
 			baos.close();
-			// TODO: bytearray streams are too "heavy", imho. Could I change this to bitmaps?
-			return Drawable.createFromStream(new ByteArrayInputStream(baos.toByteArray()), entry.getFileNameString());
+			return new BitmapDrawable(this.byteArrayToBitmap(baos.toByteArray()));
 		}catch(Exception e){
 			throw new ReaderException("Cannot read page: "+e.getMessage());
 		}catch(OutOfMemoryError err){
