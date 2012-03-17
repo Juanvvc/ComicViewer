@@ -22,7 +22,10 @@
                 <data android:scheme="file:" android:pathPattern=".*\\.cbz" android:host="*"/>
             </intent-filter>
         </activity>
-        <activity android:name="FileExplorer" android:label="@string/app_name">
+<!--         <activity android:name=".FileExplorer" android:label="@string/app_name"> -->
+
+<!--         </activity> -->
+        <activity android:name=".GalleryExplorer" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

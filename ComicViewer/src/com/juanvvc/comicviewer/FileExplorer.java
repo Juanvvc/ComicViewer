@@ -15,14 +15,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+/** This class is no longer in use. I'm keping this as a reference */
 public class FileExplorer extends ListActivity {
 
 	private List<String> item = null;
 	private List<String> path = null;
 	private String root="/mnt/sdcard/";
 	private TextView myPath;
-	private String dirPath=root;
-	private static final String SEP="/";
 
 	/** Called when the activity is first created. */
 	@Override
@@ -36,7 +35,6 @@ public class FileExplorer extends ListActivity {
 	private void getDir(String dirPath)
 	{
 		myPath.setText("Location: " + dirPath);
-		this.dirPath = dirPath;
 
 		item = new ArrayList<String>();
 		path = new ArrayList<String>();

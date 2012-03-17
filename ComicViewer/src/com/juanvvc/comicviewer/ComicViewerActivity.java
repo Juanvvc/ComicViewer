@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -70,14 +69,7 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
     	}else{
     		Toast.makeText(this,"No comic", Toast.LENGTH_LONG).show();
     	}
-    		
-     
-//        this.loadReader("/mnt/sdcard/Creepy/Paying For It (2011).cbz", 0);
-//        this.loadReader("/mnt/sdcard/Creepy/STO (Ladroncorps).cbr", 0);
-        
-        // show a file manager to choose a file:
-//        Intent sharingIntent = new Intent(this, FileExplorer.class);
-//        startActivityForResult(sharingIntent, REQUEST_FILE);
+
         
     }
     
@@ -125,7 +117,7 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
 			reader.moveTo(page-1);
 			this.changePage(true);
 		}catch(ReaderException e){
-			Toast.makeText(this.getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 		}
     }
    
