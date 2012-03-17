@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
@@ -13,6 +14,7 @@ public abstract class Reader {
 	public static final int MAX_BITMAP_SIZE=1024;
 	Context context;
 	final static String TAG="Reader";
+	private final static boolean AUTOMATIC_ROTATION=true;
 	
 	public Reader(Context context){
 		this.uri = null;
@@ -86,6 +88,7 @@ public abstract class Reader {
 	 * @return A Bitmap object
 	 */
 	protected Bitmap byteArrayToBitmap(byte[] ba){
+		Bitmap bitmap=null;
 		/* First strategy:
 		 1.- load only the image information (inJustDecodeBounds=true)
 		 2.- read the image size
@@ -105,7 +108,7 @@ public abstract class Reader {
 //		opts.inPreferQualityOverSpeed=true;
 //		opts.inJustDecodeBounds=false;
 //		// finally, load the scaled image
-//		return BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+//		bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
 
 		/* Second strategy:
 		  1.- load the complete image
@@ -119,13 +122,24 @@ public abstract class Reader {
 		// finally, load the scaled image
 		while(true){
 			try{
-				return BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+				bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+				break; // if we arrive here, the last line did'nt trigger an outofmemory error
 			}catch(OutOfMemoryError e){
 				System.gc();
 			}
 			opts.inSampleSize+=1;
 			Log.d(TAG, "Using scale "+opts.inSampleSize);
 		}
+		
+		if(AUTOMATIC_ROTATION && bitmap.getHeight()<bitmap.getWidth()){
+			Matrix matrix=new Matrix();
+			matrix.postRotate(90);
+			Bitmap b=bitmap;
+			bitmap=Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), matrix, true);
+			b.recycle();
+		}
+		
+		return bitmap;
 	}
 	
 }

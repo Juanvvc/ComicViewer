@@ -1,12 +1,19 @@
 package com.juanvvc.comicviewer;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageSwitcher;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.juanvvc.comicviewer.readers.CBRReader;
@@ -17,25 +24,27 @@ import com.juanvvc.comicviewer.readers.ReaderException;
 /** Shows a comic on the screen
  * @author juanvi */
 public class ComicViewerActivity extends Activity implements OnClickListener{
-	private Button _left;
-	private Button _right;
-	private TransitionView _mainView;
 	private Reader reader=null;
 	private static int REQUEST_FILE = 0x67f;
+	private final static int ANIMATION_DURATION=500;
+	
+	private Animation anims[]={null, null, null, null};
     
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setContentView(R.layout.main);
+        setContentView(R.layout.comicviewer);
         
-        _left = (Button) this.findViewById(R.id.buttonLeft);
-        _right = (Button) this.findViewById(R.id.buttonRight);
-        _mainView = (TransitionView) this.findViewById(R.id.mainView);
+		this.configureAnimations(
+				R.anim.slide_in_right, R.anim.slide_out_left,
+				android.R.anim.slide_in_left, android.R.anim.slide_out_right,
+				ANIMATION_DURATION);
         
-//        this.loadReader("/mnt/sdcard/Creepy/Paying For It (2011).cbz", -1);
-        this.loadReader("/mnt/sdcard/Creepy/STO (Ladroncorps).cbr", -1);
+     
+//        this.loadReader("/mnt/sdcard/Creepy/Paying For It (2011).cbz", 0);
+        this.loadReader("/mnt/sdcard/Creepy/STO (Ladroncorps).cbr", 0);
         
         // show a file manager to choose a file:
 //        Intent sharingIntent = new Intent(this, FileExplorer.class);
@@ -48,7 +57,7 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
     /** Called when a screen button was pressed. Event binding is in XML */
     public void onClick(View sender){
     	if(this.reader!=null){
-    		this._mainView.changePage(sender==this._right);
+    		this.changePage(sender==this.findViewById(R.id.buttonRight));
     		Toast.makeText(this.getApplicationContext(),
     				this.reader.getCurrentPage()+"/"+this.reader.countPages(),
     				Toast.LENGTH_SHORT).show();
@@ -63,8 +72,8 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
 				reader = new CBZReader(this.getApplicationContext(), uri);
 			else if(uri.toLowerCase().endsWith(".cbr"))
 				reader = new CBRReader(this.getApplicationContext(), uri);
-			reader.moveTo(page);
-			this._mainView.setReader(reader);
+			reader.moveTo(page-1);
+			this.changePage(true);
 		}catch(ReaderException e){
 			Toast.makeText(this.getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 		}
@@ -97,5 +106,64 @@ public class ComicViewerActivity extends Activity implements OnClickListener{
     		Toast.makeText(this.getApplicationContext(), msg, Toast.LENGTH_LONG).show();
     	}
     }
+    
 
+	public void changePage(boolean pageRight){
+		if(this.reader==null)
+			return;
+		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
+		ImageView img1=(ImageView)this.findViewById(R.id.img1);
+		ImageView img2=(ImageView)this.findViewById(R.id.img2);
+		try{
+			// drawable of the next page
+			Drawable n=(pageRight?this.reader.next():this.reader.prev());
+			// the ImageView that will hold the new drawable
+			ImageView newView=(imgs.getCurrentView()==img1?img2:img1);
+			// the drawable that the ImageView is holding now
+			Drawable p=newView.getDrawable();
+			// set animations according to the movement
+			this.setAnimations(pageRight);
+			if(n!=null){
+				// release memory of the unused page
+				// Bitmaps must be explicitly removed from memory, or OutOfMemory errors appear very fast
+				// Try to remove the next line and load a file with large pages
+				if(p!=null && p instanceof BitmapDrawable){
+					Bitmap b=((BitmapDrawable)p).getBitmap();
+					if(b!=null) b.recycle();
+				}
+				// set the new page
+				newView.setImageDrawable(n);
+				// show the next page, with an animation
+				imgs.showNext();
+			}
+			// we loaded large images: ask to system to clean the memory and avoid problems in the future
+			System.gc();
+		}catch(ReaderException e){
+			Toast.makeText(this.getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+		}
+
+	}
+	
+	public void configureAnimations(int inAnim, int outAnim, int inRevAnim, int outRevAnim, int duration){
+		Context context = this.getApplicationContext();
+		anims[0]=AnimationUtils.loadAnimation(context, inAnim);
+		anims[1]=AnimationUtils.loadAnimation(context, outAnim);
+		anims[2]=AnimationUtils.loadAnimation(context, inRevAnim);
+		anims[3]=AnimationUtils.loadAnimation(context, outRevAnim);
+		for(int i=0; i<anims.length; i++) anims[i].setDuration(duration);
+		this.setAnimations(true);
+	}
+
+	private void setAnimations(boolean forward){
+		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
+		if(imgs!=null && anims[0]!=null){
+			if(forward){
+				imgs.setInAnimation(this.anims[0]);
+				imgs.setOutAnimation(this.anims[1]);
+			}else{
+				imgs.setInAnimation(this.anims[2]);
+				imgs.setOutAnimation(this.anims[3]);
+			}
+		}
+	}
 }

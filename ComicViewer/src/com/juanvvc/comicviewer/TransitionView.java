@@ -17,12 +17,18 @@ import android.widget.Toast;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
+/** This class is no longer in use. I'm keeping this file only for reference. It is NOT up-to-date.
+ * 
+ * In the current version, all this stuff was integrated into ComivViewerActiviy and its XML layout.
+ * 
+ * @author juanvi
+ *
+ */
 public class TransitionView extends RelativeLayout {
 	private final static int ANIMATION_DURATION=500;
 	private ImageView _img1;
 	private ImageView _img2;
 	private ImageSwitcher _imgs;
-	private int _currentImage=0;
 	private Reader reader=null;
 	private Animation anims[]={null, null, null, null};
 	

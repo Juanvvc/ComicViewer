@@ -87,6 +87,8 @@ public class CBRReader extends Reader {
 	private Drawable getDrawableFromRarEntry(FileHeader entry) throws ReaderException{
 		try{
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			// sometimes, a outofmemory is triggered here. Try to save as much memory as possible
+			System.gc();
 			this.archive.extractFile(entry, baos);
 			baos.close();
 			return new BitmapDrawable(this.byteArrayToBitmap(baos.toByteArray()));
