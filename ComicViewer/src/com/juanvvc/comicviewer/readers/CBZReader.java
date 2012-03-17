@@ -94,10 +94,10 @@ public class CBZReader extends Reader {
 
 
 
-	public Drawable current()  throws ReaderException {
-		if(this.currentPage<0 || this.currentPage>=this.countPages())
+	public Drawable getPage(int page)  throws ReaderException {
+		if(page<0 || page>=this.countPages())
 			return null;
-		return this.getDrawableFromZipEntry(this.entries.get(this.currentPage));
+		return this.getDrawableFromZipEntry(this.entries.get(page));
 	}
 
 	public int countPages() {

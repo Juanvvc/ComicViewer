@@ -8,16 +8,6 @@
         android:id="@+id/switcher"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" >
-
-        <ImageView
-            android:id="@+id/img1"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
-
-        <ImageView
-            android:id="@+id/img2"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" />
     </ImageSwitcher>
     
     <Button

@@ -116,10 +116,10 @@ public class CBRReader extends Reader {
 		this.currentPage -= 1;
 		return this.current();
 	}
-
-	public Drawable current()  throws ReaderException {
-		if(this.currentPage<0 || this.currentPage>=this.countPages()) return null;
-		return this.getDrawableFromRarEntry(this.entries.get(this.currentPage));
+	
+	public Drawable getPage(int page) throws ReaderException{
+		if(page<0 || page>=this.countPages()) return null;
+		return this.getDrawableFromRarEntry(this.entries.get(page));
 	}
 
 	public int countPages() {

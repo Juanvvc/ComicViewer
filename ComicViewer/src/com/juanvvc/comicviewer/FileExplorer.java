@@ -105,10 +105,9 @@ public class FileExplorer extends ListActivity {
 //						}
 //
 //			}).show();
-			Intent data=new Intent();
-			data.putExtra("file", this.dirPath+SEP+file.getName());
-			setResult(RESULT_OK, data);
-			finish();
+			Intent data=new Intent(this, ComicViewerActivity.class);
+			data.putExtra("uri", file.getAbsolutePath());
+			this.startActivity(data);
 		}
 	}
 }

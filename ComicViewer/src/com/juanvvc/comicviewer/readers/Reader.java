@@ -16,6 +16,14 @@ public abstract class Reader {
 	final static String TAG="Reader";
 	private final static boolean AUTOMATIC_ROTATION=true;
 	
+
+	public Drawable current()  throws ReaderException {
+		return this.getPage(this.currentPage);
+	}
+	
+	public abstract Drawable getPage(int page) throws ReaderException;
+
+	
 	public Reader(Context context){
 		this.uri = null;
 		this.currentPage = -1;
@@ -29,7 +37,6 @@ public abstract class Reader {
 	}
 	public abstract void close();
 	public abstract int countPages();
-	public abstract Drawable current() throws ReaderException;
 
 
 	public int getCurrentPage() {
