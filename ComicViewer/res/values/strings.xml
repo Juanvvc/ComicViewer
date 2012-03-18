@@ -5,5 +5,10 @@
     <string name="nodata">No data</string>
     <string name="outofmemory">Out of memory</string>
     <string name="encrypted_file">Encrypted file</string>
+    <string name="first_page">First page</string>
+    <string name="last_page">Last Page</string>
+    <string name="set_bookmark">Set bookmark</string>
+    <string name="remove_bookmark">Remove bookmark</string>
+    <string name="close">Close</string>
 
 </resources>

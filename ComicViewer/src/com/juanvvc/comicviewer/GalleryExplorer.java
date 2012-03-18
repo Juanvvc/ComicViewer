@@ -73,7 +73,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     		this.context=context;
     		
     		// create the list of comic collections
-    		this.entries = ComicCollection.getCollections(dir);
+    		this.entries = ComicCollection.getCollections(GalleryExplorer.this, dir);
 			// sort directories alphabetically
 			Collections.sort(this.entries, new Comparator<ComicCollection>(){
 				public int compare(ComicCollection lhs, ComicCollection rhs) {
@@ -142,7 +142,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	 */
 	public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
 		// get the file name (we know that the item is going to be a file)
-		File f=(File)arg0.getAdapter().getItem(position);
+		ComicInfo ci=(ComicInfo)arg0.getAdapter().getItem(position);
+		File f=new File(ci.uri);
 		Toast.makeText(this, "Loading "+f.getName(), Toast.LENGTH_LONG).show();
 		// start the comic viewer
 		Intent data=new Intent(this, ComicViewerActivity.class);
@@ -155,7 +156,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
      * an AsyncTask to create the cover out of the UI thread */
     private class CoverListAdapter extends BaseAdapter{
     	private Context context;
-    	private ArrayList<File> entries=null;
+    	private ComicCollection entries=null;
     	private int background;
     	
     	CoverListAdapter(Context context, ComicCollection collection){
@@ -175,7 +176,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		 * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
-			File f=this.entries.get(position);
+			ComicInfo ci=this.entries.get(position);
 			View v=convertView;
 			if(convertView==null){
 				v=View.inflate(this.context, R.layout.coveritem, null);
@@ -186,11 +187,17 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			ViewHolder holder = new ViewHolder();
 			holder.text=(TextView)v.findViewById(R.id.coveritem_text);
 			holder.img=(ImageView)v.findViewById(R.id.coveritem_img);
-			holder.file=f;
+			holder.file=new File(ci.uri);
 			// create the comic name: it is the file name without a suffix
-			String name=f.getName();
+			String name=holder.file.getName();
 			if(name.lastIndexOf(".")>0)
 				name=name.substring(0, name.lastIndexOf("."));
+			// add some information about the state of the comic
+			if(ci.read){
+				name+=" (read)";
+			}else if(ci.page>0 && ci.countpages>-1){
+				name+=" ("+(ci.page+1)+"/"+ci.countpages+")";
+			}
 			holder.name=name;
 			holder.text.setText(name);
 			// the cover is loaded in a separate thread

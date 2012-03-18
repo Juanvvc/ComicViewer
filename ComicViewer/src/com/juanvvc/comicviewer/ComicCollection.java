@@ -8,21 +8,33 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import com.juanvvc.comicviewer.readers.DirReader;
-import com.juanvvc.comicviewer.readers.Reader;
-import com.juanvvc.comicviewer.readers.ReaderException;
+import android.content.Context;
 
-public class ComicCollection extends ArrayList<File> {
+import com.juanvvc.comicviewer.readers.Reader;
+
+/** Manages a collection of comics.
+ * A collection of comics is an ordered set of comics that are (hopefully) realted.
+ * Usually, it is a directory in the filesystem 
+ * @author juanvi
+ *
+ */
+public class ComicCollection extends ArrayList<ComicInfo> {
 	private static final long serialVersionUID = 1L;
-	private ArrayList<File> entries;
-	private File root;
+	/** The name of the collection. */
 	private String name;
 
-	public ComicCollection(String name, List<File> list){
+	/** Creates a collection from a list of files
+	 * @param name
+	 * @param list
+	 */
+	public ComicCollection(String name, List<ComicInfo> list){
 		super(list);
 		this.name = name;
 	}
 	
+	/** Creates an empty collection with a name
+	 * @param name
+	 */
 	public ComicCollection(String name) {
 		super();
 		this.name = name;
@@ -32,9 +44,16 @@ public class ComicCollection extends ArrayList<File> {
 		return name;
 	}
 
-	public static ArrayList<ComicCollection> getCollections(File root){
+	/** Given a directory, identify the ComicCollections that are inside them.
+	 * This method only creates one level of collections: top directories and subdirectories
+	 * are all of them collections of the same level.
+	 * @param context
+	 * @param root
+	 * @return
+	 */
+	public static ArrayList<ComicCollection> getCollections(Context context, File root){
 		ArrayList<ComicCollection> collections=new ArrayList<ComicCollection>();
-		ComicCollection rootCol = ComicCollection.populate(root);
+		ComicCollection rootCol = ComicCollection.populate(context, root);
 		if(rootCol!=null) collections.add(rootCol);
 		
 		ArrayList<File> contents=new ArrayList<File>(Arrays.asList(root.listFiles()));
@@ -45,26 +64,24 @@ public class ComicCollection extends ArrayList<File> {
 			if(!nf.isDirectory() || nf.getName().equals(GalleryExplorer.THUMBNAILS))
 				itr.remove();
 			else{
-				collections.addAll(ComicCollection.getCollections(nf));
+				collections.addAll(ComicCollection.getCollections(context, nf));
 			}
 		}
 		return collections;
 	}
 	
-	public static ComicCollection populate(File root){
-		ComicCollection f=new ComicCollection(root.getName(), Arrays.asList(root.listFiles()));
-		Iterator<File> itr=f.iterator();
-		while(itr.hasNext()){
-			File nf=itr.next();
-			// remove from the list the thumbnails directory
-			if(nf.getName().equals(GalleryExplorer.THUMBNAILS))
-				itr.remove();
-			// check if there is a manager for the file
-			else if(!Reader.existsReader(nf.getAbsolutePath()))
-				itr.remove();
-		}
-		// if we have no items, return: we do not allow empty collections
-		if(f.size()==0) return null;
+	/** Creates a collection from the contents of a directory.
+	 * The contents of the directory are scanned, and if comics are found inside, the collection is created.
+	 * This method doesn't allow empty collections: if a directory doesn't have any comic, the collection is not created.
+	 * Subdirectories are scanned only to test if they have images (i.e., they can be read by a DirReader)
+	 * Subdirectories that are not managed by a DirReader are not added to this collection. Keep in mind that this
+	 * include subdirectories with CBZ files, for example: these collections are of a single level. 
+	 * @param root
+	 * @return
+	 */
+	public static ComicCollection populate(Context context, File root){
+		// get the files in the directory
+		ArrayList<File> f=new ArrayList<File>(Arrays.asList(root.listFiles()));
 		// sort the names alphabetically
 		Collections.sort(f, new Comparator<File>(){
 			public int compare(File lhs, File rhs) {
@@ -73,15 +90,49 @@ public class ComicCollection extends ArrayList<File> {
 				return n1.compareTo(n2);
 			}			
 		});
-		return f;
+		
+		// create the collection
+		ComicCollection col=new ComicCollection(root.getName());
+		Iterator<File> itr=f.iterator();
+		ComicDBHelper db=new ComicDBHelper(context);
+		while(itr.hasNext()){
+			File nf=itr.next();
+			// remove from the list the thumbnails directory
+			if(nf.getName().equals(GalleryExplorer.THUMBNAILS))
+				continue;
+			// check if there is a manager for the file
+			else if(!Reader.existsReader(nf.getAbsolutePath()))
+				continue;
+			
+			// get the information from the database, if exists
+			// we do not want to UPDATE the database: if the information is no there, create one
+			// Comics are only inserted into the database when read for the first time, to save resources
+			ComicInfo c=db.getComicInfo(db.getComicID(nf.getAbsolutePath(), false));
+			if(c==null){
+				c=new ComicInfo();
+				c.uri=nf.getAbsolutePath();
+				c.reader=null;
+				c.page=0;
+				c.countpages=-1;
+				c.id=-1;
+			}
+			c.collection=col;
+			col.add(c);
+		}
+		db.close();
+		// if we have no items, return: we do not allow empty collections
+		if(col.size()==0) return null;
+		return col;
 	}
 	
-	public File next(File current){
-		return null;
-	}
-	
-	public Reader getReader() throws ReaderException{
-		if(DirReader.manages(this.root.getAbsolutePath())) return new DirReader(null, this.root.getAbsolutePath());
-		return null;
+	/** Given a comic in this directory, return the next one in the collection.
+	 * @param current
+	 * @return The next comic, or null if there is no next comic of the comic is not in the collection
+	 */
+	public ComicInfo next(ComicInfo current){
+		int i=this.indexOf(current);
+		if(i<0 || i>=this.size()) return null;
+		else
+			return this.get(i+1);
 	}
 }
