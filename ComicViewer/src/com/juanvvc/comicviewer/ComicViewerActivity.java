@@ -1,15 +1,25 @@
 package com.juanvvc.comicviewer;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.GestureOverlayView.OnGesturePerformedListener;
+import android.gesture.Prediction;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -24,8 +34,9 @@ import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
 /** Shows a comic on the screen
+ * This class implements ViewFactory because it generates the Views for the internal ImageSwitcher
  * @author juanvi */
-public class ComicViewerActivity extends Activity implements OnClickListener, ViewFactory{
+public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener{
 	/** A reference to the reader in use. If null, there is not any comic. */
 	private Reader reader=null;
 	/** An arbitrary number to identify requests */
@@ -39,6 +50,8 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
 	/** A reference to the animations.
 	 * @see com.juanvvc.comicviewer.ComicViewerActivity#configureAnimations(int, int, int, int, int) */
 	private Animation anims[]={null, null, null, null};
+	/** The gestures library */
+	GestureLibrary geslibrary;
     
 	/** Called when the activity is first created. */
     @Override
@@ -70,6 +83,17 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
     		Toast.makeText(this,"No comic", Toast.LENGTH_LONG).show();
     	}
 
+    	// we listen to the events from the user
+    	((View)this.findViewById(R.id.comicviewer_layout)).setOnTouchListener(this);
+    	
+    	// open the gestures library
+    	this.geslibrary= GestureLibraries.fromRawResource(this, R.raw.gestures);
+    	if(this.geslibrary.load()){
+    		GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
+    		gestures.addOnGesturePerformedListener(this);
+    	}else{
+    		Log.w(TAG, "No gestures available");
+    	}
         
     }
     
@@ -90,14 +114,69 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
     /* Called when a screen button was pressed. Event binding is in XML
      * @see android.view.View.OnClickListener#onClick(android.view.View)
      */
-    public void onClick(View sender){
-    	if(this.reader!=null){
-    		this.changePage(sender==this.findViewById(R.id.buttonRight));
-    		Toast.makeText(this.getApplicationContext(),
+//    public void onClick(View sender){
+//    	if(this.reader!=null){
+//    		this.changePage(sender==this.findViewById(R.id.buttonRight));
+//    		Toast.makeText(this,
+//    				this.reader.getCurrentPage()+"/"+this.reader.countPages(),
+//    				Toast.LENGTH_SHORT).show();
+//    	}
+//    }
+    
+
+	/* Called when the screen is pressed
+	 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
+	 */
+	public boolean onTouch(View v, MotionEvent event) {
+		if(event.getAction()==MotionEvent.ACTION_DOWN){
+			int zone = this.getZone(v, event.getX(), event.getY());
+			switch(zone){
+			case 0: this.changePage(false); break; // left zone
+			case 1:
+				// reload current image (it may help in some large pages)
+				// TODO: this does nothing
+				try{
+					ImageView iv=(ImageView) ((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+					((BitmapDrawable)iv.getDrawable()).getBitmap().recycle();
+					iv.setImageDrawable(this.reader.current());
+				}catch(ReaderException e){}
+				break;
+			default: this.changePage(true); // right zone
+			}
+    		Toast.makeText(this,
     				this.reader.getCurrentPage()+"/"+this.reader.countPages(),
     				Toast.LENGTH_SHORT).show();
-    	}
-    }
+			
+		}
+		return false;
+	}
+	
+	/** Returns the identifier of the zone (x, y) of a view.
+	 * A zone is a geometric area inside the view. For example, the righ side, the left side...	 */
+	private int getZone(View v, float x, float y){
+		// currently, only two zones are used: left(0), center(1), right(2)
+		if(x<v.getWidth()/3) return 0;
+		if(x>2*v.getWidth()/3) return 2;
+		return 1;
+	}
+	
+	/** Responds to a gestures.
+	 * TODO: this is not working. Check: http://developer.android.com/resources/articles/gestures.html
+	 * @see android.gesture.GestureOverlayView.OnGesturePerformedListener#onGesturePerformed(android.gesture.GestureOverlayView, android.gesture.Gesture)
+	 */
+	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+	    ArrayList<Prediction> predictions = this.geslibrary.recognize(gesture);
+	    // We want at least one prediction
+	    if (predictions.size() > 0) {
+	        Prediction prediction = predictions.get(0);
+	        // We want at least some confidence in the result
+	        if (prediction.score > 1.0) {
+	            // Show the spell
+	            Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT).show();
+	            Log.d(TAG, prediction.name);
+	        }
+	    }
+	}
     
     /** Given a URI (actually, a file path), this method chooses the right reader and loads the comic.
      * @param uri The file path of the comic to load. The reader is choosen according to the file extension.
@@ -256,4 +335,5 @@ public class ComicViewerActivity extends Activity implements OnClickListener, Vi
 			Log.d(TAG, "Next page loaded");			
 		}
 	}
+
 }

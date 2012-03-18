@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Style of the Gallery in the GalleryExplorer activity. See http://developer.android.com/resources/tutorials/views/hello-gallery.html -->
+<resources>
+    <declare-styleable name="ComicExplorer">
+        <attr name="android:galleryItemBackground" />
+    </declare-styleable>
+</resources>

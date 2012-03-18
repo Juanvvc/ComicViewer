@@ -69,7 +69,7 @@ public abstract class Reader {
 		return this.current();
 	}
 	
-	/** COnvert a byte array into a Bitmap
+	/** Convert a byte array into a Bitmap
 	 * 
 	 * 	 This method should be a single line:
 		 return new BitmapDrawable(BitmapFactory.decodeByteArray(ba, 0, ba.length);

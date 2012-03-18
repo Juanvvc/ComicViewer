@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout of a cover item: it shows the cover and the comic name
+This layoput is used in the GalleryExplorer activity -->
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <ImageView
+            android:id="@+id/coveritem_img"
+            android:layout_width="200px"
+            android:layout_height="400px"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+			android:layout_marginTop="0dip"
+            android:src="@drawable/loading_cover" />
+
+        <TextView
+            android:id="@+id/coveritem_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/coveritem_img"
+            android:layout_below="@+id/coveritem_img"
+            android:text="TextView" />
+
+    </RelativeLayout>
