@@ -1,6 +1,7 @@
 package com.juanvvc.comicviewer.readers;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -15,22 +16,20 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+/** A reader for ZIP files.
+ * 
+ * Comics in ZIP usually have the extension .cbz
+ * @author juanvi
+ */
 public class CBZReader extends Reader {
 	private ZipFile archive = null;
 	private ArrayList<? extends ZipEntry> entries = null;
 	
-	public CBZReader(Context context){
-		super(context);
-		Log.v(TAG, "Using CBZReader");
-		this.archive = null;
+	public CBZReader(Context context, String uri) throws ReaderException {
+		super(context, uri);
+		if(uri!=null) this.load(uri);
 	}
-	public CBZReader(Context context, String uri) throws ReaderException{
-		super(context);
-		Log.v(TAG, "Using CBZReader");
-		this.archive = null;
-		this.load(uri);
-	}
-
+	
 	public void load(String uri) throws ReaderException{
 		try{
 			Log.i(TAG, "Loading URI"+uri);
@@ -69,7 +68,7 @@ public class CBZReader extends Reader {
 		this.currentPage = -1;
 	}
 	
-	private Drawable getDrawableFromZipEntry(ZipEntry entry) throws ReaderException{
+	private Drawable getDrawableFromZipEntry(ZipEntry entry, int initialscale) throws ReaderException{
 		try{
 			// you cannot use:
 			//Drawable.createFromStream(this.archive.getInputStream(entry), entry.getName());
@@ -83,7 +82,7 @@ public class CBZReader extends Reader {
 			while((ret = is.read(tmp)) > 0)
 			    bos.write(tmp, 0, ret);
 			
-			return new BitmapDrawable(this.byteArrayToBitmap(bos.toByteArray()));
+			return new BitmapDrawable(this.byteArrayToBitmap(bos.toByteArray(), initialscale));
 
 		}catch(Exception ex){
 			throw new ReaderException(ex.getMessage());
@@ -97,14 +96,26 @@ public class CBZReader extends Reader {
 	public Drawable getPage(int page)  throws ReaderException {
 		if(page<0 || page>=this.countPages())
 			return null;
-		return this.getDrawableFromZipEntry(this.entries.get(page));
+		return this.getDrawableFromZipEntry(this.entries.get(page), 1);
+	}
+	public Drawable getFastPage(int page, int initialscale)  throws ReaderException {
+		if(page<0 || page>=this.countPages())
+			return null;
+		return this.getDrawableFromZipEntry(this.entries.get(page), initialscale);
 	}
 
 	public int countPages() {
 		if(this.archive!=null)
 			return this.entries.size();
 		else
-			return -100;
+			return NOFILE;
 	}
-
+	
+	public static boolean manages(String uri){
+		File file=new File(uri);
+		if(!file.exists() || file.isDirectory()) return false;
+		String name = file.getName().toLowerCase();
+		if(name.endsWith(".zip") || name.endsWith(".cbz")) return true;
+		return false;
+	}
 }

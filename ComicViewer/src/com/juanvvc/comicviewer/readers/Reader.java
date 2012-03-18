@@ -8,36 +8,78 @@ import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+/** This class manages comics. It is used to load a comic, get a page, and move through next() and prev() movements.
+ * 
+ * This class must be extended to particular readers.
+ * @author juanvi
+ *
+ */
 public abstract class Reader {
+	/** The URI of the currently loaded reader */
 	String uri=null;
+	/** The current page */
 	int currentPage = -1;
+	/** In some load page strategies, the max page to load
+	 * (Currently, not in use) */
 	public static final int MAX_BITMAP_SIZE=1024;
+	/** The context of the application */
 	Context context;
+	/** A constant tag name, for logging */
 	final static String TAG="Reader";
+	/** If set, horizontal pages rotate to match the screen.
+	 * TODO: do not assume that the screen is portrait */
 	private final static boolean AUTOMATIC_ROTATION=true;
+	/** Constant to return in getPageCount() when there is no loaded file */
+	public static final int NOFILE=-100;
 	
+	
+	public Reader(Context context, String uri) throws ReaderException{
+		this.uri = uri;
+		this.currentPage = -1;
+		this.context = context;
+	}
+		
 
+	/**
+	 * @return The Drawable of the current page, unscaled.
+	 * Equals to getPage(this.currentPage)
+	 * @throws ReaderException
+	 */
 	public Drawable current()  throws ReaderException {
 		return this.getPage(this.currentPage);
 	}
 	
+	/** You have to override this method in your reader.
+	 * @param page
+	 * @return The Drawable of a page, unscaled.
+	 * @throws ReaderException
+	 */
 	public abstract Drawable getPage(int page) throws ReaderException;
-
 	
-	public Reader(Context context){
-		this.uri = null;
-		this.currentPage = -1;
-		this.context = context;
+	/** The scaled version of a drawable.
+	 * In the default implementation it is equal to getPage(), so you probably would like to override this method.
+	 * @param page
+	 * @param initialscale The drawable will be scaled at least this factor, maybe more if there
+	 * are memory problems.
+	 * @throws ReaderException
+	 */	
+	public Drawable getFastPage(int page, int initialscale) throws ReaderException{
+		return this.getPage(page);
 	}
-	
+
+	/** Loads a URI into this reader. You need to override this method in you reader, calling to the parent.load(uri)
+	 * @param uri
+	 * @throws ReaderException
+	 */
 	public void load(String uri) throws ReaderException{
 		this.uri = uri;
 		// current page is -1, since user didn't turn over the page yet. First thing: call to next()
 		this.currentPage = -1;
 	}
+	/** Closes the reader. You need to override this method */
 	public abstract void close();
+	/** Counts the pages of the reader. You need to override this method */
 	public abstract int countPages();
-
 
 	public int getCurrentPage() {
 		return this.currentPage;
@@ -51,6 +93,10 @@ public abstract class Reader {
 		return this.uri;
 	}
 	
+	/**
+	 * @return The next page, or null if there are not any more
+	 * @throws ReaderException
+	 */
 	public Drawable next() throws ReaderException{
 		if(this.uri==null)
 			return null;
@@ -60,6 +106,10 @@ public abstract class Reader {
 		return this.current();
 	}
 
+	/**
+	 * @return The previous page, or null if there are not any more
+	 * @throws ReaderException
+	 */
 	public Drawable prev() throws ReaderException{
 		if(this.uri==null)
 			return null;
@@ -92,19 +142,20 @@ public abstract class Reader {
 		 This method is in this class because I think that any reader will find this useful.
 		 
 	 * @param ba The byte array to convert
+	 * @param initialscale The initial scale to use, 1 for original size, 2 for half the size...
 	 * @return A Bitmap object
 	 */
-	protected Bitmap byteArrayToBitmap(byte[] ba){
+	protected Bitmap byteArrayToBitmap(byte[] ba, int initialscale){
 		Bitmap bitmap=null;
 		/* First strategy:
 		 1.- load only the image information (inJustDecodeBounds=true)
 		 2.- read the image size
 		 3.- if larger than MAX_BITMAP_SIZE, apply a scale
 		 4.- load the image scaled
-		 Problem: in my experience, some images are unnecessarely scaled down and quality suffers
+		 Problem: in my experience, some images are unnecessarily scaled down and quality suffers
 		*/
 //		Options opts=new Options();
-//		opts.inSampleSize=1;
+//		opts.inSampleSize=initialscale;
 //		opts.inJustDecodeBounds=true;
 //		BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
 //		// now, set the scale according to the image size: 1, 2, 3...
@@ -124,7 +175,7 @@ public abstract class Reader {
 		  "bitmap too large" that cannot be caught and the image is not shown. Quality is much better.
 		 */
 		Options opts=new Options();
-		opts.inSampleSize=1;
+		opts.inSampleSize=initialscale;
 		opts.inPreferQualityOverSpeed=true;
 		// finally, load the scaled image
 		while(true){
@@ -134,7 +185,7 @@ public abstract class Reader {
 			}catch(OutOfMemoryError e){
 				System.gc();
 			}
-			opts.inSampleSize+=1;
+			opts.inSampleSize*=2;
 			Log.d(TAG, "Using scale "+opts.inSampleSize);
 		}
 		
@@ -147,6 +198,39 @@ public abstract class Reader {
 		}
 		
 		return bitmap;
+	}
+	
+	
+	/** You must override this method in your reader
+	 * @param uri
+	 * @return If the reader manages this type of URI.
+	 */
+	public static boolean manages(String uri){
+		return false;
+	}
+	
+	/**
+	 * @param context
+	 * @param uri
+	 * @return  A suitable reader for the uri, or null if none was found 
+	 * @throws ReaderException
+	 */
+	public static Reader getReader(Context context, String uri) throws ReaderException{
+		if(CBRReader.manages(uri))
+			return new CBRReader(context, uri);
+		if(CBZReader.manages(uri))
+			return new CBZReader(context, uri);
+		if(DirReader.manages(uri))
+			return new DirReader(context, uri);
+		return null;
+	}
+	
+	/** This method is equivalent to Reader.getReader(uri)!=null, but significantly faster. 
+	 * @param uri
+	 * @return True if there is a known reader that manages this type of URI
+	 */
+	public static boolean existsReader(String uri){
+		return CBRReader.manages(uri) || CBZReader.manages(uri) || DirReader.manages(uri);
 	}
 	
 }

@@ -8,7 +8,7 @@ This layoput is used in the GalleryExplorer activity -->
         <ImageView
             android:id="@+id/coveritem_img"
             android:layout_width="200px"
-            android:layout_height="400px"
+            android:layout_height="300px"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
 			android:layout_marginTop="0dip"

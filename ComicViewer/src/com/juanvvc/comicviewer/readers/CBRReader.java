@@ -18,28 +18,23 @@ import android.util.Log;
 import de.innosystec.unrar.Archive;
 import de.innosystec.unrar.rarfile.FileHeader;
 
-/**
+/** A reader for RAR files.
+ * 
+ * Comics in ZIP usually have the extension .cbr
  * @author juanvi
- *
  */
 public class CBRReader extends Reader {
 	private Archive archive=null;
-	List<? extends FileHeader> entries = null;
+	private List<? extends FileHeader> entries = null;
 	
-	public CBRReader(Context context){
-		super(context);
-		Log.v(TAG, "Usig CBRReader");
-		this.archive = null;
-	}
 	public CBRReader(Context context, String uri) throws ReaderException{
-		super(context);
-		Log.v(TAG, "Usig CBRReader");
-		this.archive = null;
-		this.load(uri);
+		super(context, uri);
+		if(uri!=null) this.load(uri);
 	}
 
 
 	public void load(String uri) throws ReaderException {
+		super.load(uri);
 		Log.i(TAG, "Loading URI"+uri);
 		// tries to open the RAR file
 		try{
@@ -71,7 +66,6 @@ public class CBRReader extends Reader {
 			}
 			
 		});
-		super.load(uri);
 	}
 
 
@@ -84,14 +78,14 @@ public class CBRReader extends Reader {
 
 	}
 
-	private Drawable getDrawableFromRarEntry(FileHeader entry) throws ReaderException{
+	private Drawable getDrawableFromRarEntry(FileHeader entry, int initialscale) throws ReaderException{
 		try{
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			// sometimes, a outofmemory is triggered here. Try to save as much memory as possible
 			System.gc();
 			this.archive.extractFile(entry, baos);
 			baos.close();
-			return new BitmapDrawable(this.byteArrayToBitmap(baos.toByteArray()));
+			return new BitmapDrawable(this.byteArrayToBitmap(baos.toByteArray(), initialscale));
 		}catch(Exception e){
 			throw new ReaderException("Cannot read page: "+e.getMessage());
 		}catch(OutOfMemoryError err){
@@ -99,46 +93,32 @@ public class CBRReader extends Reader {
 		}
 	}
 
-	public Drawable next() throws ReaderException{
-		if(this.archive==null)
-			return null;
-		if(this.currentPage<-1 || this.currentPage>=this.entries.size())
-			return null;
-		this.currentPage += 1;
-		return this.current();
-	}
-
-	public Drawable prev() throws ReaderException{
-		if(this.archive==null)
-			return null;
-		if(this.currentPage<=0 || this.currentPage>=this.entries.size())
-			return null;
-		this.currentPage -= 1;
-		return this.current();
-	}
-	
 	public Drawable getPage(int page) throws ReaderException{
-		if(page<0 || page>=this.countPages()) return null;
-		return this.getDrawableFromRarEntry(this.entries.get(page));
+		if(page<0 || page>=this.countPages())
+			return null;
+		return this.getDrawableFromRarEntry(this.entries.get(page), 1);
+	}
+	public Drawable getFastPage(int page, int initialscale) throws ReaderException{
+		if(page<0 || page>=this.countPages())
+			return null;
+		return this.getDrawableFromRarEntry(this.entries.get(page), initialscale);
+	}
+	
+	public static boolean manages(String uri){
+		File file=new File(uri);
+		if(!file.exists() || file.isDirectory())
+			return false;
+		String name = file.getName().toLowerCase();
+		if(name.endsWith(".rar") || name.endsWith(".cbr"))
+			return true;
+		return false;
 	}
 
+
+	@Override
 	public int countPages() {
-		if(this.archive!=null)
-			return this.entries.size();
-		else
-			return -1;
+		if(this.entries==null)
+			return NOFILE;
+		return this.entries.size();
 	}
-
-	public int currentPage() {
-		return this.currentPage;
-	}
-	
-	public void moveTo(int page) {
-		this.currentPage = page;
-	}
-	
-	public String getURI(){
-		return this.uri;
-	}
-
 }

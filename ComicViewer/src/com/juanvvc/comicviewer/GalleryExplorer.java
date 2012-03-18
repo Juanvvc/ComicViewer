@@ -48,7 +48,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	/** An arbitrary name to help debugging */
 	private static final String TAG="GalleryExplorer";
 	/** The name of the thumbnails directory */
-	private static final String THUMBNAILS=".thumbnails";
+	static final String THUMBNAILS=".thumbnails";
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,18 +67,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     /** This adapter manages a list of collections. Each row of the list are a pair <collection name, gallery> */
     private class CollectionListAdapter extends BaseAdapter{
     	private Context context;
-    	private ArrayList<File> entries;
+    	private ArrayList<ComicCollection> entries;
     	
     	CollectionListAdapter(Context context, File dir){
     		this.context=context;
     		
     		// create the list of comic collections
-    		this.entries = this.scanDirTree(dir);
-			// add the base directory, to list comics that are not inside a collection
-    		this.entries.add(dir);
+    		this.entries = ComicCollection.getCollections(dir);
 			// sort directories alphabetically
-			Collections.sort(this.entries, new Comparator<File>(){
-				public int compare(File lhs, File rhs) {
+			Collections.sort(this.entries, new Comparator<ComicCollection>(){
+				public int compare(ComicCollection lhs, ComicCollection rhs) {
 					String n1=lhs.getName();
 					String n2=rhs.getName();
 					return n1.compareTo(n2);
@@ -87,40 +85,40 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			});
     	}
     	
-    	/** Returns the list of collections within a directory, searching recursively subdirectories
-    	 * @param d
-    	 * @return
-    	 */
-    	private ArrayList<File> scanDirTree(File d){
-    		ArrayList<File> f=new ArrayList<File>(Arrays.asList(d.listFiles()));
-    		ArrayList<File> children=new ArrayList<File>();
-    		Iterator<File> itr=f.iterator();
-			while(itr.hasNext()){
-				File nf=itr.next();
-				// remove from the list normal files and the thumbnails directory
-				if(!nf.isDirectory() || nf.getName().equals(THUMBNAILS))
-					itr.remove();
-				else
-					children.addAll(scanDirTree(nf));
-			}
-			f.addAll(children);
-			return f;
-    	}
+//    	/** Returns the list of collections within a directory, searching recursively subdirectories
+//    	 * @param d
+//    	 * @return
+//    	 */
+//    	private ArrayList<File> scanDirTree(File d){
+//    		ArrayList<File> f=new ArrayList<File>(Arrays.asList(d.listFiles()));
+//    		ArrayList<File> children=new ArrayList<File>();
+//    		Iterator<File> itr=f.iterator();
+//			while(itr.hasNext()){
+//				File nf=itr.next();
+//				// remove from the list normal files and the thumbnails directory
+//				if(!nf.isDirectory() || nf.getName().equals(THUMBNAILS))
+//					itr.remove();
+//				else
+//					children.addAll(scanDirTree(nf));
+//			}
+//			f.addAll(children);
+//			return f;
+//    	}
 
     	
 		/** This method creates a row for the collection list
 		 * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
-			File f=this.entries.get(position);
+			ComicCollection collection=this.entries.get(position);
 			View v=convertView;
 			if(convertView==null)
 				v=View.inflate(this.context, R.layout.galleryrow, null);
 			// create the cover gallery with an adapter
 			Gallery g=(Gallery)v.findViewById(R.id.cover_gallery);
-			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, f));
+			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection));
 			// create the gallery name
-			((TextView)v.findViewById(R.id.collection_name)).setText(f.getName());
+			((TextView)v.findViewById(R.id.collection_name)).setText(collection.getName());
 			// gallery items listen to clicks!
 	        g.setOnItemClickListener(GalleryExplorer.this);
 			return v;
@@ -160,28 +158,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     	private ArrayList<File> entries=null;
     	private int background;
     	
-    	CoverListAdapter(Context context, File dir){
+    	CoverListAdapter(Context context, ComicCollection collection){
     		this.context = context;
     		
-    		// create the list of the files in this collecion
-    		this.entries = new ArrayList<File>(Arrays.asList(dir.listFiles()));
-			Iterator<File> itr=this.entries.iterator();
-			// remove inner directories and files that are not identified as comic
-			while(itr.hasNext()){
-				File f = itr.next();
-				String name=f.getName().toLowerCase();
-				if(f.isDirectory() || !(name.endsWith(".cbr") || name.endsWith(".cbz")))
-					itr.remove();
-			}
-			// sort files alphabetically
-			Collections.sort(this.entries, new Comparator<File>(){
-				public int compare(File lhs, File rhs) {
-					String n1=lhs.getName();
-					String n2=rhs.getName();
-					return n1.compareTo(n2);
-				}
-				
-			});
+    		// create the list of the files in this collection
+    		this.entries = collection;
 			
     		// This sets the style of the gallery. From:
     		// http://developer.android.com/guide/tutorials/views/hello-gallery.html
@@ -206,14 +187,14 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			holder.text=(TextView)v.findViewById(R.id.coveritem_text);
 			holder.img=(ImageView)v.findViewById(R.id.coveritem_img);
 			holder.file=f;
-			// the cover is loaded in a separate thread
-			(new LoadCover()).execute(holder);
 			// create the comic name: it is the file name without a suffix
 			String name=f.getName();
 			if(name.lastIndexOf(".")>0)
 				name=name.substring(0, name.lastIndexOf("."));
 			holder.name=name;
 			holder.text.setText(name);
+			// the cover is loaded in a separate thread
+			(new LoadCover()).execute(holder);
 			return v;
 		}
 		
@@ -259,16 +240,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				
 				// Load the comic file, and then the first image
 				// select the comic reader
-				if(uri.toLowerCase().endsWith(".cbz"))
-					reader = new CBZReader(GalleryExplorer.this, uri);
-				else if(uri.toLowerCase().endsWith(".cbr"))
-					reader = new CBRReader(GalleryExplorer.this, uri);
+				reader=Reader.getReader(GalleryExplorer.this, uri);
 				// if the first page it is not a bitmapdrawable, this will trigger an exception. Pity, but it's OK
-				Bitmap b=((BitmapDrawable)reader.getPage(0)).getBitmap();
+				BitmapDrawable bd=((BitmapDrawable)reader.getPage(0));
+				// in case of fail, return the broken image
+				if(bd==null)
+					return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				// scale
-				Bitmap s=Bitmap.createScaledBitmap(b, 200, 300, true);
+				Bitmap s=Bitmap.createScaledBitmap(bd.getBitmap(), 200, 300, true);
 				// recycle the original bitmap
-				b.recycle();
+				bd.getBitmap().recycle();
 				
 				try{
 					// save the cache file for the next time, if you can
@@ -289,7 +270,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				
 				return new BitmapDrawable(s);
 			}catch(ReaderException e){
-				return null;
+				Log.e(TAG, e.toString());
+				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
 		protected void onPostExecute(Drawable d){

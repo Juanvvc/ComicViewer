@@ -22,21 +22,20 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher.ViewFactory;
 
-import com.juanvvc.comicviewer.readers.CBRReader;
-import com.juanvvc.comicviewer.readers.CBZReader;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
 /** Shows a comic on the screen
  * This class implements ViewFactory because it generates the Views for the internal ImageSwitcher
  * @author juanvi */
-public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener{
+public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener, AnimationListener{
 	/** A reference to the reader in use. If null, there is not any comic. */
 	private Reader reader=null;
 	/** An arbitrary number to identify requests */
@@ -46,12 +45,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	/** The TAG constant for the Logger */
 	private static final String TAG="ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread */
-	private AsyncTask<Integer, Integer, Drawable> nextPage=null;
+	private AsyncTask<Integer, Integer, Drawable> nextFastPage=null;
+	/** A task to load current page on the background and free the main thread */
+	private AsyncTask<Object, Integer, Drawable> currentPage=null;
 	/** A reference to the animations.
 	 * @see com.juanvvc.comicviewer.ComicViewerActivity#configureAnimations(int, int, int, int, int) */
 	private Animation anims[]={null, null, null, null};
 	/** The gestures library */
 	GestureLibrary geslibrary;
+	/** The scale of the fast pages. If ==1, no fast pages are used */
+	private static int FAST_PAGES_SCALE=2;
     
 	/** Called when the activity is first created. */
     @Override
@@ -70,7 +73,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
     	// load the intent, if any
     	Intent intent=this.getIntent();    	
-    	if(intent.getExtras().containsKey("uri")){
+    	if(intent.getExtras()!=null && intent.getExtras().containsKey("uri")){
     		this.loadReader(intent.getExtras().getString("uri"), 0);
     	}else if(savedInstanceState!=null && savedInstanceState.containsKey("uri")){
     		// load the save state, if any
@@ -80,7 +83,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     			this.loadReader(savedInstanceState.getString("uri"), 0);
     		}
     	}else{
-    		Toast.makeText(this,"No comic", Toast.LENGTH_LONG).show();
+//    		Toast.makeText(this,"No comic", Toast.LENGTH_LONG).show();
+    		this.loadReader("/mnt/sdcard/Creepy/Creepy 001.cbr", 0);
     	}
 
     	// we listen to the events from the user
@@ -136,10 +140,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// reload current image (it may help in some large pages)
 				// TODO: this does nothing
 				try{
-					ImageView iv=(ImageView) ((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+					ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
+					ImageView iv=(ImageView) imgs.getCurrentView();
 					((BitmapDrawable)iv.getDrawable()).getBitmap().recycle();
 					iv.setImageDrawable(this.reader.current());
-				}catch(ReaderException e){}
+				}catch(Exception e){}
 				break;
 			default: this.changePage(true); // right zone
 			}
@@ -187,10 +192,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		try{
 			this.reader=null;
 			// chooses the right reader to use
-			if(uri.toLowerCase().endsWith(".cbz"))
-				reader = new CBZReader(this.getApplicationContext(), uri);
-			else if(uri.toLowerCase().endsWith(".cbr"))
-				reader = new CBRReader(this.getApplicationContext(), uri);
+			reader=Reader.getReader(this, uri);
+			if(reader==null) throw new ReaderException("Not suitable reader for "+uri);
 			// moves to the selected page. Notice that we move to the PREVIOS page and then we change to the NEXT
 			// doing so, there is an animation and the screen is updated
 			reader.moveTo(page-1);
@@ -212,23 +215,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	super.onSaveInstanceState(savedInstanceState);
     }
     
-    /* Gets a response from the FileExplorer: shows the comic selected by the user
-     * @see android.app.Activity#onActivityResult(int, int, android.content.Intent)
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-    	if(resultCode == RESULT_OK && requestCode==REQUEST_FILE){
-    		String msg;
-    		if(data.hasExtra("file")){
-    			this.loadReader(data.getExtras().getString("file"), -1);
-    			msg=data.getExtras().getString("file");
-    		}else
-    			msg="No file";
-    		Toast.makeText(this.getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-    	}
-    }
-    
-
 	/** Changes the page currently on screen, doing an animation.
 	 * TODO: currently, this method only supports left-to-right comics.
 	 * @param forward True if the user is moving forward, false is backward
@@ -238,35 +224,35 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			return;
 		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
 		try{
-			// set animations according to the movement of the yser
+			// set animations according to the movement of the user
 			this.setAnimations(forward);
 			// drawable of the next page
 			Drawable n=null;
 			if(forward){
 				// if moving forward, we will check if we loaded the next page in the background
 				// We assume that this method is running in the UI thread
-				if(this.nextPage==null)
+				if(this.nextFastPage==null)
 					// if there is no background thread, create one. Note that this means
 					// that the UI thread will block in the next line
-					this.nextPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
+					this.nextFastPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
 				// get the loaded page. If the task was trigger in the past, this page should be
 				// available immediately. If it was created in the last "if" statement, this
 				// line will block the thread for a few milisecons (while the page loads)
-				n=this.nextPage.get();
+				n=this.nextFastPage.get();
 				// move to the next page "by hand"
 				this.reader.moveTo(this.reader.getCurrentPage()+1);
 				// create a new thread to load the next page in the background. This supposes that
 				// the natural move is onward and the user will see the next page next
-				this.nextPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
+				this.nextFastPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
 			}else{
 				n=this.reader.prev();
 				// if the user is moving backwards, the background thread (if existed) was
 				// loading the NEXT page. Stop it now.
-				if(this.nextPage!=null)
-					this.nextPage.cancel(true);
+				if(this.nextFastPage!=null)
+					this.nextFastPage.cancel(true);
 				// and load the next page from the prev. That is, the currently displayed page.
 				// I'm sure that there is room to the improvement here
-				this.nextPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
+				this.nextFastPage=new LoadNextPage().execute(this.reader.getCurrentPage()+1);
 			}
 			if(n!=null)
 				imgs.setImageDrawable(n);
@@ -289,7 +275,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		anims[1]=AnimationUtils.loadAnimation(context, outAnim);
 		anims[2]=AnimationUtils.loadAnimation(context, inRevAnim);
 		anims[3]=AnimationUtils.loadAnimation(context, outRevAnim);
-		for(int i=0; i<anims.length; i++) anims[i].setDuration(duration);
+		// if the fast pages is on, we set the listener for the animations:
+		// the real page is loaded AFTER the animations
+		if(FAST_PAGES_SCALE>1){
+			anims[0].setAnimationListener(this);
+			anims[2].setAnimationListener(this);
+		}
+		for(int i=0; i<anims.length; i++)
+			anims[i].setDuration(duration);
 		this.setAnimations(true);
 	}
 
@@ -309,6 +302,21 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}
 	}
 	
+	/** If fast pages are used, animations show a scaled version of the pages. When the animation ends,
+	 * the application will load the final, unscaled image in the background.
+	 * @see android.view.animation.Animation.AnimationListener#onAnimationEnd(android.view.animation.Animation)
+	 */
+	public void onAnimationEnd(Animation animation) {
+		if(this.currentPage!=null)
+			this.currentPage.cancel(true);
+		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
+		ImageView iv=(ImageView) imgs.getCurrentView();
+		this.currentPage=new LoadCurrentPage().execute(iv, this.reader.getCurrentPage());
+	}
+	public void onAnimationRepeat(Animation animation) {}
+	public void onAnimationStart(Animation animation) {}
+
+	
 	/** This task is used to load a page in a background thread and improve the GUI response time.
 	 * Use (page is an integer):
 	 * 
@@ -324,9 +332,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			if(reader==null)
 				return null;
 			int page=params[0].intValue();
-			Log.d(TAG, "Loading page "+page);
+			Log.d(TAG, "Loading fast page "+page);
 			try {
-				return reader.getPage(page);
+				return reader.getFastPage(page, FAST_PAGES_SCALE);
 			} catch (ReaderException e) {
 				return null;
 			}
@@ -335,5 +343,38 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			Log.d(TAG, "Next page loaded");			
 		}
 	}
-
+	
+	/** This task is used to load a page in a background thread and improve the GUI response time.
+	 * This thread is used to load an unscaled version of the current page
+	 * Use (page is an integer):
+	 * 
+	 * page=new LoadCurrentPage().execute(page);
+	 * (...do whatever...)
+	 * Drawable newpage = page.get()
+	 * 
+	 * @author juanvi
+	 */
+	private class LoadCurrentPage extends AsyncTask<Object, Integer, Drawable>{
+		ImageView view=null;
+		@Override
+		protected Drawable doInBackground(Object... params) {
+			if(reader==null)
+				return null;
+			view=(ImageView)params[0];
+			int page=((Integer)params[1]).intValue();
+			Log.d(TAG, "Loading page "+page);
+			try {
+				return reader.getPage(page);
+			} catch (ReaderException e) {
+				return null;
+			}
+		}
+		protected void onPostExecute(Drawable d){
+			if(d!=null){
+				((BitmapDrawable)view.getDrawable()).getBitmap().recycle();
+				view.setImageDrawable(d);
+				// TODO: free the last view
+			}
+		}
+	}
 }
