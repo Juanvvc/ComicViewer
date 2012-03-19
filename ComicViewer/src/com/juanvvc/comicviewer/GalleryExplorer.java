@@ -10,7 +10,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.TypedArray;
@@ -21,6 +23,9 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -49,6 +54,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	private static final String TAG="GalleryExplorer";
 	/** The name of the thumbnails directory */
 	static final String THUMBNAILS=".thumbnails";
+	/** Random number to identify request of directories */
+	private static final int REQUEST_DIRECTORY=0x8e;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -177,11 +184,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ComicInfo ci=this.entries.get(position);
-			View v=convertView;
-			if(convertView==null){
-				v=View.inflate(this.context, R.layout.coveritem, null);
-				v.setBackgroundResource(this.background);
-			}
+			// TODO: I tried to reuse convertView, but some images and text do not change fast enough...
+			View v=View.inflate(this.context, R.layout.coveritem, null);
+			v.setBackgroundResource(this.background);
+			
 			// Creates a view holder to speed the UI thread
 			// See: http://developer.android.com/training/improving-layouts/smooth-scrolling.html
 			ViewHolder holder = new ViewHolder();
@@ -233,7 +239,13 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		protected Drawable doInBackground(ViewHolder... params) {
 			Reader reader=null;
 			this.holder = params[0];
-			String uri=this.holder.file.getAbsolutePath();
+			// if the file is deleted externally, it maybe in the collection but no longer in the filesystem
+			// then, this check is mandatory
+			if(!this.holder.file.exists()){
+				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
+				// TODO: automatic scan?
+			}			
+			String uri=this.holder.file.getAbsolutePath();			
 			File cachefile=new File(holder.file.getParent()+File.separator+THUMBNAILS+File.separator+holder.name+".png");
 			try{
 				// look for the cover in the thumbnails directory. If found, we are done
@@ -248,6 +260,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				// Load the comic file, and then the first image
 				// select the comic reader
 				reader=Reader.getReader(GalleryExplorer.this, uri);
+				if(reader==null)
+					throw new ReaderException("Not a suitable reader");
 				// if the first page it is not a bitmapdrawable, this will trigger an exception. Pity, but it's OK
 				BitmapDrawable bd=((BitmapDrawable)reader.getPage(0));
 				// in case of fail, return the broken image
@@ -286,4 +300,77 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			this.holder.img.setImageDrawable(d);
 		}
 	}
+	
+	////////////////////////////////MANAGE THE MENU
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.gallerymenu, menu);
+	    return true;
+	}
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle item selection
+	    switch (item.getItemId()) {
+	    	case R.id.change_directory: // go to the last page
+	    		Intent intent = new Intent(getBaseContext(), DirExplorer.class);
+                intent.putExtra(DirExplorer.START_PATH, "/");
+                intent.putExtra(DirExplorer.CAN_SELECT_DIR, true);
+                intent.putExtra(DirExplorer.FORMAT_FILTER, new String[] { "cbz", "cbr", "png", "jpg" });
+                startActivityForResult(intent, REQUEST_DIRECTORY);
+	    		// notice that changing the comic directory will force a rescan of the collection
+                return true;
+	    	case R.id.rescan: // rescan collection
+	        	ListView collections = (ListView) findViewById(R.id.collections);
+	        	collections.invalidate();
+	        	collections.setAdapter(new CollectionListAdapter(this, new File("/mnt/sdcard")));
+	        	return true;
+	        case R.id.settings: // change settings (currently not implemented)
+	        	return true;
+        	default:
+        		return super.onOptionsItemSelected(item);
+	    }
+	}
+	
+	/** Get the result of a called activity.
+	 * In the case of this Activity, the only SubActivity is "Select a directory for comics"
+	 */
+    public synchronized void onActivityResult(final int requestCode, int resultCode, final Intent data) {
+		if (resultCode == Activity.RESULT_OK) {
+			if (requestCode == REQUEST_DIRECTORY) {
+				System.out.println("Saving...");
+				String filePath = data.getStringExtra(DirExplorer.RESULT_PATH);
+				Log.i(TAG, "Selected: "+filePath);
+				
+				// Four cases:
+				// 1.- The user selected an existing file. Remove the file and select the parent dir
+				File f=new File(filePath);
+				if(f.exists() && !f.isDirectory())
+					f = f.getParentFile();
+				// 2.- the user selected an important directory, such as / or /mnt or /sdcard. The amount of subdirectories
+				// is huge. Report and error
+				if(f.getAbsolutePath().equals("/") || f.getAbsolutePath().equals("/mnt") || f.getAbsolutePath().equals("/sdcard")){
+					new AlertDialog.Builder(this)
+							.setIcon(R.drawable.icon)
+							.setTitle("[" + f.getAbsolutePath() + "] is a system directory and cannot be used. Please, select a subdirectory")
+							.setPositiveButton("OK", null).show();
+					f=null;
+				}else{
+					// 3.- the user selected an unexisting directory.
+					// TODO: ask if sure
+					if(!f.exists())
+						f.mkdir();
+					// 4.- the user selected a directory. Do nothing
+				}
+				
+				// force a rescan
+	        	if(f!=null){
+	        		ListView collections = (ListView) findViewById(R.id.collections);
+	        		collections.invalidate();
+	        		collections.setAdapter(new CollectionListAdapter(this, f));
+	        	}
+			}
+		}
+    }
+	
 }

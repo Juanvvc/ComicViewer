@@ -204,7 +204,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			case 0: this.changePage(false); break; // left zone
 			case 1:
 				// reload current image (it may help in some large pages)
-				// TODO: this does nothing
 				try{
 					ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
 					ImageView iv=(ImageView) imgs.getCurrentView();
@@ -215,7 +214,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			default: this.changePage(true); // right zone
 			}
     		Toast.makeText(this,
-    				this.comicInfo.reader.getCurrentPage()+"/"+this.comicInfo.reader.countPages(),
+    				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
     				Toast.LENGTH_SHORT).show();
 			
 		}
@@ -282,9 +281,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			}
 			protected void onPostExecute(ComicInfo info){
 				ComicViewerActivity.this.comicInfo = info;
-				// moves to the selected page. Notice that we move to the PREVIOS page and then we change to the NEXT
-				// doing so, there is an animation and the screen is updated
-				ComicViewerActivity.this.moveToPage(info.page);
+				if(info!=null)
+					ComicViewerActivity.this.moveToPage(info.page);
 			}
     	}).execute(info);
     }
@@ -324,36 +322,43 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if(this.comicInfo==null)
 			return;
 		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
+		Reader reader=this.comicInfo.reader;
 		try{
 			// set animations according to the movement of the user
 			this.setAnimations(forward);
 			// drawable of the next page
 			Drawable n=null;
 			if(forward){
+				// check that we are not in the last page
+				if(reader.getCurrentPage()==reader.countPages()-1)
+					return;
 				// if moving forward, we will check if we loaded the next page in the background
 				// We assume that this method is running in the UI thread
 				if(this.nextFastPage==null)
 					// if there is no background thread, create one. Note that this means
 					// that the UI thread will block in the next line
-					this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(this.comicInfo.reader.getCurrentPage()+1);
+					this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 				// get the loaded page. If the task was trigger in the past, this page should be
 				// available immediately. If it was created in the last "if" statement, this
-				// line will block the thread for a few milisecons (while the page loads)
+				// line will block the thread for a few milliseconds (while the page loads)
 				n=this.nextFastPage.get();
 				// move to the next page "by hand"
-				this.comicInfo.reader.moveTo(this.comicInfo.reader.getCurrentPage()+1);
+				this.comicInfo.reader.moveTo(reader.getCurrentPage()+1);
 				// create a new thread to load the next page in the background. This supposes that
 				// the natural move is onward and the user will see the next page next
-				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(this.comicInfo.reader.getCurrentPage()+1);
+				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 			}else{
-				n=this.comicInfo.reader.prev();
+				// check that we are not in the first page
+				if(reader.getCurrentPage()==0)
+					return;
+				n=reader.prev();
 				// if the user is moving backwards, the background thread (if existed) was
 				// loading the NEXT page. Stop it now.
 				if(this.nextFastPage!=null)
 					this.nextFastPage.cancel(true);
 				// and load the next page from the prev. That is, the currently displayed page.
-				// I'm sure that there is room to the improvement here
-				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(this.comicInfo.reader.getCurrentPage()+1);
+				// TODO: I'm sure that there is room for improvements here
+				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 			}
 			if(n!=null)
 				imgs.setImageDrawable(n);
@@ -492,13 +497,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	    // Handle item selection
 	    switch (item.getItemId()) {
 	        case R.id.first_page: // go to the first page
-	        	if(ComicViewerActivity.this.comicInfo.reader.countPages()>1){
+	        	if(this.comicInfo.reader.countPages()>1){
 		            this.moveToPage(0);
 		            return true;
 	        	}
 	        	break;
 	        case R.id.last_page: // go to the last page
-	        	if(ComicViewerActivity.this.comicInfo.reader.countPages()>1){
+	        	if(this.comicInfo.reader.countPages()>1){
 		            this.moveToPage(this.comicInfo.reader.countPages()-1);
 		            return true;
 	        	}
