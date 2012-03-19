@@ -86,6 +86,8 @@ public abstract class Reader {
 	}
 	
 	public void moveTo(int page) {
+		if(page<0 || page>=this.countPages())
+			return;
 		this.currentPage = page;
 	}
 	
@@ -131,7 +133,7 @@ public abstract class Reader {
 		 are always loaded as OPENGL_TEXTURES, and a HW limit applies: MAX_BITMAP_SIZE at most.
 		 http://groups.google.com/group/android-developers/browse_thread/thread/2352c776651b6f99
 		 Some report (http://stackoverflow.com/questions/7428996/hw-accelerated-activity-how-to-get-opengl-texture-size-limit)
-		 that the minimum is 2048. In my device, that does not work. 1024 does. TODO: set the minimum to the screen size.
+		 that the minimum is 2048. In my device, that does not work. 1024 does.
 		 Conclusion: in current devices, you cannot load a bitmap larger (width or height) than MAX_BITMAP_SIZE pixels.
 		 Fact: many CBRs use images larger than that. OutOfMemory errors appear.
 		 Solution: Options.inSampleSize to the rescue. 

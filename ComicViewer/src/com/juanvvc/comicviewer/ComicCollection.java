@@ -132,9 +132,19 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	 * @return The next comic, or null if there is no next comic of the comic is not in the collection
 	 */
 	public ComicInfo next(ComicInfo current){
-		int i=this.indexOf(current);
-		if(i<0 || i>=this.size()) return null;
+		int n=-1;
+		// since the ComicInfo object may be created by an external entity such as ComicDBHelper,
+		// we cannot use this.indexOf(current)
+		// an alternative may be implementing ComicInfo.equals().
+		for(int i=0; i<this.size(); i++){
+			if(this.get(i).uri.equals(current.uri)){
+				n=i;
+				break;
+			}
+		}
+		if(n>-1 && n<size())
+			return this.get(n+1);
 		else
-			return this.get(i+1);
+			return null;
 	}
 }

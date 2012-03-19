@@ -155,8 +155,8 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		if(comicid==-1) return;
 		SQLiteDatabase db=this.getWritableDatabase();
 		db.delete("comics", "_id=?", new String[]{String.valueOf(comicid)});
+		db.delete("bookmarks", "comicid=?", new String[]{new Long(comicid).toString()});
 		db.close();
-		// TODO: remove bookmarks
 	}
 	
 	/** This method returns an array of bookmarks.
@@ -167,9 +167,11 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	public BookmarkInfo[] getBookmarks(long comicid) {
 		SQLiteDatabase db=this.getReadableDatabase();
 		Cursor cur=null;
-		if(comicid==1)
+		if(comicid!=-1)
+			// return selected bookmarks
 			cur=db.query("bookmarks", new String[]{ "_id", "comicid", "page"}, "comicid=?", new String[]{String.valueOf(comicid)}, null, null, null);
 		else
+			// return all bookmarks
 			cur=db.query("bookmarks", new String[]{ "_id", "comicid", "page"}, "page>?", new String[]{"-1"}, null, null, null);
 		if(cur.getCount()>100) return null;
 		BookmarkInfo[] ba=new BookmarkInfo[cur.getCount()];

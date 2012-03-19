@@ -2,6 +2,7 @@ package com.juanvvc.comicviewer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -40,8 +41,6 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * This class implements ViewFactory because it generates the Views for the internal ImageSwitcher
  * @author juanvi */
 public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener, AnimationListener{
-	/** If set, horizontal pages are automatically rotated */
-	private final static int ANIMATION_DURATION=500;
 	/** The TAG constant for the Logger */
 	private static final String TAG="ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread */
@@ -52,14 +51,20 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * @see com.juanvvc.comicviewer.ComicViewerActivity#configureAnimations(int, int, int, int, int) */
 	private Animation anims[]={null, null, null, null};
 	/** The gestures library */
-	GestureLibrary geslibrary;
-	/** The scale of the fast pages. If ==1, no fast pages are used */
-	private static int FAST_PAGES_SCALE=2;
+	private GestureLibrary geslibrary;
 	/** Information in the DB about the loaded comic.
 	 * If null, no comic was loaded */
 	private ComicInfo comicInfo=null;
 	/** Random number to identify request of bookmarks */
 	private static final int REQUEST_BOOKMARKS=0x21;
+
+	///////////// TODO: make these things options
+	/** If set, horizontal pages are automatically rotated */
+	private final static int ANIMATION_DURATION=500;
+	/** The scale of the fast pages. If ==1, no fast pages are used */
+	private static int FAST_PAGES_SCALE=2;
+	/** If set, at the end of the comic loads the next issue */
+	private static final boolean LOAD_NEXT_ISSUE=true;
     
 	/** Called when the activity is first created. */
     @Override
@@ -212,8 +217,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if(event.getAction()==MotionEvent.ACTION_DOWN){
 			int zone = this.getZone(v, event.getX(), event.getY());
 			switch(zone){
-			case 0: this.changePage(false); break; // left zone
-			case 1:
+			case 3: // left margin
+				this.changePage(false);
+				break;
+			case 4: // center
 				// reload current image (it may help in some large pages)
 				try{
 					ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
@@ -222,22 +229,41 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					iv.setImageDrawable(this.comicInfo.reader.current());
 				}catch(Exception e){}
 				break;
-			default: this.changePage(true); // right zone
+			case 5: // right margin
+				this.changePage(true);
+				// after changing the page, the comic maybe not available any more!
+				// for example, because we are loading the next issue and it is not ready yet
+				if(this.comicInfo!=null && this.comicInfo.reader!=null)
+		    		Toast.makeText(this,
+		    				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
+		    				Toast.LENGTH_SHORT).show();
+
+				break;
+			case 2: // right side of the header
+				this.switchBookmark();
+				break;
 			}
-    		Toast.makeText(this,
-    				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
-    				Toast.LENGTH_SHORT).show();
-			
 		}
 		return true;
 	}
 	
 	/** Returns the identifier of the zone (x, y) of a view.
-	 * A zone is a geometric area inside the view. For example, the righ side, the left side...	 */
+	 * A zone is a geometric area inside the view. For example, the righ side, the left side...
+	 * There are 9 zones. From 0 to 8: header-left-center-right; margin-left-center-margin right; footer-left-center-right 	 */
 	private int getZone(View v, float x, float y){
 		// currently, only two zones are used: left(0), center(1), right(2)
-		if(x<v.getWidth()/3) return 0;
-		if(x>2*v.getWidth()/3) return 2;
+		if(x<v.getWidth()/3){
+			if(y<0.2*v.getWidth()) return 0;
+			if(y>0.8*v.getWidth()) return 6;
+			return 3;
+		}
+		if(x>2*v.getWidth()/3){
+			if(y<0.2*v.getWidth()) return 2;
+			if(y>0.8*v.getWidth()) return 8;
+			return 5;
+		}
+		if(y<0.2*v.getWidth()) return 1;
+		if(y>0.8*v.getWidth()) return 4;
 		return 1;
 	}
 	
@@ -264,6 +290,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
      * @param page The page of the comic to load
      */
     public void loadComic(ComicInfo info){
+    	Log.i(TAG, "Loading comic "+info.uri+" at page "+info.page);
+        
+    	close();
+    	
     	// stop the AsyncTasks
     	if(this.nextFastPage!=null){
         	this.nextFastPage.cancel(true);
@@ -271,6 +301,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
         }
         if(this.currentPage!=null)
         	this.currentPage.cancel(true);
+        
+        
+        // load information about the bookmarks from the database
+        ComicDBHelper db=new ComicDBHelper(this);
+        ComicInfo ci=db.getComicInfo(db.getComicID(info.uri, false));
+        if(ci!=null)
+        	info.bookmarks=ci.bookmarks;
+        else
+        	info.bookmarks=new ArrayList<Integer>();
         
     	// the comic is loaded in the background, since there is lots of things to do
     	(new AsyncTask<ComicInfo, Void, ComicInfo>(){
@@ -364,8 +403,19 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			Drawable n=null;
 			if(forward){
 				// check that we are not in the last page
-				if(reader.getCurrentPage()==reader.countPages()-1)
+				if(reader.getCurrentPage()>=reader.countPages()-1){
+					// load the next issue in the collection
+					Log.i(TAG, "At the end of the comic");
+					if(LOAD_NEXT_ISSUE && this.comicInfo.collection!=null){
+						Log.d(TAG, "Loading next issue");
+						ComicInfo nextIssue=this.comicInfo.collection.next(this.comicInfo);
+						if(nextIssue!=null){
+							Log.i(TAG, "Next issue: "+nextIssue.uri);
+							this.loadComic(nextIssue);
+						}
+					}
 					return;
+				}
 				// if moving forward, we will check if we loaded the next page in the background
 				// We assume that this method is running in the UI thread
 				if(this.nextFastPage==null)
@@ -385,23 +435,30 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// check that we are not in the first page
 				if(reader.getCurrentPage()==0)
 					return;
-				n=reader.prev();
 				// if the user is moving backwards, the background thread (if existed) was
 				// loading the NEXT page. Stop it now.
 				if(this.nextFastPage!=null)
 					this.nextFastPage.cancel(true);
+				// move to the prev page "by hand".
+				//This is faster and safer than this.comicInfo.reader.prev() since we are using scaled images
+				this.comicInfo.reader.moveTo(reader.getCurrentPage()-1);
+				n=this.comicInfo.reader.getFastPage(reader.getCurrentPage(), FAST_PAGES_SCALE);
 				// and load the next page from the prev. That is, the currently displayed page.
 				// TODO: I'm sure that there is room for improvements here
 				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 			}
 			if(n!=null)
 				imgs.setImageDrawable(n);
-		}catch(Exception e){
-			Toast.makeText(this.getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+		}catch(ReaderException e){
+			Log.e(TAG, e.toString());
+		}catch(ExecutionException e){
+			Log.e(TAG, e.toString());
+		}catch(InterruptedException e){
+			Log.e(TAG, e.toString());
 		}
 		
     	// if the current page is bookmarked, show the bookmark
-    	if(this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){
+    	if(this.comicInfo.bookmarks!=null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){
     		this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
     	}else{
     		this.findViewById(R.id.bookmark).setVisibility(View.GONE);

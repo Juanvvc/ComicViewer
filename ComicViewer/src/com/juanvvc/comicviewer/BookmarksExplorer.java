@@ -16,7 +16,7 @@ public class BookmarksExplorer extends ListActivity {
 		setResult(RESULT_CANCELED, getIntent());
 		
 		long comicid=-1;
-		if(getIntent().getExtras()!=null && getIntent().getExtras().containsKey("comidid")){
+		if(getIntent().getExtras()!=null && getIntent().getExtras().containsKey("comicid")){
 			comicid=getIntent().getExtras().getLong("comicid");
 		}
 
@@ -27,7 +27,7 @@ public class BookmarksExplorer extends ListActivity {
 			String[] values=new String[this.bookmarks.length];
 			for(int i=0; i<this.bookmarks.length; i++){
 				ComicInfo ci=db.getComicInfo(this.bookmarks[i].comicid);
-				values[i]=getText(R.string.page)+" "+this.bookmarks[i].page+" "+getText(R.string.in)+" \""+(new File(ci.uri)).getName()+"\".";
+				values[i]=getText(R.string.page)+" "+(this.bookmarks[i].page+1)+" "+getText(R.string.in)+" \""+(new File(ci.uri)).getName()+"\".";
 			}
 			
 			ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, values);
