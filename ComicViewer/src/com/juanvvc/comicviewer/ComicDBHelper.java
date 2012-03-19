@@ -131,8 +131,27 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		if(info.reader!=null)
 			cv.put("pages", info.reader.countPages());
 		db.update("comics", cv, "_id=?", new String[]{String.valueOf(info.id)});
+		// Update bookrmaks
+		// First: remove all current bookmarks
+		db.delete("bookmarks", "comicid=?", new String[]{new Long(info.id).toString()});
+		// Second: add current bookmarks
+		String comicid=new Long(info.id).toString();
+		if(info.bookmarks!=null){
+			for(int i=0; i<info.bookmarks.size(); i++){
+				Integer b=info.bookmarks.get(i);
+				cv=new ContentValues();
+				cv.put("page", b);
+				cv.put("comicid", comicid);
+				db.insert("bookmarks", null, cv);
+			}
+		}
 		db.close();
-		// TODO: update bookmarks
+	}
+	
+	private void removeBookmarks(ComicInfo info){
+		SQLiteDatabase db=this.getWritableDatabase();
+		db.delete("bookmarks", "comicid=", new String[]{new Long(info.id).toString()});
+		db.close();
 	}
 	
 	/** Removes a comic from the database

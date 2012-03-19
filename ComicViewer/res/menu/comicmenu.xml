@@ -2,5 +2,6 @@
     <menu xmlns:android="http://schemas.android.com/apk/res/android">
         <item android:id="@+id/first_page" android:title="@string/first_page"></item>
         <item android:id="@+id/last_page" android:title="@string/last_page"></item>
+        <item android:id="@+id/switch_bookmark" android:title="@string/switch_bookmark"></item>
         <item android:id="@+id/close" android:title="@string/close"></item>
     </menu>

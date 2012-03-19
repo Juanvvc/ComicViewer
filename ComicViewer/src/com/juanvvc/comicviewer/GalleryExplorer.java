@@ -70,7 +70,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     	if(comicDir==null){
 			new AlertDialog.Builder(this)
 					.setIcon(R.drawable.icon)
-					.setTitle("Please, select the comics directory")
+					.setTitle(this.getText(R.string.please_select_directory))
 					.setPositiveButton("OK", null).show();
     	}else{
 	    	ListView collections = (ListView) findViewById(R.id.collections);
@@ -369,8 +369,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				if(f.getAbsolutePath().equals("/") || f.getAbsolutePath().equals("/mnt") || f.getAbsolutePath().equals("/sdcard")){
 					new AlertDialog.Builder(this)
 							.setIcon(R.drawable.icon)
-							.setTitle("[" + f.getAbsolutePath() + "] is a system directory and cannot be used. Please, select a subdirectory")
-							.setPositiveButton("OK", null).show();
+							.setTitle("[" + f.getAbsolutePath() + "] "+getText(R.string.system_directory))
+							.setPositiveButton(getText(android.R.string.ok), null).show();
 					f=null;
 				}else{
 					// 3.- the user selected an unexisting directory.

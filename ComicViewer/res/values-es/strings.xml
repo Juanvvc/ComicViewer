@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="explorer_name">Seleccione directorio</string>
+    <string name="nodata">Sin datos</string>
+    <string name="outofmemory">Sin memoria</string>
+    <string name="encrypted_file">Archivo cifrado</string>
+    <string name="first_page">Primera página</string>
+    <string name="last_page">Última página</string>
+    <string name="switch_bookmark">Marcar/Desmarcar</string>
+    <string name="close">Cerrar</string>
+    <string name="rescan">Recarga colección</string>
+    <string name="change_directory">Cambia directorio</string>
+    <string name="remove_comic">Borrar cómic</string>
+    <string name="switch_read">Cambiar estado leído</string>
+    <string name="settings">Opciones</string>
+    <string name="file_name">Nombre de arhivo</string>
+    <string name="newnew">Nuevo</string>
+    <string name="cover">Portada de cómic</string>
+    <string name="bookmark">Marca</string>
+    <string name="please_select_directory">Por favor, seleccione el directorio de cómics</string>
+    <string name="system_directory">es un directorio protegido. Por favor, seleccione un subdirectorio</string>
+    <string name="no_suitable_reader">Archivo no reconocido </string>
+
+</resources>

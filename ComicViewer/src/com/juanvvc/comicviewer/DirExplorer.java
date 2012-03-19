@@ -317,7 +317,7 @@ public class DirExplorer extends ListActivity {
 			} else {
 				new AlertDialog.Builder(this).setIcon(R.drawable.icon)
 						.setTitle("[" + file.getName() + "] cannot read directory")
-						.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+						.setPositiveButton(getText(android.R.string.ok), new DialogInterface.OnClickListener() {
 
 							public void onClick(DialogInterface dialog, int which) {
 

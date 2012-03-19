@@ -12,6 +12,18 @@
         android:layout_height="fill_parent" >
     </ImageSwitcher>
     
+    <ImageView
+        android:id="@+id/bookmark"
+        android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:src="@drawable/bookmark"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="10dp"
+        android:contentDescription="@string/bookmark"
+        android:visibility="gone"         
+        />
+    
 <!--     <Button -->
 <!--         android:id="@+id/buttonRight" -->
 <!--         android:layout_width="wrap_content" -->

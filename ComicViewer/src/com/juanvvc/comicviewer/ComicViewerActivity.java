@@ -271,7 +271,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				try{
 					// chooses the right reader to use
 					info.reader=Reader.getReader(ComicViewerActivity.this, info.uri);
-					if(info.reader==null) throw new ReaderException("Not suitable reader for "+info.uri);
+					if(info.reader==null) throw new ReaderException(getText(R.string.no_suitable_reader)+info.uri);
 					info.collection = ComicCollection.populate(ComicViewerActivity.this, new File(info.uri).getParentFile());
 					info.reader.countPages();
 					return info;
@@ -285,6 +285,22 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					ComicViewerActivity.this.moveToPage(info.page);
 			}
     	}).execute(info);
+    }
+    
+    /** Switches the bookmark in the current page */
+    private void switchBookmark(){
+    	if(this.comicInfo!=null){
+    		int cp = this.comicInfo.reader.getCurrentPage();
+    		if(cp<0)
+    			return;
+    		if(this.comicInfo.bookmarks.contains(cp)){
+    			this.comicInfo.bookmarks.remove(new Integer(cp));
+    			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
+    		}else{
+    			this.comicInfo.bookmarks.add(cp);
+    			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
+    		}
+    	}
     }
     
     /** Moves the view to a certain page.
@@ -311,6 +327,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	}else{
     		this.comicInfo.reader.moveTo(page+1);
     		this.changePage(false);
+    	}
+    	
+    	// if the page is bookmarked, show the bookmark
+    	if(this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){
+    		this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
+    	}else{
+    		this.findViewById(R.id.bookmark).setVisibility(View.GONE);
     	}
     }
     
@@ -365,6 +388,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}catch(Exception e){
 			Toast.makeText(this.getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 		}
+		
+    	// if the current page is bookmarked, show the bookmark
+    	if(this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){
+    		this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
+    	}else{
+    		this.findViewById(R.id.bookmark).setVisibility(View.GONE);
+    	}
 
 	}
 	
@@ -507,6 +537,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		            this.moveToPage(this.comicInfo.reader.countPages()-1);
 		            return true;
 	        	}
+	        	break;
+	        case R.id.switch_bookmark:
+	        	switchBookmark();
 	        	break;
 	        case R.id.close: // close this viewer
 	        	this.finish();
