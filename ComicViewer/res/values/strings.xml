@@ -7,8 +7,8 @@
     <string name="encrypted_file">Encrypted file</string>
     <string name="first_page">First page</string>
     <string name="last_page">Last Page</string>
-    <string name="set_bookmark">Set bookmark</string>
-    <string name="remove_bookmark">Remove bookmark</string>
+    <string name="set_bookmark">Set Bookmark</string>
+    <string name="remove_bookmark">Remove Bookmark</string>
     <string name="close">Close</string>
     <string name="rescan">Rescan</string>
     <string name="change_directory">Change Directory</string>
@@ -17,5 +17,6 @@
     <string name="settings">Settings</string>
     <string name="file_name">File name</string>
     <string name="newnew">New</string>
+    <string name="cover">The cover of available comics</string>
 
 </resources>

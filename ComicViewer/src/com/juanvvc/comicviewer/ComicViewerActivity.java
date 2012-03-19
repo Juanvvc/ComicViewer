@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.gesture.Gesture;
-import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
 import android.gesture.GestureOverlayView.OnGesturePerformedListener;
@@ -117,13 +116,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	((View)this.findViewById(R.id.comicviewer_layout)).setOnTouchListener(this);
     	
     	// open the gestures library
-    	this.geslibrary= GestureLibraries.fromRawResource(this, R.raw.gestures);
-    	if(this.geslibrary.load()){
-    		GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
-    		gestures.addOnGesturePerformedListener(this);
-    	}else{
-    		Log.w(TAG, "No gestures available");
-    	}
+    	// TODO: gestures are not working
+//    	this.geslibrary= GestureLibraries.fromRawResource(this, R.raw.gestures);
+//    	if(this.geslibrary.load()){
+//    		GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
+//    		gestures.addOnGesturePerformedListener(this);
+//    	}else{
+//    		Log.w(TAG, "No gestures available");
+//    	}
         
     }
     
@@ -231,7 +231,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	}
 	
 	/** Responds to a gestures.
-	 * TODO: this is not working. Check: http://developer.android.com/resources/articles/gestures.html
+	 * TODO: gestures not working. Check: http://developer.android.com/resources/articles/gestures.html
 	 * @see android.gesture.GestureOverlayView.OnGesturePerformedListener#onGesturePerformed(android.gesture.GestureOverlayView, android.gesture.Gesture)
 	 */
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {

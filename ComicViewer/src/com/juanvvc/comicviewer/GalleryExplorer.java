@@ -4,16 +4,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -37,8 +35,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.juanvvc.comicviewer.readers.CBRReader;
-import com.juanvvc.comicviewer.readers.CBZReader;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
@@ -56,6 +52,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	static final String THUMBNAILS=".thumbnails";
 	/** Random number to identify request of directories */
 	private static final int REQUEST_DIRECTORY=0x8e;
+	/** The directory that contents the comics */
+	private String comicDir=null;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,11 +62,31 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     	this.setContentView(R.layout.galleryexplorer);
     	
-    	ListView collections = (ListView) findViewById(R.id.collections);
-    	// TODO: ask for the initial directory
-        collections.setAdapter(new CollectionListAdapter(this, new File("/mnt/sdcard")));
-        
+    	// Restore preferences
+    	SharedPreferences settings=getPreferences(MODE_PRIVATE);
+    	this.comicDir=settings.getString("comicDir", null);
+    	
+    	// check preferences
+    	if(comicDir==null){
+			new AlertDialog.Builder(this)
+					.setIcon(R.drawable.icon)
+					.setTitle("Please, select the comics directory")
+					.setPositiveButton("OK", null).show();
+    	}else{
+	    	ListView collections = (ListView) findViewById(R.id.collections);
+	        collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+    	}
 
+    }
+    
+    /** The Activity is going to be killed: save preferences */
+    public void onStop(){
+    	super.onStop();
+    	// save preferences
+    	SharedPreferences settings = getPreferences(MODE_PRIVATE);
+    	SharedPreferences.Editor editor=settings.edit();
+    	editor.putString("comicDir", comicDir);
+    	editor.commit();
     }
     
     /** This adapter manages a list of collections. Each row of the list are a pair <collection name, gallery> */
@@ -184,7 +202,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ComicInfo ci=this.entries.get(position);
-			// TODO: I tried to reuse convertView, but some images and text do not change fast enough...
+			// TODO: I tried to reuse convertView, but some images and text do not change fast enough.
 			View v=View.inflate(this.context, R.layout.coveritem, null);
 			v.setBackgroundResource(this.background);
 			
@@ -277,8 +295,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					// THIS NEEDS WRITING PERMISSIONS
 					if(!cachefile.getParentFile().exists())
 						// create the thumbnails directory
-						// TODO: check if the directory was really created.
-						// I suppose that if not, an exception will be triggered while saving the file
+						// I suppose that if the directory cannot be created, an exception will be triggered in the next line
 						cachefile.getParentFile().mkdir();
 					// save the thumbnail
 					FileOutputStream out=new FileOutputStream(cachefile.getAbsoluteFile());
@@ -368,6 +385,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	        		ListView collections = (ListView) findViewById(R.id.collections);
 	        		collections.invalidate();
 	        		collections.setAdapter(new CollectionListAdapter(this, f));
+	        		this.comicDir=f.getAbsolutePath();
 	        	}
 			}
 		}

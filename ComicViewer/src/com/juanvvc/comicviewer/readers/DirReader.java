@@ -114,9 +114,12 @@ public class DirReader extends Reader {
 	
 	public static boolean manages(String uri){
 		File file=new File(uri);
-		if(!file.exists() || !file.isDirectory()) return false;
+		if(!file.exists() || !file.isDirectory())
+			return false;
 		// look for a minimum number of image files
 		File[] contents=file.listFiles();
+		if(contents==null)
+			return false; // if contents==null, the file is not a directory. But it passed the directory check! Shit happens.
 		int numimgs=0;
 		for(int i=0; i<contents.length; i++){
 			if(contents[i].isDirectory()) continue;

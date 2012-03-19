@@ -52,6 +52,8 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	 * @return
 	 */
 	public static ArrayList<ComicCollection> getCollections(Context context, File root){
+		if(root==null)
+			return null;
 		ArrayList<ComicCollection> collections=new ArrayList<ComicCollection>();
 		ComicCollection rootCol = ComicCollection.populate(context, root);
 		if(rootCol!=null) collections.add(rootCol);
