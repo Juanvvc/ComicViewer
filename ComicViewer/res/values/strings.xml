@@ -21,5 +21,6 @@
     <string name="please_select_directory">Please, select the comics directory</string>
     <string name="system_directory">is a system directory and cannot be used. Please, select a subdirectory.</string>
     <string name="no_suitable_reader">Not suitable reader for </string>
+    <string name="read"> (read)</string>
 
 </resources>

@@ -146,6 +146,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     /** Closes the comic, freeing resources and saving current state on the database.
      * Typically, this is never called manually */
     public void close(){
+    	Log.i(TAG, "Closing comic viewer");
     	if(this.comicInfo!=null && this.comicInfo.reader!=null){
     		if(this.comicInfo!=null){
         		ComicDBHelper db=new ComicDBHelper(this);
@@ -162,9 +163,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     }
     
     @Override
-    public void onStop(){
+    public void onDestroy(){
     	this.close();
-    	super.onStop();
+    	super.onDestroy();
     }
     
     /* This method supplies a View for the ImageSwitcher.
@@ -194,10 +195,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 //    }
     
 
-	/* Called when the screen is pressed
+	/** Called when the screen is pressed
 	 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
 	 */
 	public boolean onTouch(View v, MotionEvent event) {
+		if(this.comicInfo==null)
+			return false;
 		if(event.getAction()==MotionEvent.ACTION_DOWN){
 			int zone = this.getZone(v, event.getX(), event.getY());
 			switch(zone){
@@ -218,7 +221,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     				Toast.LENGTH_SHORT).show();
 			
 		}
-		return false;
+		return true;
 	}
 	
 	/** Returns the identifier of the zone (x, y) of a view.

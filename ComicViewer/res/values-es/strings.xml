@@ -20,5 +20,6 @@
     <string name="please_select_directory">Por favor, seleccione el directorio de cómics</string>
     <string name="system_directory">es un directorio protegido. Por favor, seleccione un subdirectorio</string>
     <string name="no_suitable_reader">Archivo no reconocido </string>
+    <string name="read"> (leído)</string>
 
 </resources>

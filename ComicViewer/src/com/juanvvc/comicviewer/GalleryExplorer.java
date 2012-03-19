@@ -223,7 +223,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				name+=" ("+(ci.page+1)+"/"+ci.countpages+")";
 			}
 			holder.name=name;
-			holder.text.setText(name);
+			if(ci.read){
+				holder.text.setText(name+GalleryExplorer.this.getText(R.string.read));
+			}else if(ci.page>0 && ci.countpages>-1){
+				holder.text.setText(name+" ("+(ci.page+1)+"/"+ci.countpages+")");
+			}
 			// the cover is loaded in a separate thread
 			(new LoadCover()).execute(holder);
 			return v;
