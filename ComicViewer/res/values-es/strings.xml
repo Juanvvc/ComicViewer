@@ -21,5 +21,9 @@
     <string name="system_directory">es un directorio protegido. Por favor, seleccione un subdirectorio</string>
     <string name="no_suitable_reader">Archivo no reconocido </string>
     <string name="read"> (leído)</string>
+    <string name="in">en</string>
+    <string name="page">Página</string>
+    <string name="bookmark_list">Lista de marcas</string>
+    <string name="no_comic">Cómic no encontrado</string>
 
 </resources>

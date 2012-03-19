@@ -25,6 +25,9 @@
          <activity android:name=".DirExplorer" android:label="@string/app_name"> -->
 
          </activity>
+         <activity android:name=".BookmarksExplorer" android:label="@string/bookmark">
+
+        </activity>
         <activity android:name=".GalleryExplorer" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

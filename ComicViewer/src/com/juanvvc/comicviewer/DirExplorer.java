@@ -109,7 +109,7 @@ public class DirExplorer extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setResult(RESULT_CANCELED, getIntent());
 
-		setContentView(R.layout.filelist);
+		setContentView(R.layout.direxplorer);
 		myPath = (TextView) findViewById(R.id.path);
 		mFileName = (EditText) findViewById(R.id.fdEditTextFile);
 
@@ -267,7 +267,7 @@ public class DirExplorer extends ListActivity {
 		path.addAll(dirsPathMap.tailMap("").values());
 		path.addAll(filesPathMap.tailMap("").values());
 
-		SimpleAdapter fileList = new SimpleAdapter(this, mList, R.layout.filerow, new String[] {
+		SimpleAdapter fileList = new SimpleAdapter(this, mList, R.layout.direxplorerrow, new String[] {
 				ITEM_KEY, ITEM_IMAGE }, new int[] { R.id.fdrowtext, R.id.fdrowimage });
 
 		for (String dir : dirsMap.tailMap("").values()) {

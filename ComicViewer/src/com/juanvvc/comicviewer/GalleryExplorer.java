@@ -52,6 +52,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	static final String THUMBNAILS=".thumbnails";
 	/** Random number to identify request of directories */
 	private static final int REQUEST_DIRECTORY=0x8e;
+	/** Random number to identify request of bookmarks */
+	private static final int REQUEST_BOOKMARKS=0x22;
+	/** Random number to identify request of a comic viewer */
+	private static final int REQUEST_VIEWER=0x5a;
 	/** The directory that contents the comics */
 	private String comicDir=null;
 	
@@ -71,7 +75,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			new AlertDialog.Builder(this)
 					.setIcon(R.drawable.icon)
 					.setTitle(this.getText(R.string.please_select_directory))
-					.setPositiveButton("OK", null).show();
+					.setPositiveButton(android.R.string.ok, null).show();
     	}else{
 	    	ListView collections = (ListView) findViewById(R.id.collections);
 	        collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
@@ -138,7 +142,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			ComicCollection collection=this.entries.get(position);
 			View v=convertView;
 			if(convertView==null)
-				v=View.inflate(this.context, R.layout.galleryrow, null);
+				v=View.inflate(this.context, R.layout.galleryexplorerrow, null);
 			// create the cover gallery with an adapter
 			Gallery g=(Gallery)v.findViewById(R.id.cover_gallery);
 			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection));
@@ -203,7 +207,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ComicInfo ci=this.entries.get(position);
 			// TODO: I tried to reuse convertView, but some images and text do not change fast enough.
-			View v=View.inflate(this.context, R.layout.coveritem, null);
+			View v=View.inflate(this.context, R.layout.galleryexploreritem, null);
 			v.setBackgroundResource(this.background);
 			
 			// Creates a view holder to speed the UI thread
@@ -217,11 +221,6 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			if(name.lastIndexOf(".")>0)
 				name=name.substring(0, name.lastIndexOf("."));
 			// add some information about the state of the comic
-			if(ci.read){
-				name+=" (read)";
-			}else if(ci.page>0 && ci.countpages>-1){
-				name+=" ("+(ci.page+1)+"/"+ci.countpages+")";
-			}
 			holder.name=name;
 			if(ci.read){
 				holder.text.setText(name+GalleryExplorer.this.getText(R.string.read));
@@ -332,9 +331,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
+		Intent intent;
 	    switch (item.getItemId()) {
 	    	case R.id.change_directory: // go to the last page
-	    		Intent intent = new Intent(getBaseContext(), DirExplorer.class);
+	    		intent = new Intent(getBaseContext(), DirExplorer.class);
                 intent.putExtra(DirExplorer.START_PATH, "/");
                 intent.putExtra(DirExplorer.CAN_SELECT_DIR, true);
                 intent.putExtra(DirExplorer.FORMAT_FILTER, new String[] { "cbz", "cbr", "png", "jpg" });
@@ -346,6 +346,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	        	collections.invalidate();
 	        	collections.setAdapter(new CollectionListAdapter(this, new File("/mnt/sdcard")));
 	        	return true;
+	    	case R.id.bookmarks: // show the bookmarks activity
+	    		intent = new Intent(getBaseContext(), BookmarksExplorer.class);
+                startActivityForResult(intent, REQUEST_BOOKMARKS);
+                return true;    		
 	        case R.id.settings: // change settings (currently not implemented)
 	        	return true;
         	default:
@@ -353,14 +357,15 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	    }
 	}
 	
-	/** Get the result of a called activity.
-	 * In the case of this Activity, the only SubActivity is "Select a directory for comics"
-	 */
+	/** Get the result of a called activity. */
     public synchronized void onActivityResult(final int requestCode, int resultCode, final Intent data) {
 		if (resultCode == Activity.RESULT_OK) {
 			if (requestCode == REQUEST_DIRECTORY) {
+				// Activity "select a directory for the comic collection"
+				
 				System.out.println("Saving...");
 				String filePath = data.getStringExtra(DirExplorer.RESULT_PATH);
+				if(filePath==null) return;
 				Log.i(TAG, "Selected: "+filePath);
 				
 				// Four cases:
@@ -391,6 +396,22 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	        		collections.setAdapter(new CollectionListAdapter(this, f));
 	        		this.comicDir=f.getAbsolutePath();
 	        	}
+			}else if(requestCode == REQUEST_BOOKMARKS){
+				long comicid=data.getLongExtra("comicid", -1);
+				if(comicid!=-1){
+					int page=data.getIntExtra("page", 0);
+					// get the file name (we know that the item is going to be a file)
+					ComicDBHelper db=new ComicDBHelper(this);
+					ComicInfo ci=db.getComicInfo(comicid);
+					if(ci==null) return;
+					File f=new File(ci.uri);
+					Toast.makeText(this, "Loading "+f.getName(), Toast.LENGTH_LONG).show();
+					// start the comic viewer
+					Intent intent=new Intent(this, ComicViewerActivity.class);
+					intent.putExtra("uri", f.getAbsolutePath());
+					intent.putExtra("page", page);
+					this.startActivityForResult(intent, REQUEST_VIEWER);
+				}
 			}
 		}
     }

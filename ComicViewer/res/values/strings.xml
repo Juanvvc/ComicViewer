@@ -22,5 +22,9 @@
     <string name="system_directory">is a system directory and cannot be used. Please, select a subdirectory.</string>
     <string name="no_suitable_reader">Not suitable reader for </string>
     <string name="read"> (read)</string>
+    <string name="in">in</string>
+    <string name="page">Page</string>
+    <string name="bookmark_list">Bookmark list</string>
+    <string name="no_comic">Comic not found</string>
 
 </resources>

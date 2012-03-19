@@ -148,12 +148,6 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		db.close();
 	}
 	
-	private void removeBookmarks(ComicInfo info){
-		SQLiteDatabase db=this.getWritableDatabase();
-		db.delete("bookmarks", "comicid=", new String[]{new Long(info.id).toString()});
-		db.close();
-	}
-	
 	/** Removes a comic from the database
 	 * @param comicid
 	 */
@@ -163,5 +157,33 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		db.delete("comics", "_id=?", new String[]{String.valueOf(comicid)});
 		db.close();
 		// TODO: remove bookmarks
+	}
+	
+	/** This method returns an array of bookmarks.
+	 * TODO This method supposes that there number of bookmarks is LOW (under 100, more or less)
+	 * @param comicid The id of the comic. If -1, return all bookmarks
+	 * @return The bookmarks or null if bookmarks are more than 100
+	 */
+	public BookmarkInfo[] getBookmarks(long comicid) {
+		SQLiteDatabase db=this.getReadableDatabase();
+		Cursor cur=null;
+		if(comicid==1)
+			cur=db.query("bookmarks", new String[]{ "_id", "comicid", "page"}, "comicid=?", new String[]{String.valueOf(comicid)}, null, null, null);
+		else
+			cur=db.query("bookmarks", new String[]{ "_id", "comicid", "page"}, "page>?", new String[]{"-1"}, null, null, null);
+		if(cur.getCount()>100) return null;
+		BookmarkInfo[] ba=new BookmarkInfo[cur.getCount()];
+		if(!cur.moveToFirst()) return ba;
+		for(int i=0; i<cur.getCount(); i++){
+			BookmarkInfo b=new BookmarkInfo();
+			b.id=cur.getLong(cur.getColumnIndex("_id"));
+			b.comicid=cur.getLong(cur.getColumnIndex("comicid"));
+			b.page=cur.getInt(cur.getColumnIndex("page"));
+			ba[i]=b;
+			cur.moveToNext();
+		}
+		cur.close();
+		db.close();
+		return ba;		
 	}
 }

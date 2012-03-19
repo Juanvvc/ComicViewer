@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -57,6 +58,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	/** Information in the DB about the loaded comic.
 	 * If null, no comic was loaded */
 	private ComicInfo comicInfo=null;
+	/** Random number to identify request of bookmarks */
+	private static final int REQUEST_BOOKMARKS=0x21;
     
 	/** Called when the activity is first created. */
     @Override
@@ -64,7 +67,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
         super.onCreate(savedInstanceState);
         // sets the orientation portrait, mandatory
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setContentView(R.layout.comicviewer);
+        setContentView(R.layout.comicvieweractivity);
         
 		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
 		imgs.setFactory(this);
@@ -80,6 +83,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	ComicInfo info;
     	if(intent.getExtras()!=null && intent.getExtras().containsKey("uri")){
     		uri=intent.getExtras().getString("uri");
+    		if(intent.getExtras().containsKey("page"))
+    			savedPage=intent.getExtras().getInt("page");
     	}else if(savedInstanceState!=null && savedInstanceState.containsKey("uri")){
     		// load the save state, if any
     		uri=savedInstanceState.getString("uri");
@@ -87,8 +92,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
         		savedPage=savedInstanceState.getInt("page");
         	}
     	}else{
-//    		Toast.makeText(this,"No comic", Toast.LENGTH_LONG).show();
-    		uri="/mnt/sdcard/Creepy/Creepy 001.cbr";
+    		new AlertDialog.Builder(this)
+    			.setIcon(R.drawable.icon)
+    			.setTitle(this.getText(R.string.no_comic))
+    			.setPositiveButton(android.R.string.ok, null).show();
+    		return;
     	}
     	
     	// get the information of this Comic from the database
@@ -105,7 +113,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	}
     	
     	// if savedPage is set, it has preference
-    	// saved page is set when the activity is on pause
+    	// saved page is set when the activity is on pause, or was pased by the intent
     	if(savedPage>-1)
     		info.page=savedPage;
     	
@@ -113,7 +121,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	this.loadComic(info);
 
     	// we listen to the events from the user
-    	((View)this.findViewById(R.id.comicviewer_layout)).setOnTouchListener(this);
+    	((View)this.findViewById(R.id.comicvieweractivity_layout)).setOnTouchListener(this);
     	
     	// open the gestures library
     	// TODO: gestures are not working
@@ -530,19 +538,32 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	    // Handle item selection
 	    switch (item.getItemId()) {
 	        case R.id.first_page: // go to the first page
-	        	if(this.comicInfo.reader.countPages()>1){
+	        	if(this.comicInfo!=null && this.comicInfo.reader.countPages()>1){
 		            this.moveToPage(0);
 		            return true;
 	        	}
 	        	break;
 	        case R.id.last_page: // go to the last page
-	        	if(this.comicInfo.reader.countPages()>1){
+	        	if(this.comicInfo!=null && this.comicInfo.reader.countPages()>1){
 		            this.moveToPage(this.comicInfo.reader.countPages()-1);
 		            return true;
 	        	}
 	        	break;
 	        case R.id.switch_bookmark:
-	        	switchBookmark();
+	        	if(this.comicInfo!=null)
+	        		switchBookmark();
+	        	break;
+	        case R.id.bookmarks:
+	        	if(this.comicInfo!=null){
+		        	// the information of the bookmarks must be updated in the database
+		        	ComicDBHelper db=new ComicDBHelper(this);
+		        	db.updateComicInfo(this.comicInfo);
+		        	db.close();
+		        	// show the bookmark list
+		    		Intent intent = new Intent(this, BookmarksExplorer.class);
+		    		intent.putExtra("comicid", this.comicInfo.id);
+	                startActivityForResult(intent, REQUEST_BOOKMARKS);
+	        	}
 	        	break;
 	        case R.id.close: // close this viewer
 	        	this.finish();
@@ -550,4 +571,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	    }
         return super.onOptionsItemSelected(item);
 	}
+	
+    public synchronized void onActivityResult(final int requestCode, int resultCode, final Intent data) {
+		if (resultCode == Activity.RESULT_OK) {
+			if(requestCode == REQUEST_BOOKMARKS){
+				int page=data.getIntExtra("page", 0);
+				Log.i(TAG, "Bookmark to page "+page);
+				this.moveToPage(page);
+			}
+		}
+    }
 }

@@ -26,3 +26,9 @@ class ComicInfo{
 	 * This field is not set in the database helper, must be set manually. */
 	Reader reader;
 }
+
+class BookmarkInfo{
+	long id;
+	long comicid;
+	int page;
+}

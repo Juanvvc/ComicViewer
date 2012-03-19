@@ -2,5 +2,7 @@
     <menu xmlns:android="http://schemas.android.com/apk/res/android">
         <item android:id="@+id/rescan" android:title="@string/rescan"></item>
         <item android:id="@+id/change_directory" android:title="@string/change_directory"></item>
+        <item android:id="@+id/bookmarks" android:title="@string/bookmark_list"></item>
         <item android:id="@+id/settings" android:title="@string/settings" android:enabled="false"></item>
+        
     </menu>
