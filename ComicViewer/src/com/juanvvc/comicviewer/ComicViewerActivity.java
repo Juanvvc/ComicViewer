@@ -160,6 +160,17 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
      * Typically, this is never called manually */
     public void close(){
     	Log.i(TAG, "Closing comic viewer");
+    	
+    	// stop the AsyncTasks
+    	if(this.nextFastPage!=null){
+        	this.nextFastPage.cancel(true);
+        	this.nextFastPage=null;
+        }
+        if(this.currentPage!=null){
+        	this.currentPage.cancel(true);
+        	this.currentPage=null;
+        }
+    	
     	if(this.comicInfo!=null && this.comicInfo.reader!=null){
     		if(this.comicInfo!=null){
         		ComicDBHelper db=new ComicDBHelper(this);
@@ -193,21 +204,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	return img;
     }
 
-    
-    
-    /* Called when a screen button was pressed. Event binding is in XML
-     * @see android.view.View.OnClickListener#onClick(android.view.View)
-     */
-//    public void onClick(View sender){
-//    	if(this.comicInfo.reader!=null){
-//    		this.changePage(sender==this.findViewById(R.id.buttonRight));
-//    		Toast.makeText(this,
-//    				this.comicInfo.reader.getCurrentPage()+"/"+this.comicInfo.reader.countPages(),
-//    				Toast.LENGTH_SHORT).show();
-//    	}
-//    }
-    
-
+      
 	/** Called when the screen is pressed
 	 * @see android.view.View.OnTouchListener#onTouch(android.view.View, android.view.MotionEvent)
 	 */
@@ -227,16 +224,18 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					ImageView iv=(ImageView) imgs.getCurrentView();
 					((BitmapDrawable)iv.getDrawable()).getBitmap().recycle();
 					iv.setImageDrawable(this.comicInfo.reader.current());
-				}catch(Exception e){}
+					
+					// shows the position of the user in the comic on the screen
+					if(this.comicInfo!=null && this.comicInfo.reader!=null)
+						Toast.makeText(this,
+							(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
+							Toast.LENGTH_SHORT).show();
+				}catch(Exception e){
+					Log.e(TAG, e.toString());
+				}
 				break;
 			case 5: // right margin
 				this.changePage(true);
-				// after changing the page, the comic maybe not available any more!
-				// for example, because we are loading the next issue and it is not ready yet
-				if(this.comicInfo!=null && this.comicInfo.reader!=null)
-		    		Toast.makeText(this,
-		    				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
-		    				Toast.LENGTH_SHORT).show();
 
 				break;
 			case 2: // right side of the header
@@ -263,9 +262,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			if(y>0.8*v.getHeight()) return 8;
 			return 5;
 		}
-		if(y<0.2*v.getWidth()) return 1;
-		if(y>0.8*v.getWidth()) return 4;
-		return 1;
+		if(y<0.2*v.getHeight()) return 1;
+		if(y>0.8*v.getHeight()) return 7;
+		return 4;
 	}
 	
 	/** Responds to a gestures.
@@ -287,7 +286,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	}
     
     /** Given a URI (actually, a file path), this method chooses the right reader and loads the comic.
-     * @param uri The file path of the comic to load. The reader is choosen according to the file extension.
+     * @param uri The file path of the comic to load. The reader is chosen according to the file extension.
      * @param page The page of the comic to load
      */
     public void loadComic(ComicInfo info){
@@ -295,14 +294,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
         
     	close();
     	
-    	// stop the AsyncTasks
-    	if(this.nextFastPage!=null){
-        	this.nextFastPage.cancel(true);
-        	this.nextFastPage=null;
-        }
-        if(this.currentPage!=null)
-        	this.currentPage.cancel(true);
-        
+    	Toast.makeText(this, getText(R.string.loading)+info.uri, Toast.LENGTH_LONG).show();
         
         // load information about the bookmarks from the database
         ComicDBHelper db=new ComicDBHelper(this);
@@ -379,6 +371,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     		this.comicInfo.reader.moveTo(page+1);
     		this.changePage(false);
     	}
+    	
+		// shows the position of the user in the comic on the screen
+		if(this.comicInfo!=null && this.comicInfo.reader!=null)
+			Toast.makeText(this,
+				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
+				Toast.LENGTH_SHORT).show();
     	
     	// if the page is bookmarked, show the bookmark
     	if(this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){
@@ -458,6 +456,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}catch(InterruptedException e){
 			Log.e(TAG, e.toString());
 		}
+		
+		// shows the position of the user in the comic on the screen
+		if(this.comicInfo!=null && this.comicInfo.reader!=null)
+			Toast.makeText(this,
+				(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
+				Toast.LENGTH_SHORT).show();
 		
     	// if the current page is bookmarked, show the bookmark
     	if(this.comicInfo.bookmarks!=null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())){

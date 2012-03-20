@@ -9,7 +9,7 @@
     <string name="last_page">Last Page</string>
     <string name="switch_bookmark">Switch Bookmark</string>
     <string name="close">Close</string>
-    <string name="rescan">Rescan</string>
+    <string name="rescan">Re-scan collection</string>
     <string name="change_directory">Change Directory</string>
     <string name="remove_comic">Remove comic</string>
     <string name="switch_read">Switch Read state</string>
@@ -19,14 +19,15 @@
     <string name="cover">Comic cover</string>
     <string name="bookmark">Bookmark</string>
     <string name="please_select_directory">Please, select the comics directory</string>
-    <string name="system_directory">is a system directory and cannot be used. Please, select a subdirectory.</string>
+    <string name="system_directory">" is a system directory and cannot be used. Please, select a subdirectory."</string>
     <string name="no_suitable_reader">Not suitable reader for </string>
-    <string name="read"> (read)</string>
-    <string name="in">in</string>
-    <string name="page">Page</string>
+    <string name="read">" (read)"</string>
+    <string name="in">" in "</string>
+    <string name="page">"Page "</string>
     <string name="bookmark_list">Bookmark list</string>
     <string name="no_comic">Comic not found</string>
     <string name="cannot_remove_directories">Directories cannot be removed</string>
-    <string name="removed"> was removed</string>
+    <string name="removed">" was removed"</string>
+    <string name="loading">"Loading "</string>
 
 </resources>

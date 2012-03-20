@@ -1,0 +1,26 @@
+A simple comic viewer for Android. It has a gallery activity to show
+the cover of the available comics, bookmarking support and shows
+comic in CBR, CBZ and directories of JPG/PNG images. This is a test
+project to use in education, by no means is intended for final users
+but should be highly usable and stable.
+
+Source code is fully commented. You can download the last version
+of the project and some extra documentation from github:
+
+https://github.com/Juanvvc/ComicViewer
+
+## License
+
+This project uses a modification of android-file-dialog by
+alexander.ponomarev.1 The activity DirExplorer is under a BSD
+license. You can get the original source code at
+http://code.google.com/p/android-file-dialog/
+
+The project uses junrar.jar. The repository distributes a binary
+file of this library, but sources can be found at
+https://github.com/edmund-wagner/junrar
+It uses its own license, not approved by the FSF.
+
+The rest of the code is under a GPLv3 license.
+
+(c) 2012 Juanvi Vera

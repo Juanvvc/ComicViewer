@@ -181,7 +181,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			View v=View.inflate(this.context, R.layout.galleryexploreritem, null);
 			v.setBackgroundResource(this.background);
 			
-			// Creates a view holder to speed the UI thread
+			// Creates a view holder to speed up the UI thread
 			// See: http://developer.android.com/training/improving-layouts/smooth-scrolling.html
 			ViewHolder holder = new ViewHolder();
 			holder.text=(TextView)v.findViewById(R.id.coveritem_text);
@@ -197,6 +197,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				holder.text.setText(name+GalleryExplorer.this.getText(R.string.read));
 			}else if(ci.page>0 && ci.countpages>-1){
 				holder.text.setText(name+" ("+(ci.page+1)+"/"+ci.countpages+")");
+			}else{
+				holder.text.setText(name);
 			}
 			// the cover is loaded in a separate thread
 			(new LoadCover()).execute(holder);
@@ -222,7 +224,6 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		// get the file name (we know that the item is going to be a file)
 		ComicInfo ci=(ComicInfo)arg0.getAdapter().getItem(position);
 		File f=new File(ci.uri);
-		Toast.makeText(this, "Loading "+f.getName(), Toast.LENGTH_LONG).show();
 		// start the comic viewer
 		Intent data=new Intent(this, ComicViewerActivity.class);
 		data.putExtra("uri", f.getAbsolutePath());
