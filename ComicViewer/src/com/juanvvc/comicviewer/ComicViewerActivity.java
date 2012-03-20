@@ -2,6 +2,7 @@ package com.juanvvc.comicviewer;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 import android.app.Activity;
@@ -395,11 +396,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			return;
 		ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
 		Reader reader=this.comicInfo.reader;
+		// drawable of the next page
+		Drawable n=null;
 		try{
 			// set animations according to the movement of the user
 			this.setAnimations(forward);
-			// drawable of the next page
-			Drawable n=null;
 			if(forward){
 				// check that we are not in the last page
 				if(reader.getCurrentPage()>=reader.countPages()-1){
@@ -447,15 +448,22 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// TODO: I'm sure that there is room for improvements here
 				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 			}
-			if(n!=null)
-				imgs.setImageDrawable(n);
+			
 		}catch(ReaderException e){
 			Log.e(TAG, e.toString());
+			n=getResources().getDrawable(R.drawable.outofmemory);
 		}catch(ExecutionException e){
 			Log.e(TAG, e.toString());
+			n=getResources().getDrawable(R.drawable.outofmemory);
 		}catch(InterruptedException e){
 			Log.e(TAG, e.toString());
+			n=getResources().getDrawable(R.drawable.outofmemory);
+		}catch(CancellationException e){
+			n=getResources().getDrawable(R.drawable.outofmemory);
 		}
+		
+		if(n!=null)
+			imgs.setImageDrawable(n);
 		
 		// shows the position of the user in the comic on the screen
 		if(this.comicInfo!=null && this.comicInfo.reader!=null)
@@ -545,7 +553,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			try {
 				return ComicViewerActivity.this.comicInfo.reader.getFastPage(page, FAST_PAGES_SCALE);
 			} catch (ReaderException e) {
-				return null;
+				return ComicViewerActivity.this.getResources().getDrawable(R.drawable.outofmemory);
 			}
 		}
 		protected void onPostExecute(Drawable d){

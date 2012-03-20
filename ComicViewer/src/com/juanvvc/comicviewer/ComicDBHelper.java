@@ -14,7 +14,7 @@ import android.util.Log;
  */
 public class ComicDBHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME="comicdb.db";
-	private static final int DATABASE_VERSION=3;
+	private static final int DATABASE_VERSION=4;
 	private static final String TAG="database";
 	
 	public ComicDBHelper(Context context){
@@ -26,7 +26,6 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		Log.v(TAG, "Creating the database");
 		db.execSQL("CREATE TABLE comics(_id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, read INTEGER, last_page INTEGER, pages INTEGER, last_access TEST);");
 		db.execSQL("CREATE TABLE bookmarks(_id INTEGER PRIMARY KEY, comicid INTEGER NOT NULL, page INTEGER NOT NULL);");
-		db.close();
 	}
 
 	@Override
