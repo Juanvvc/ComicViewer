@@ -7,7 +7,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 /** Access to the internal comic database.
  * @author juanvi
@@ -23,14 +22,14 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.v(TAG, "Creating the database");
+		myLog.v(TAG, "Creating the database");
 		db.execSQL("CREATE TABLE comics(_id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, read INTEGER, last_page INTEGER, pages INTEGER, last_access TEST);");
 		db.execSQL("CREATE TABLE bookmarks(_id INTEGER PRIMARY KEY, comicid INTEGER NOT NULL, page INTEGER NOT NULL);");
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.w(TAG, "Updating database from "+oldVersion+" to "+newVersion);
+		myLog.w(TAG, "Updating database from "+oldVersion+" to "+newVersion);
 		db.execSQL("DROP TABLE IF EXISTS comics");
 		db.execSQL("DROP TABLE IF EXISTS bookmarks");
 		this.onCreate(db);
@@ -41,7 +40,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	 * @return the ID of the created comic
 	 */
 	private long createNewComic(String uri){
-		Log.v(TAG, "New comic in the database: "+uri);
+		myLog.v(TAG, "New comic in the database: "+uri);
 		SQLiteDatabase db=this.getWritableDatabase();
 		ContentValues cv=new ContentValues();
 		cv.put("last_page", 0);
@@ -76,7 +75,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		}
 		cur.close();
 		db.close();
-		Log.v(TAG, "Comic '"+uri+"': "+id);
+		myLog.v(TAG, "Comic '"+uri+"': "+id);
 		return id;
 	}
 	

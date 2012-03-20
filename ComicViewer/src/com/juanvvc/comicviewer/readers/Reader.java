@@ -1,12 +1,13 @@
 package com.juanvvc.comicviewer.readers;
 
+import com.juanvvc.comicviewer.myLog;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 /** This class manages comics. It is used to load a comic, get a page, and move through next() and prev() movements.
  * 
@@ -86,6 +87,7 @@ public abstract class Reader {
 	}
 	
 	public void moveTo(int page) {
+		myLog.v(TAG, "Moving to "+page);
 		if(page<0 || page>=this.countPages())
 			return;
 		this.currentPage = page;
@@ -188,7 +190,7 @@ public abstract class Reader {
 				System.gc();
 			}
 			opts.inSampleSize*=2;
-			Log.d(TAG, "Using scale "+opts.inSampleSize);
+			myLog.d(TAG, "Using scale "+opts.inSampleSize);
 		}
 		
 		if(AUTOMATIC_ROTATION && bitmap.getHeight()<bitmap.getWidth()){

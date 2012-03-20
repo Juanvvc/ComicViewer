@@ -11,11 +11,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import com.juanvvc.comicviewer.myLog;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 /** A reader for directories of images.
  * 
@@ -29,7 +30,7 @@ public class DirReader extends Reader {
 	public DirReader(Context context, String uri) throws ReaderException{
 		super(context, uri);
 		if(uri!=null){
-			Log.v(TAG, "Usig DirReader on "+uri);
+			myLog.v(TAG, "Usig DirReader on "+uri);
 			this.load(uri);
 		}
 	}

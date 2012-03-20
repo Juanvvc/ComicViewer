@@ -1,9 +1,10 @@
 package com.juanvvc.comicviewer;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -19,7 +20,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,7 +42,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * This class implements ViewFactory because it generates the Views for the internal ImageSwitcher
  * @author juanvi */
 public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener, AnimationListener{
-	/** The TAG constant for the Logger */
+	/** The TAG constant for the myLogger */
 	private static final String TAG="ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread */
 	private LoadNextPage nextFastPage=null;
@@ -136,7 +136,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 //    		GestureOverlayView gestures = (GestureOverlayView) findViewById(R.id.gestures);
 //    		gestures.addOnGesturePerformedListener(this);
 //    	}else{
-//    		Log.w(TAG, "No gestures available");
+//    		myLog.w(TAG, "No gestures available");
 //    	}
         
     }
@@ -155,13 +155,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	}
     	super.onSaveInstanceState(savedInstanceState);
     }
-
     
-    /** Closes the comic, freeing resources and saving current state on the database.
-     * Typically, this is never called manually */
-    public void close(){
-    	Log.i(TAG, "Closing comic viewer");
-    	
+    private void stopThreads(){
     	// stop the AsyncTasks
     	if(this.nextFastPage!=null){
         	this.nextFastPage.cancel(true);
@@ -171,6 +166,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
         	this.currentPage.cancel(true);
         	this.currentPage=null;
         }
+    }
+
+    
+    /** Closes the comic, freeing resources and saving current state on the database.
+     * Typically, this is never called manually */
+    public void close(){
+    	myLog.i(TAG, "Closing comic viewer");
+    	
+    	this.stopThreads();
     	
     	if(this.comicInfo!=null && this.comicInfo.reader!=null){
     		if(this.comicInfo!=null){
@@ -215,12 +219,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if(event.getAction()==MotionEvent.ACTION_DOWN){
 			int zone = this.getZone(v, event.getX(), event.getY());
 			switch(zone){
+			case 1: // center of header. In landscape mode, go back a page
 			case 3: // left margin
 				this.changePage(false);
 				break;
 			case 4: // center
 				// reload current image (it may help in some large pages)
 				try{
+					this.stopThreads();
+					
 					ImageSwitcher imgs=(ImageSwitcher)this.findViewById(R.id.switcher);
 					ImageView iv=(ImageView) imgs.getCurrentView();
 					((BitmapDrawable)iv.getDrawable()).getBitmap().recycle();
@@ -232,9 +239,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 							(this.comicInfo.reader.getCurrentPage()+1)+"/"+this.comicInfo.reader.countPages(),
 							Toast.LENGTH_SHORT).show();
 				}catch(Exception e){
-					Log.e(TAG, e.toString());
+					myLog.e(TAG, e.toString());
 				}
 				break;
+			case 7: // center of footer. In landscape mode, advance a page
 			case 5: // right margin
 				this.changePage(true);
 
@@ -281,7 +289,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	        if (prediction.score > 1.0) {
 	            // Show the spell
 	            Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT).show();
-	            Log.d(TAG, prediction.name);
+	            myLog.d(TAG, prediction.name);
 	        }
 	    }
 	}
@@ -291,7 +299,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
      * @param page The page of the comic to load
      */
     public void loadComic(ComicInfo info){
-    	Log.i(TAG, "Loading comic "+info.uri+" at page "+info.page);
+    	myLog.i(TAG, "Loading comic "+info.uri+" at page "+info.page);
         
     	close();
     	
@@ -309,14 +317,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	(new AsyncTask<ComicInfo, Void, ComicInfo>(){
 			@Override
 			protected ComicInfo doInBackground(ComicInfo... params) {
-				ComicViewerActivity.this.close();
 				ComicInfo info=params[0];
 		    	if(info.uri==null) return null;
 				try{
 					// chooses the right reader to use
 					info.reader=Reader.getReader(ComicViewerActivity.this, info.uri);
 					if(info.reader==null) throw new ReaderException(getText(R.string.no_suitable_reader)+info.uri);
-					info.collection = ComicCollection.populate(ComicViewerActivity.this, new File(info.uri).getParentFile());
+					File colRoot=new File(info.uri).getParentFile();
+					info.collection = new ComicCollection(colRoot.getName()).populate(ComicViewerActivity.this, colRoot);
 					info.reader.countPages();
 					return info;
 				}catch(ReaderException e){
@@ -357,13 +365,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
     	if(this.comicInfo.reader.countPages()==1) return;
     	if(page<0 || page>=this.comicInfo.reader.countPages()) return;
     	if(page==this.comicInfo.reader.getCurrentPage()) return;
-    	// stop the AsyncTasks
-    	if(this.nextFastPage!=null){
-        	this.nextFastPage.cancel(true);
-        	this.nextFastPage=null;
-        }
-        if(this.currentPage!=null)
-        	this.currentPage.cancel(true);
+    	this.stopThreads();
     	// move onwards or backwards, according to the current page
     	if(this.comicInfo.reader.getCurrentPage()<page){
     		this.comicInfo.reader.moveTo(page-1);
@@ -405,30 +407,32 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// check that we are not in the last page
 				if(reader.getCurrentPage()>=reader.countPages()-1){
 					// load the next issue in the collection
-					Log.i(TAG, "At the end of the comic");
+					myLog.i(TAG, "At the end of the comic");
 					if(LOAD_NEXT_ISSUE && this.comicInfo.collection!=null){
-						Log.d(TAG, "Loading next issue");
+						myLog.d(TAG, "Loading next issue");
 						ComicInfo nextIssue=this.comicInfo.collection.next(this.comicInfo);
 						if(nextIssue!=null){
-							Log.i(TAG, "Next issue: "+nextIssue.uri);
+							myLog.i(TAG, "Next issue: "+nextIssue.uri);
 							nextIssue.page=0; // we load the next issue at the first page. It is weird otherwise
 							this.loadComic(nextIssue);
 						}
 					}
 					return;
 				}
+				
 				// if moving forward, we will check if we loaded the next page in the background
 				// We assume that this method is running in the UI thread
-				if(this.nextFastPage==null)
-					// if there is no background thread, create one. Note that this means
-					// that the UI thread will block in the next line
+				if(this.nextFastPage==null){
+					// load the page from the filesystem
+					n=this.comicInfo.reader.next();
+					// Cache the next page in the background
 					this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
-				// get the loaded page. If the task was trigger in the past, this page should be
-				// available immediately. If it was created in the last "if" statement, this
-				// line will block the thread for a few milliseconds (while the page loads)
-				n=this.nextFastPage.get();
-				// move to the next page "by hand"
-				this.comicInfo.reader.moveTo(reader.getCurrentPage()+1);
+				}else{
+					// get the cached page.
+					n=this.nextFastPage.get();
+					// move to the next page "by hand"
+					this.comicInfo.reader.moveTo(reader.getCurrentPage()+1);
+				}
 				// create a new thread to load the next page in the background. This supposes that
 				// the natural move is onward and the user will see the next page next
 				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
@@ -436,30 +440,27 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// check that we are not in the first page
 				if(reader.getCurrentPage()==0)
 					return;
+				// move to the prev page "by hand".
+				//This is faster and safer than this.comicInfo.reader.prev() since we may be using scaled images
+				this.comicInfo.reader.moveTo(reader.getCurrentPage()-1);
 				// if the user is moving backwards, the background thread (if existed) was
 				// loading the NEXT page. Stop it now.
 				if(this.nextFastPage!=null)
 					this.nextFastPage.cancel(true);
-				// move to the prev page "by hand".
-				//This is faster and safer than this.comicInfo.reader.prev() since we are using scaled images
-				this.comicInfo.reader.moveTo(reader.getCurrentPage()-1);
 				n=this.comicInfo.reader.getFastPage(reader.getCurrentPage(), FAST_PAGES_SCALE);
 				// and load the next page from the prev. That is, the currently displayed page.
 				// TODO: I'm sure that there is room for improvements here
 				this.nextFastPage=(LoadNextPage)new LoadNextPage().execute(reader.getCurrentPage()+1);
 			}
 			
-		}catch(ReaderException e){
-			Log.e(TAG, e.toString());
+		}catch(Exception e){
+			Writer result = new StringWriter();
+		    PrintWriter printWriter = new PrintWriter(result);
+		    e.printStackTrace(printWriter);
+		    			
+			myLog.e(TAG, e.toString()+result.toString());
 			n=getResources().getDrawable(R.drawable.outofmemory);
-		}catch(ExecutionException e){
-			Log.e(TAG, e.toString());
-			n=getResources().getDrawable(R.drawable.outofmemory);
-		}catch(InterruptedException e){
-			Log.e(TAG, e.toString());
-			n=getResources().getDrawable(R.drawable.outofmemory);
-		}catch(CancellationException e){
-			n=getResources().getDrawable(R.drawable.outofmemory);
+			this.stopThreads();
 		}
 		
 		if(n!=null)
@@ -549,7 +550,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			if(ComicViewerActivity.this.comicInfo==null)
 				return null;
 			int page=params[0].intValue();
-			Log.d(TAG, "Loading fast page "+page);
+			myLog.d(TAG, "Loading fast page "+page);
 			try {
 				return ComicViewerActivity.this.comicInfo.reader.getFastPage(page, FAST_PAGES_SCALE);
 			} catch (ReaderException e) {
@@ -557,7 +558,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			}
 		}
 		protected void onPostExecute(Drawable d){
-			Log.d(TAG, "Next page loaded");			
+			myLog.d(TAG, "Next page loaded");			
 		}
 	}
 	
@@ -580,7 +581,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				return null;
 			view=(ImageView)params[0];
 			int page=((Integer)params[1]).intValue();
-			Log.d(TAG, "Loading page "+page);
+			myLog.d(TAG, "Loading page "+page);
 			try {
 				return reader.getPage(page);
 			} catch (ReaderException e) {
@@ -647,7 +648,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if (resultCode == Activity.RESULT_OK) {
 			if(requestCode == REQUEST_BOOKMARKS){
 				int page=data.getIntExtra("page", 0);
-				Log.i(TAG, "Bookmark to page "+page);
+				myLog.i(TAG, "Bookmark to page "+page);
 				this.moveToPage(page);
 			}
 		}

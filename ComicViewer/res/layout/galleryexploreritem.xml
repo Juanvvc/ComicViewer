@@ -23,18 +23,5 @@ This layout is used in the GalleryExplorer activity -->
             android:layout_alignLeft="@+id/coveritem_img"
             android:layout_below="@+id/coveritem_img"
             android:text="@string/nodata" />
-        
-        <!--
-        I couldn't find a better way to pass information from this item to the main activity than a hidden field.
-        The absolute path of the comic in the filesystem
-        -->
-        <TextView
-            android:id="@+id/coveritem_path"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignLeft="@+id/coveritem_img"
-            android:layout_below="@+id/coveritem_text"
-            android:text="@string/nodata"
-            android:visibility="gone" />
 
     </RelativeLayout>

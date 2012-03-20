@@ -12,7 +12,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -20,7 +19,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -67,8 +65,6 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	// only in portrait mode
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     	this.setContentView(R.layout.galleryexplorer);
     	
     	// Restore preferences
@@ -130,7 +126,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			// create the cover gallery with an adapter
 			Gallery g=(Gallery)v.findViewById(R.id.cover_gallery);
 			GalleryExplorer.this.registerForContextMenu(g);
-			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection));
+			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection, position));
 			// create the gallery name
 			((TextView)v.findViewById(R.id.collection_name)).setText(collection.getName());
 			// gallery items listen to clicks!
@@ -158,9 +154,13 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
     	private Context context;
     	private ComicCollection entries=null;
     	private int background;
+    	int parentID=0;
+    	/** The max number of children. Actually, this is not checked! Set a high number and wait for the best */
+    	public static final int MAX_CHILDREN=1000;
     	
-    	CoverListAdapter(Context context, ComicCollection collection){
+    	CoverListAdapter(Context context, ComicCollection collection, int parentID){
     		this.context = context;
+    		this.parentID=parentID;
     		
     		// create the list of the files in this collection
     		this.entries = collection;
@@ -186,7 +186,6 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			ViewHolder holder = new ViewHolder();
 			holder.text=(TextView)v.findViewById(R.id.coveritem_text);
 			holder.img=(ImageView)v.findViewById(R.id.coveritem_img);
-			((TextView)v.findViewById(R.id.coveritem_path)).setText(ci.uri);
 			holder.file=new File(ci.uri);
 			// create the comic name: it is the file name without a suffix
 			String name=holder.file.getName();
@@ -213,7 +212,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			return this.entries.get(position);
 		}
 		public long getItemId(int position) {
-			return position;
+			return this.parentID*MAX_CHILDREN+position;
 		}
     }
     
@@ -241,38 +240,28 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	/** Manages the contextual menu over comics */
 	public boolean onContextItemSelected(MenuItem item) {
 	    AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+	    
 	    // get the comicinfo of the selected item
-	    ComicInfo comicinfo=null;
 	    ComicDBHelper db=new ComicDBHelper(this);
-	    try{
-	    	// I couldn't find a better way to pass information about the selected item.
-	    	// we have the info.position of the selected item in the Adapter of the Gallery...
-	    	// ...GalleryExplorer but we don't have the adapter! We cannot do comicinfo=adapter.getItem(info.position)
-	    	// Maybe an Activity was not designed to have several Lists with contextual menus?
-	    	String comicuri=((TextView)info.targetView.findViewById(R.id.coveritem_path)).getText().toString();
-	    	comicinfo=db.getComicInfo(db.getComicID(comicuri, false));
-	    }catch(Exception e){
-	    	Log.e(TAG, e.toString());
-	    	db.close();
-	    	return super.onContextItemSelected(item);
-	    }
-	    if(comicinfo==null){
-	    	db.close();
-	    	return super.onContextItemSelected(item);
-	    }
-	    ListView collections=null;
+	    // get the adapters
+	    BaseAdapter colAdapter=(BaseAdapter)((ListView)this.findViewById(R.id.collections)).getAdapter();
+	    ListView list=(ListView)this.findViewById(R.id.collections);
+	    BaseAdapter comicAdapter=(BaseAdapter)((Gallery)info.targetView.getParent()).getAdapter();
+    	String comicuri=((ComicInfo)comicAdapter.getItem(info.position)).uri;
+    	ComicInfo comicinfo=db.getComicInfo(db.getComicID(comicuri, true));
+
 	    switch (item.getItemId()) {
 	        case R.id.switch_read: // switches the read status of a comic
 	            comicinfo.read=!comicinfo.read;
 	            db.updateComicInfo(comicinfo);
-	            // force a rescan
-	        	collections = (ListView) findViewById(R.id.collections);
-	        	collections.invalidate();
-	        	collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+	            //TODO: this do not work.
+	            ((ComicCollection)colAdapter.getItem(info.position/CoverListAdapter.MAX_CHILDREN)).invalidate(this);
+	            comicAdapter.notifyDataSetChanged();
+	            list.invalidateViews();
 	        	db.close();
 	            return true;
 	        case R.id.remove_comic: // deletes the comic
-	            Log.i(TAG, "Removing comic");
+	            myLog.i(TAG, "Removing comic");
 	            File comicfile=new File(comicinfo.uri);
 	            if(!comicfile.isDirectory()){
 	            	// TODO: we cannot remove directories at the moment 
@@ -282,11 +271,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		            comicfile.delete();
 		            // removes the thumbnail from the filesystem
 		            getThumbnailFile(comicfile).delete();
-		            // force a rescan
-		        	collections = (ListView) findViewById(R.id.collections);
-		        	collections.invalidate();
-		        	collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
-		        	db.close();
+		            // update the view
+		            ((ComicCollection)colAdapter.getItem(info.position/CoverListAdapter.MAX_CHILDREN)).invalidate(this);
+		            comicAdapter.notifyDataSetChanged();
+		            colAdapter.notifyDataSetChanged();
+		            list.invalidateViews();
 		        	Toast.makeText(this, comicfile.getName()+getText(R.string.removed), Toast.LENGTH_LONG).show();
 	            }else{
 	            	Toast.makeText(this, getText(R.string.cannot_remove_directories), Toast.LENGTH_LONG).show();
@@ -330,12 +319,12 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			try{
 				// look for the cover in the thumbnails directory. If found, we are done
 				if(cachefile.exists()){
-					Log.v(TAG, "Cache found: "+cachefile.getName());
+					myLog.v(TAG, "Cache found: "+cachefile.getName());
 					return new BitmapDrawable(BitmapFactory.decodeFile(cachefile.getAbsolutePath()));
 				}
 				
 				// if we are here, the thumbnail was not found
-				Log.v(TAG, "Cache not found, creating: "+cachefile.getName());
+				myLog.v(TAG, "Cache not found, creating: "+cachefile.getName());
 				
 				// Load the comic file, and then the first image
 				// select the comic reader
@@ -363,14 +352,14 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					FileOutputStream out=new FileOutputStream(cachefile.getAbsoluteFile());
 					s.compress(Bitmap.CompressFormat.PNG, 90, out);
 					out.close();
-					Log.v(TAG, "Cache file created: "+cachefile.getName());
+					myLog.v(TAG, "Cache file created: "+cachefile.getName());
 				}catch(IOException eio){
-					Log.w(TAG, "Cannot create the cache file: "+eio.toString());
+					myLog.w(TAG, "Cannot create the cache file: "+eio.toString());
 				}
 				
 				return new BitmapDrawable(s);
 			}catch(ReaderException e){
-				Log.e(TAG, e.toString());
+				myLog.e(TAG, e.toString());
 				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
@@ -425,7 +414,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				System.out.println("Saving...");
 				String filePath = data.getStringExtra(DirExplorer.RESULT_PATH);
 				if(filePath==null) return;
-				Log.i(TAG, "Selected: "+filePath);
+				myLog.i(TAG, "Selected: "+filePath);
 				
 				// Four cases:
 				// 1.- The user selected an existing file. Remove the file and select the parent dir

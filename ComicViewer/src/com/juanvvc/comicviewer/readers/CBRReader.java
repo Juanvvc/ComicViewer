@@ -11,10 +11,11 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import com.juanvvc.comicviewer.myLog;
+
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import de.innosystec.unrar.Archive;
 import de.innosystec.unrar.rarfile.FileHeader;
 
@@ -35,7 +36,7 @@ public class CBRReader extends Reader {
 
 	public void load(String uri) throws ReaderException {
 		super.load(uri);
-		Log.i(TAG, "Loading URI"+uri);
+		myLog.i(TAG, "Loading URI"+uri);
 		// tries to open the RAR file
 		try{
 			this.archive = new Archive(new File(uri));			

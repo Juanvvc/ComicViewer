@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageSwitcher;
@@ -135,12 +134,12 @@ class MyImageView extends ImageView{
 	private final static String TAG="MyImageView";
 	public MyImageView(Context context){
 		super(context);
-		Log.w(TAG, "Using custom ImageView");
+		myLog.w(TAG, "Using custom ImageView");
 	}
 	
 	@Override
 	public void onDraw(Canvas c){
-		Log.v("MyImageView", "max size: "+c.getMaximumBitmapWidth()+"x"+c.getMaximumBitmapHeight());
+		myLog.v("MyImageView", "max size: "+c.getMaximumBitmapWidth()+"x"+c.getMaximumBitmapHeight());
 		super.onDraw(c);
 	}
 }

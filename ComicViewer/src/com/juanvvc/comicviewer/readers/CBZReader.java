@@ -11,10 +11,11 @@ import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.juanvvc.comicviewer.myLog;
+
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 /** A reader for ZIP files.
  * 
@@ -32,7 +33,7 @@ public class CBZReader extends Reader {
 	
 	public void load(String uri) throws ReaderException{
 		try{
-			Log.i(TAG, "Loading URI"+uri);
+			myLog.i(TAG, "Loading URI"+uri);
 			this.archive = new ZipFile(uri);
 			// get the entries of the file and sort them alphabetically
 			this.entries = Collections.list(this.archive.entries());

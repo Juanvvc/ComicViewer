@@ -22,6 +22,10 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	private static final long serialVersionUID = 1L;
 	/** The name of the collection. */
 	private String name;
+	/** The directory of the root of the collection.
+	 * Used in populate() and invalidate()
+	 */
+	private File rootDir;
 
 	/** Creates a collection from a list of files
 	 * @param name
@@ -55,7 +59,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		if(root==null)
 			return null;
 		ArrayList<ComicCollection> collections=new ArrayList<ComicCollection>();
-		ComicCollection rootCol = ComicCollection.populate(context, root);
+		ComicCollection rootCol = new ComicCollection(root.getName()).populate(context, root);
 		if(rootCol!=null) collections.add(rootCol);
 		
 		ArrayList<File> contents=new ArrayList<File>(Arrays.asList(root.listFiles()));
@@ -74,14 +78,15 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	
 	/** Creates a collection from the contents of a directory.
 	 * The contents of the directory are scanned, and if comics are found inside, the collection is created.
-	 * This method doesn't allow empty collections: if a directory doesn't have any comic, the collection is not created.
 	 * Subdirectories are scanned only to test if they have images (i.e., they can be read by a DirReader)
 	 * Subdirectories that are not managed by a DirReader are not added to this collection. Keep in mind that this
 	 * include subdirectories with CBZ files, for example: these collections are of a single level. 
 	 * @param root
-	 * @return
+	 * @return A reference to self
 	 */
-	public static ComicCollection populate(Context context, File root){
+	public ComicCollection populate(Context context, File root){
+		this.clear();
+		
 		// get the files in the directory
 		ArrayList<File> f=new ArrayList<File>(Arrays.asList(root.listFiles()));
 		// sort the names alphabetically
@@ -94,7 +99,6 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		});
 		
 		// create the collection
-		ComicCollection col=new ComicCollection(root.getName());
 		Iterator<File> itr=f.iterator();
 		ComicDBHelper db=new ComicDBHelper(context);
 		while(itr.hasNext()){
@@ -118,13 +122,11 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 				c.countpages=-1;
 				c.id=-1;
 			}
-			c.collection=col;
-			col.add(c);
+			c.collection=this;
+			add(c);
 		}
 		db.close();
-		// if we have no items, return: we do not allow empty collections
-		if(col.size()==0) return null;
-		return col;
+		return this;
 	}
 	
 	/** Given a comic in this directory, return the next one in the collection.
@@ -146,5 +148,11 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 			return this.get(n+1);
 		else
 			return null;
+	}
+	
+	public void invalidate(Context context){
+		if(this.rootDir==null)
+			return;
+		this.populate(context, this.rootDir);
 	}
 }
