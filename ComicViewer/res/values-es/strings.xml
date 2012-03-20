@@ -25,5 +25,7 @@
     <string name="page">Página</string>
     <string name="bookmark_list">Lista de marcas</string>
     <string name="no_comic">Cómic no encontrado</string>
+    <string name="cannot_remove_directories">No se pueden borrar los directorios</string>
+    <string name="removed"> fue eliminado</string>
 
 </resources>

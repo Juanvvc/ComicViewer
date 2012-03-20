@@ -78,7 +78,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		imgs.setFactory(this);
 		this.configureAnimations(
 				R.anim.slide_in_right, R.anim.slide_out_left,
-				android.R.anim.slide_in_left, android.R.anim.slide_out_right,
+				R.anim.slide_in_left, R.anim.slide_out_right,
 				ANIMATION_DURATION);
 
     	// load the intent, if any
@@ -252,14 +252,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * There are 9 zones. From 0 to 8: header-left-center-right; margin-left-center-margin right; footer-left-center-right 	 */
 	private int getZone(View v, float x, float y){
 		// currently, only two zones are used: left(0), center(1), right(2)
+		// remember that this activity is intended for portrait mode
 		if(x<v.getWidth()/3){
-			if(y<0.2*v.getWidth()) return 0;
-			if(y>0.8*v.getWidth()) return 6;
+			if(y<0.2*v.getHeight()) return 0;
+			if(y>0.8*v.getHeight()) return 6;
 			return 3;
 		}
 		if(x>2*v.getWidth()/3){
-			if(y<0.2*v.getWidth()) return 2;
-			if(y>0.8*v.getWidth()) return 8;
+			if(y<0.2*v.getHeight()) return 2;
+			if(y>0.8*v.getHeight()) return 8;
 			return 5;
 		}
 		if(y<0.2*v.getWidth()) return 1;
@@ -411,6 +412,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 						ComicInfo nextIssue=this.comicInfo.collection.next(this.comicInfo);
 						if(nextIssue!=null){
 							Log.i(TAG, "Next issue: "+nextIssue.uri);
+							nextIssue.page=0; // we load the next issue at the first page. It is weird otherwise
 							this.loadComic(nextIssue);
 						}
 					}

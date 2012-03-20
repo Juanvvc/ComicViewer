@@ -26,5 +26,7 @@
     <string name="page">Page</string>
     <string name="bookmark_list">Bookmark list</string>
     <string name="no_comic">Comic not found</string>
+    <string name="cannot_remove_directories">Directories cannot be removed</string>
+    <string name="removed"> was removed</string>
 
 </resources>
