@@ -8,6 +8,7 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <!--         android:debuggable="true" -->
+    <supports-screens android:smallScreens="false"/>
     <application
 
         android:hardwareAccelerated="true"

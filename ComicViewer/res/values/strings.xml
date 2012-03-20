@@ -29,5 +29,6 @@
     <string name="cannot_remove_directories">Directories cannot be removed</string>
     <string name="removed">" was removed"</string>
     <string name="loading">"Loading "</string>
+    <string name="go_to_page">Go to page...</string>
 
 </resources>

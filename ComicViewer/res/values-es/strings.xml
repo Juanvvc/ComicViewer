@@ -28,5 +28,6 @@
     <string name="cannot_remove_directories">No se pueden borrar los directorios</string>
     <string name="removed">" fue eliminado"</string>
     <string name="loading">"Cargando "</string>
+    <string name="go_to_page">Vé a página&#8230;</string>
 
 </resources>

@@ -10,8 +10,6 @@ class ComicInfo{
 	boolean read;
 	/** The id of the comic in the database. If -1, it is not in the database */
 	long id;
-	/** The date of the last view */
-	String lastdate;
 	/** Last viewed page, only read. Prefer reader.getCurrentPage() if reader is not null */
 	int page;
 	/** Number of pages, only read. Prefer reader.getCurrentPage() if reader is not null */
