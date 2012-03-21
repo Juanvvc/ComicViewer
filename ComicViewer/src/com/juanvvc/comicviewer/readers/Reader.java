@@ -198,20 +198,18 @@ public abstract class Reader {
 		 * my experience, some images are unnecessarily scaled down and quality
 		 * suffers
 		 */
-		// Options opts=new Options();
-		// opts.inSampleSize=initialscale;
-		// opts.inJustDecodeBounds=true;
-		// BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
-		// // now, set the scale according to the image size: 1, 2, 3...
-		// opts.inSampleSize = Math.max(opts.outHeight,
-		// opts.outWidth)/MAX_BITMAP_SIZE+1;
-		// //TODO: apply a smart scaler
-		// opts.inScaled=true;
-		// // set a high quality scale (did really works?)
-		// opts.inPreferQualityOverSpeed=true;
-		// opts.inJustDecodeBounds=false;
-		// // finally, load the scaled image
-		// bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+//		 Options opts=new Options();
+//		 opts.inJustDecodeBounds=true;
+//		 BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
+//		 // now, set the scale according to the image size: 1, 2, 3...
+//		 opts.inSampleSize = Math.max(opts.outHeight, opts.outWidth)/MAX_BITMAP_SIZE+1;
+//		 myLog.d(TAG, "MS=" + Math.max(opts.outHeight, opts.outWidth) + " Using scale: " + opts.inSampleSize);
+//		 opts.inScaled=true;
+//		 // set a high quality scale (did really works?)
+//		 opts.inPreferQualityOverSpeed=true;
+//		 opts.inJustDecodeBounds=false;
+//		 // finally, load the scaled image
+//		 bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
 
 		/*
 		 * Second strategy: 1.- load the complete image 2.- if error, scale down

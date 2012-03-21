@@ -7,10 +7,10 @@
     <uses-sdk android:minSdkVersion="15" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<!--         android:debuggable="true" -->
+
     <supports-screens android:smallScreens="false"/>
     <application
-
+        android:debuggable="true"
         android:hardwareAccelerated="true"
         android:icon="@drawable/icon"
         android:label="@string/app_name" >
