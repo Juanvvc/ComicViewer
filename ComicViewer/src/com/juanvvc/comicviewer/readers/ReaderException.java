@@ -1,10 +1,17 @@
 package com.juanvvc.comicviewer.readers;
 
+/** An Exception that Readers may throw.
+ * @author juanvi
+ *
+ */
 public class ReaderException extends Exception {
-	private static final long serialVersionUID = 1L;
+    /** A random number for the Serializable interface. */
+    private static final long serialVersionUID = 1L;
 
-	public ReaderException(String msg){
-		super(msg);
-	}
-
+    /** Constructs an exception from a message.
+     * @param msg The message of the exception
+     */
+    public ReaderException(final String msg) {
+        super(msg);
+    }
 }
