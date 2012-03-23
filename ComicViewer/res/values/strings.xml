@@ -30,5 +30,9 @@
     <string name="removed">" was removed"</string>
     <string name="loading">"Loading "</string>
     <string name="go_to_page">Go to page...</string>
+    <string name="switch_drawing">Switch drawing mode</string>
+    <string name="switch_drawing_visible">Switch Drawing Visible</string>
+    <string name="rubber">Rubber</string>
+    <string name="draw_mode_not_available">The draw mode is not available</string>
 
 </resources>

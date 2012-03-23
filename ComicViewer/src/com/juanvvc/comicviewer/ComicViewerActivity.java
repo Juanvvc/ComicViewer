@@ -36,6 +36,7 @@ import android.widget.EditText;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 import android.widget.ViewSwitcher.ViewFactory;
 
 import com.juanvvc.comicviewer.readers.Reader;
@@ -44,7 +45,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
 /**
  * Shows a comic on the screen. This class implements ViewFactory because it
  * generates the Views for the internal ImageSwitcher.
- *
+ * 
  * @author juanvi
  */
 public class ComicViewerActivity extends Activity implements ViewFactory,
@@ -57,11 +58,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	private LoadCurrentPage currentPage = null;
 	/**
 	 * A reference to the animations.
-	 *
+	 * 
 	 * @see com.juanvvc.comicviewer.ComicViewerActivity#configureAnimations(int,
 	 *      int, int, int, int)
 	 */
-	private Animation[] anims = {null, null, null, null };
+	private Animation[] anims = { null, null, null, null };
 	/** The gestures library. */
 	private GestureLibrary geslibrary;
 	/**
@@ -71,6 +72,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	private ComicInfo comicInfo = null;
 	/** Random number to identify request of bookmarks. */
 	private static final int REQUEST_BOOKMARKS = 0x21;
+	/** The directory for draws */
+	public static final String DRAWDIR = ".draws";
 
 	// TODO: make these things options
 	/** If set, horizontal pages are automatically rotated. */
@@ -79,6 +82,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	private static final int FAST_PAGES_SCALE = 2;
 	/** If set, at the end of the comic loads the next issue. */
 	private static final boolean LOAD_NEXT_ISSUE = true;
+	/** If set, the draw mode is available */
+	private static final boolean DRAW_MODE_AVAILABLE = true;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -143,8 +148,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		this.loadComic(info);
 
 		// we listen to the events from the user
-		((View) this.findViewById(R.id.comicvieweractivity_layout))
-				.setOnTouchListener(this);
+		this.findViewById(R.id.comicvieweractivity_layout).setOnTouchListener(this);
+		
+		// set the colors for the toolbar
+		this.findViewById(R.id.color_blue).setBackgroundColor(0xff0000ff);
+		this.findViewById(R.id.color_green).setBackgroundColor(0xff00ff00);
+		this.findViewById(R.id.color_red).setBackgroundColor(0xffff0000);
+		this.findViewById(R.id.pentoolbar).setVisibility(View.GONE);
 
 		// open the gestures library
 		// TODO: gestures are not working
@@ -164,7 +174,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	 * Saves the current comic and page. This method updates the internal state
 	 * and not the database, since the activity is not going to be stopped. We
 	 * like to modify the database as less as possible.
-	 *
+	 * 
 	 * @param savedInstanceState
 	 *            the place to save state information
 	 * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
@@ -232,22 +242,22 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	/**
 	 * This method supplies a View for the internal ImageSwitcher. This is were
 	 * comics pages are shown.
-	 *
+	 * 
 	 * @return A simple ImageView that fills the parent is enough.
 	 * @see android.widget.ViewSwitcher.ViewFactory#makeView()
 	 */
 	public final View makeView() {
-		ImageView img = new ImageView(this);
+		MyImageView img = new MyImageView(this, true);
+		img.setDrawMode(false, -1, -1);
 		img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-		img.setLayoutParams(new ImageSwitcher.LayoutParams(
-				LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+		img.setLayoutParams(new ImageSwitcher.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
 		img.setBackgroundColor(0xff000000);
 		return img;
 	}
 
 	/**
 	 * Called when the screen is pressed.
-	 *
+	 * 
 	 * @see android.view.View.OnTouchListener#onTouch(android.view.View,
 	 *      android.view.MotionEvent)
 	 */
@@ -267,8 +277,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 				try {
 					this.stopThreads();
 
-					ImageSwitcher imgs = (ImageSwitcher) this
-							.findViewById(R.id.switcher);
+					ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
 					ImageView iv = (ImageView) imgs.getCurrentView();
 					((BitmapDrawable) iv.getDrawable()).getBitmap().recycle();
 					iv.setImageDrawable(this.comicInfo.reader.current());
@@ -297,7 +306,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			default:
 			}
 		}
-		return true;
+		return false;
 	}
 
 	/**
@@ -359,8 +368,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			// We want at least some confidence in the result
 			if (prediction.score > 1.0) {
 				// Show the spell
-				Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT)
-						.show();
+				Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT).show();
 				myLog.d(TAG, prediction.name);
 			}
 		}
@@ -379,8 +387,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 
 		close();
 
-		Toast.makeText(this, getText(R.string.loading) + info.uri,
-				Toast.LENGTH_LONG).show();
+		Toast.makeText(this, getText(R.string.loading) + info.uri, Toast.LENGTH_LONG).show();
 
 		// load information about the bookmarks from the database
 		ComicDBHelper db = new ComicDBHelper(this);
@@ -391,8 +398,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			info.bookmarks = new ArrayList<Integer>();
 		}
 
-		// the comic is loaded in the background, since there is lots of things
-		// to do
+		// the comic is loaded in the background, since there is lots of things to do
 		(new AsyncTask<ComicInfo, Void, ComicInfo>() {
 			@Override
 			protected ComicInfo doInBackground(final ComicInfo... params) {
@@ -402,15 +408,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 				}
 				try {
 					// chooses the right reader to use
-					info.reader = Reader.getReader(ComicViewerActivity.this,
-							info.uri);
+					info.reader = Reader.getReader(ComicViewerActivity.this, info.uri);
 					if (info.reader == null) {
-						throw new ReaderException(
-								getText(R.string.no_suitable_reader) + info.uri);
+						throw new ReaderException(getText(R.string.no_suitable_reader) + info.uri);
 					}
 					File colRoot = new File(info.uri).getParentFile();
-					info.collection = new ComicCollection(colRoot.getName())
-							.populate(ComicViewerActivity.this, colRoot);
+					info.collection = new ComicCollection(colRoot.getName()).populate(ComicViewerActivity.this, colRoot);
 					info.reader.countPages();
 					return info;
 				} catch (ReaderException e) {
@@ -504,6 +507,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		Reader reader = this.comicInfo.reader;
 		// drawable of the next page
 		Drawable n = null;
+		// First, remove any draw on the current page. Views are reused, so we never know
+		((MyImageView)imgs.getCurrentView()).removeDrawing();
+		((MyImageView)imgs.getCurrentView()).setDrawMode(false, -1, -1);
 		try {
 			// set animations according to the movement of the user
 			this.setAnimations(forward);
@@ -514,8 +520,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 					myLog.i(TAG, "At the end of the comic");
 					if (LOAD_NEXT_ISSUE && this.comicInfo.collection != null) {
 						myLog.d(TAG, "Loading next issue");
-						ComicInfo nextIssue = this.comicInfo.collection
-								.next(this.comicInfo);
+						ComicInfo nextIssue = this.comicInfo.collection.next(this.comicInfo);
 						if (nextIssue != null) {
 							myLog.i(TAG, "Next issue: " + nextIssue.uri);
 							nextIssue.page = 0; // we load the next issue at the
@@ -596,14 +601,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		}
 
 		// if the current page is bookmarked, show the bookmark
-		if (this.comicInfo.bookmarks != null
-				&& this.comicInfo.bookmarks.contains(this.comicInfo.reader
-						.getCurrentPage())) {
+		if (this.comicInfo.bookmarks != null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
 			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
 		} else {
 			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
-		}
-
+		}		
 	}
 
 	/**
@@ -726,7 +728,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	 */
 	private class LoadCurrentPage extends AsyncTask<Object, Void, Drawable> {
 		/** The view that shows the low quality version of the current page. */
-		private ImageView view = null;
+		private MyImageView view = null;
+		private int page = -1;
 
 		@Override
 		protected Drawable doInBackground(final Object... params) {
@@ -734,8 +737,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			if (reader == null) {
 				return null;
 			}
-			view = (ImageView) params[0];
-			int page = ((Integer) params[1]).intValue();
+			view = (MyImageView) params[0];
+			page = ((Integer) params[1]).intValue();
 			myLog.d(TAG, "Loading page " + page);
 			try {
 				return reader.getPage(page);
@@ -747,8 +750,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		protected void onPostExecute(Drawable d) {
 			if (d != null) {
 				((BitmapDrawable) view.getDrawable()).getBitmap().recycle();
-				view.setImageDrawable(d);
-				// TODO: free the last view
+				view.setImageDrawable(d);				
 			}
 		}
 	}
@@ -829,6 +831,23 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		case R.id.close: // close this viewer
 			this.finish();
 			return true;
+		case R.id.switch_drawing: // switch to draw mode
+			if(DRAW_MODE_AVAILABLE) {
+				MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+				if (i.isDrawMode()) {
+					i.setDrawMode(false, -1, -1);
+					this.findViewById(R.id.pentoolbar).setVisibility(View.GONE);
+				} else {
+					i.setDrawMode(true, -1, -1);
+					this.findViewById(R.id.pentoolbar).setVisibility(View.VISIBLE);
+					this.onPenToolbarColor(null);
+				}
+			} else {
+				new AlertDialog.Builder(this).setIcon(R.drawable.icon)
+					.setTitle(this.getText(R.string.draw_mode_not_available))
+					.setPositiveButton(android.R.string.ok, null).show();
+			}
+			return true;
 		default:
 		}
 		return super.onOptionsItemSelected(item);
@@ -846,6 +865,40 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 				myLog.i(TAG, "Bookmark to page " + page);
 				this.moveToPage(page);
 			}
+		}
+	}
+	
+	/**  
+	 * @param file The original comic file
+	 * @return The thumbnail for that file.
+	 */
+	private File getDrawFile(File file, int page) {
+		String name = file.getName();
+		if (name.lastIndexOf(".") > 0) {
+			name = name.substring(0, name.lastIndexOf("."));
+		}
+		return new File(file.getParent() + File.separator + DRAWDIR + File.separator + name + "-" + page + ".png");
+	}
+	
+	public void onPenToolbarDelete(final View v) {
+		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+		i.removeDrawing();
+	}
+	public void onPenToolbarColor(final View v) {
+		boolean r=((ToggleButton)this.findViewById(R.id.color_red)).isChecked();
+		boolean g=((ToggleButton)this.findViewById(R.id.color_green)).isChecked();
+		boolean b=((ToggleButton)this.findViewById(R.id.color_blue)).isChecked();
+		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+		int newColor = 0xff000000 | (r?0xff0000:0) | (g?0x00ff00:0) | (b?0x0000ff:0);
+		i.setPainterColor(newColor);
+	}
+	public void onPenToolbarWidth(final View v) {
+		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+		float currentWidth = i.getPainterWidth();
+		if(currentWidth<10) {
+			i.setPainterWidth(30);
+		} else {
+			i.setPainterWidth(3);
 		}
 	}
 }

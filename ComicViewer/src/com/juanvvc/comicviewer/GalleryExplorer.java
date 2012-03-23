@@ -350,8 +350,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		if (name.lastIndexOf(".") > 0) {
 			name = name.substring(0, name.lastIndexOf("."));
 		}
-		return new File(file.getParent() + File.separator + THUMBNAILS
-				+ File.separator + name + ".png");
+		return new File(file.getParent() + File.separator + THUMBNAILS + File.separator + name + ".png");
 	}
 
 	/**
@@ -376,13 +375,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			// no longer in the filesystem
 			// then, this check is mandatory
 			if (!this.holder.file.exists()) {
-				return new BitmapDrawable(BitmapFactory.decodeResource(
-						getResources(), R.drawable.broken));
+				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				// TODO: automatic scan?
 			}
 			String uri = this.holder.file.getAbsolutePath();
-			File cachefile = GalleryExplorer.this
-					.getThumbnailFile(this.holder.file);
+			File cachefile = GalleryExplorer.this.getThumbnailFile(this.holder.file);
 			try {
 				// look for the cover in the thumbnails directory. If found, we
 				// are done
@@ -394,8 +391,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				}
 
 				// if we are here, the thumbnail was not found
-				myLog.v(TAG,
-						"Cache not found, creating: " + cachefile.getName());
+				myLog.v(TAG, "Cache not found, creating: " + cachefile.getName());
 
 				// Load the comic file, and then the first image
 				// select the comic reader
@@ -408,8 +404,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				BitmapDrawable bd = ((BitmapDrawable) reader.getPage(0));
 				// in case of fail, return the broken image
 				if (bd == null) {
-					return new BitmapDrawable(BitmapFactory.decodeResource(
-							getResources(), R.drawable.broken));
+					return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				}
 				// scale
 				Bitmap s = Bitmap.createScaledBitmap(bd.getBitmap(), 200, 300, true);
@@ -426,21 +421,18 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 						cachefile.getParentFile().mkdir();
 					}
 					// save the thumbnail
-					FileOutputStream out = new FileOutputStream(
-							cachefile.getAbsoluteFile());
+					FileOutputStream out = new FileOutputStream(cachefile.getAbsoluteFile());
 					s.compress(Bitmap.CompressFormat.PNG, 90, out);
 					out.close();
 					myLog.v(TAG, "Cache file created: " + cachefile.getName());
 				} catch (IOException eio) {
-					myLog.w(TAG,
-							"Cannot create the cache file: " + eio.toString());
+					myLog.w(TAG, "Cannot create the cache file: " + eio.toString());
 				}
 
 				return new BitmapDrawable(s);
 			} catch (ReaderException e) {
 				myLog.e(TAG, e.toString());
-				return new BitmapDrawable(BitmapFactory.decodeResource(
-						getResources(), R.drawable.broken));
+				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
 
@@ -520,9 +512,9 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 							.setIcon(R.drawable.icon)
 							.setTitle(
 									"["
-											+ f.getAbsolutePath()
-											+ "] "
-											+ getText(R.string.system_directory))
+									+ f.getAbsolutePath()
+									+ "] "
+									+ getText(R.string.system_directory))
 							.setPositiveButton(getText(android.R.string.ok),
 									null).show();
 					f = null;

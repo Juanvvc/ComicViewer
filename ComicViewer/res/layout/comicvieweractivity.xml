@@ -24,6 +24,57 @@
         android:visibility="gone"         
         />
     
+      <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/pentoolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true">
+
+        <Button
+            android:id="@+id/pencil_width"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/thin"
+            android:onClick="onPenToolbarWidth" />
+
+        <ToggleButton
+            android:id="@+id/color_red"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text=""            
+            android:onClick="onPenToolbarColor" />
+
+        <ToggleButton
+            android:id="@+id/color_green"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text=""
+            android:onClick="onPenToolbarColor" />
+
+        <ToggleButton
+            android:id="@+id/color_blue"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text=""
+            android:onClick="onPenToolbarColor" />
+
+<!--         <ToggleButton -->
+<!--             android:id="@+id/rubber" -->
+<!--             android:layout_width="64dp" -->
+<!--             android:layout_height="64dp" -->
+<!--             android:text="@string/rubber" /> -->
+
+        <Button
+            android:id="@+id/remove_drawing"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bin"
+            android:onClick="onPenToolbarDelete" />
+
+    </LinearLayout>
+    
+    
 <!--     <Button -->
 <!--         android:id="@+id/buttonRight" -->
 <!--         android:layout_width="wrap_content" -->
