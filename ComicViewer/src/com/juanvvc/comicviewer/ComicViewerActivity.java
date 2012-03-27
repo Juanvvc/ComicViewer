@@ -542,11 +542,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 					this.comicInfo.reader.moveTo(reader.getCurrentPage() + 1);
 				}
 				// create a new thread to load the next page in the background.
-				// This supposes that
-				// the natural move is onward and the user will see the next
-				// page next
-				this.nextFastPage = (LoadNextPage) new LoadNextPage()
-						.execute(reader.getCurrentPage() + 1);
+				// This supposes that the natural move is onward
+				if (this.comicInfo.reader.getCurrentPage() < this.comicInfo.reader.countPages() - 1) {
+					this.nextFastPage = (LoadNextPage) new LoadNextPage().execute(reader.getCurrentPage() + 1);
+				}
 			} else {
 				// check that we are not in the first page
 				if (reader.getCurrentPage() == 0) {
@@ -687,9 +686,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			try {
 				//return ComicViewerActivity.this.comicInfo.reader.getFastPage(getResources(), page, FAST_PAGES_SCALE);
 				return ComicViewerActivity.this.comicInfo.reader.getPage(page); 
-			} catch (ReaderException e) {
-				return ComicViewerActivity.this.getResources().getDrawable(
-						R.drawable.outofmemory);
+			} catch (Exception e) {
+				return ComicViewerActivity.this.getResources().getDrawable(R.drawable.outofmemory);
 			}
 		}
 

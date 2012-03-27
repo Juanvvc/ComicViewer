@@ -49,7 +49,7 @@ public class TiledDrawable extends Drawable {
 	private void drawCenteredFillScreen(final Canvas canvas) {
 		float scale = Math.min(
 				(((float)canvas.getWidth()) / cols) / tileWidth,
-				(((float)canvas.getHeight()) / cols) / tileHeight
+				(((float)canvas.getHeight()) / rows) / tileHeight
 				);
 		int ox = Math.round(canvas.getWidth() - scale * tileWidth * this.cols) / 2;
 		int oy = Math.round(canvas.getHeight() - scale * tileHeight * this.rows) / 2;
