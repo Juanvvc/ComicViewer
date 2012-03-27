@@ -1,20 +1,26 @@
 
 package com.juanvvc.comicviewer.readers;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+
 import com.juanvvc.comicviewer.myLog;
 
-import android.content.Context;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import de.innosystec.unrar.Archive;
+import de.innosystec.unrar.exception.RarException;
 import de.innosystec.unrar.rarfile.FileHeader;
 
 /** A reader for RAR files.
@@ -39,7 +45,7 @@ public class CBRReader extends Reader {
 			this.load(uri);
 		}
 	}
-
+	
 	@Override
 	public final void load(final String uri) throws ReaderException {
 		super.load(uri);
@@ -89,40 +95,37 @@ public class CBRReader extends Reader {
 
 	}
 
-	/** Gets a drawable from a entry in the RAR file.
-	 * @param entry The entry to load
-	 * @param initialscale The initial scale of the image to load. If 1, load a high quality version of the image
-	 * @return The drawable of the file
-	 * @throws ReaderException If there is a problem loading the image. The most likely problem is OutOfMemory
-	 */
-	private Drawable getDrawableFromRarEntry(final FileHeader entry, final int initialscale) throws ReaderException {
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			// sometimes, a outofmemory is triggered here. Try to save as much memory as possible
-			System.gc();
-			this.archive.extractFile(entry, baos);
-			baos.close();
-			return new BitmapDrawable(this.byteArrayToBitmap(baos.toByteArray(), initialscale));
-		} catch (Exception e) {
-			throw new ReaderException("Cannot read page: " + e.getMessage());
-		} catch (OutOfMemoryError err) {
-			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
-		}
-	}
-
 	@Override
 	public final Drawable getPage(final int page) throws ReaderException {
 		if (page < 0 || page >= this.countPages()) {
 			return null;
 		}
-		return this.getDrawableFromRarEntry(this.entries.get(page), 1);
+		try {
+			return this.streamToTiledDrawable(this.extractToInputStream(this.entries.get(page)),  COLUMNS, ROWS);
+		} catch (Exception e) {
+			myLog.e(TAG, "Cannot read page: " + e.toString());
+		} catch (OutOfMemoryError err) {
+			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+		}
+		return null;
 	}
 	@Override
-	public final Drawable getFastPage(final int page, final int initialscale) throws ReaderException {
+	public final Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException {
 		if (page < 0 || page >= this.countPages()) {
 			return null;
 		}
-		return this.getDrawableFromRarEntry(this.entries.get(page), initialscale);
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			// sometimes, a outofmemory is triggered here. Try to save as much memory as possible
+			System.gc();
+			this.archive.extractFile(this.entries.get(page), baos);
+			baos.close();
+			return this.byteArrayToBitmap(baos.toByteArray(), initialscale);
+		} catch (Exception e) {
+			throw new ReaderException("Cannot read page: " + e.getMessage());
+		} catch (OutOfMemoryError err) {
+			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+		}
 	}
 
 	/**
@@ -147,5 +150,41 @@ public class CBRReader extends Reader {
 			return NOFILE;
 		}
 		return this.entries.size();
+	}
+	
+	/**
+	 * Returns an {@link InputStream} that will allow to read the file and
+	 * stream it. Please note that this method will create a new Thread and an a
+	 * pair of Pipe streams.
+	 * 
+	 * (From: https://github.com/edmund-wagner/junrar/blob/master/unrar/src/main/java/com/github/junrar/Archive.java)
+	 * 
+	 * @param header
+	 *            the header to be extracted
+	 * @throws RarException
+	 * @throws IOException
+	 *             if any IO error occur
+	 */
+	public InputStream extractToInputStream(final FileHeader hd) throws RarException, IOException {
+		final PipedInputStream in = new PipedInputStream(32 * 1024);
+		final PipedOutputStream out = new PipedOutputStream(in);
+
+		// creates a new thread that will write data to the pipe. Data will be
+		// available in another InputStream, connected to the OutputStream.
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					archive.extractFile(hd, out);
+				} catch (RarException e) {
+				} finally {
+					try {
+						out.close();
+					} catch (IOException e) {
+					}
+				}
+			}
+		}).start();
+
+		return in;
 	}
 }

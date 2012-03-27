@@ -375,7 +375,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			// no longer in the filesystem
 			// then, this check is mandatory
 			if (!this.holder.file.exists()) {
-				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
+				return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				// TODO: automatic scan?
 			}
 			String uri = this.holder.file.getAbsolutePath();
@@ -385,9 +385,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				// are done
 				if (cachefile.exists()) {
 					myLog.v(TAG, "Cache found: " + cachefile.getName());
-					return new BitmapDrawable(
-							BitmapFactory.decodeFile(cachefile
-									.getAbsolutePath()));
+					return new BitmapDrawable(getResources(), BitmapFactory.decodeFile(cachefile.getAbsolutePath()));
 				}
 
 				// if we are here, the thumbnail was not found
@@ -399,12 +397,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				if (reader == null) {
 					throw new ReaderException("Not a suitable reader");
 				}
-				// if the first page it is not a bitmapdrawable, this will
-				// trigger an exception. Pity, but it's OK
-				BitmapDrawable bd = ((BitmapDrawable) reader.getPage(0));
+				// Load the first page fast (scale=4)
+				BitmapDrawable bd = new BitmapDrawable(getResources(), reader.getBitmapPage(0, 4));
 				// in case of fail, return the broken image
 				if (bd == null) {
-					return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
+					return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				}
 				// scale
 				Bitmap s = Bitmap.createScaledBitmap(bd.getBitmap(), 200, 300, true);
@@ -429,10 +426,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					myLog.w(TAG, "Cannot create the cache file: " + eio.toString());
 				}
 
-				return new BitmapDrawable(s);
-			} catch (ReaderException e) {
+				return new BitmapDrawable(getResources(), s);
+			} catch (Exception e) {
 				myLog.e(TAG, e.toString());
-				return new BitmapDrawable(BitmapFactory.decodeResource(getResources(), R.drawable.broken));
+				return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
 

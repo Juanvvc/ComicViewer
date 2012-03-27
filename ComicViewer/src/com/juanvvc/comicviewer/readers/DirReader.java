@@ -14,6 +14,7 @@ import java.util.Iterator;
 import com.juanvvc.comicviewer.myLog;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -77,27 +78,39 @@ public class DirReader extends Reader {
 			if (page < 0 || page >= this.countPages()) {
 				return null;
 			}
-			return new BitmapDrawable(this.getFileBitmap(
-					this.entries.get(page), 1));
+			InputStream is = new FileInputStream(this.entries.get(page));
+			return this.streamToTiledDrawable(is, COLUMNS, ROWS );
 
 		} catch (Exception ex) {
 			throw new ReaderException(ex.getMessage());
 		} catch (OutOfMemoryError err) {
 			throw new ReaderException(
-					this.context
-							.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+					this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
 	}
 
 	@Override
-	public final Drawable getFastPage(final int page, final int initialscale)
-			throws ReaderException {
+	public final Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException {
 		try {
 			if (page < 0 || page >= this.countPages()) {
 				return null;
 			}
-			return new BitmapDrawable(this.getFileBitmap(
-					this.entries.get(page), initialscale));
+			
+			// you cannot use:
+			// Drawable.createFromStream(this.archive.getInputStream(entry),
+			// entry.getName());
+			// this will trigger lots of OutOfMemory errors.
+			// see Reader.byteArrayBitmap for an explanation.
+			InputStream is = new FileInputStream(this.entries.get(page));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] tmp = new byte[4096];
+			int ret = 0;
+
+			while ((ret = is.read(tmp)) > 0) {
+				bos.write(tmp, 0, ret);
+			}
+
+			return this.byteArrayToBitmap(bos.toByteArray(), initialscale);
 
 		} catch (Exception ex) {
 			throw new ReaderException(ex.getMessage());
@@ -106,30 +119,6 @@ public class DirReader extends Reader {
 					this.context
 							.getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
-	}
-
-	/** Gets a drawable from a file in the directory.
-	 * @param f the file to load.
-	 * @param initialscale The initial scale of the image to load. If 1, load a high quality version of the image
-	 * @return The drawable of the file
-	 * @throws IOException If there is a problem loading the file. File not found is the most likely
-	 */
-	private Bitmap getFileBitmap(final File f, final int initialscale) throws IOException {
-		// you cannot use:
-		// Drawable.createFromStream(this.archive.getInputStream(entry),
-		// entry.getName());
-		// this will trigger lots of OutOfMemory errors.
-		// see Reader.byteArrayBitmap for an explanation.
-		InputStream is = new FileInputStream(f);
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		byte[] tmp = new byte[4096];
-		int ret = 0;
-
-		while ((ret = is.read(tmp)) > 0) {
-			bos.write(tmp, 0, ret);
-		}
-
-		return this.byteArrayToBitmap(bos.toByteArray(), initialscale);
 	}
 
 	@Override

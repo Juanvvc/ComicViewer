@@ -1,13 +1,20 @@
 package com.juanvvc.comicviewer.readers;
 
-import com.juanvvc.comicviewer.myLog;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
+import android.graphics.BitmapRegionDecoder;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+
+import com.juanvvc.comicviewer.myLog;
 
 /**
  * This class manages comics. It is used to load a comic, get a page, and move
@@ -30,6 +37,12 @@ public abstract class Reader {
 	protected Context context;
 	/** A constant tag name, for logging. */
 	protected static final String TAG = "Reader";
+	/** Number of columns in the tiled page, by default */
+	public static final int COLUMNS = 6;
+	/** Number of rows in the tiled page, by default */
+	public static final int ROWS = 8;
+	
+	
 	/**
 	 * If set, horizontal pages rotate to match the screen.
 	 * This assumes that screen is portrait, and this was mandatory in the XML.
@@ -68,19 +81,16 @@ public abstract class Reader {
 	public abstract Drawable getPage(int page) throws ReaderException;
 
 	/**
-	 * The scaled version of a drawable. In the default implementation it is
-	 * equal to getPage(), so you probably would like to override this method.
+	 * The bitmap of a page of a drawable.
 	 *
 	 * @param page The index of the page to return, starting at 0.
 	 * @param initialscale
-	 *            The drawable will be scaled at least this factor, maybe more
+	 *            The bitmap will be scaled at least this factor, maybe more
 	 *            if there are memory problems.
 	 * @throws ReaderException after any problem. Out of memory is the more likely problem.
 	 * @return A scaled version of the page
 	 */
-	public Drawable getFastPage(final int page, final int initialscale) throws ReaderException {
-		return this.getPage(page);
-	}
+	public abstract Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException;
 
 	/**
 	 * Loads a URI into this reader. You need to override this method in you
@@ -227,7 +237,7 @@ public abstract class Reader {
 		while (true) {
 			try {
 				bitmap = BitmapFactory.decodeByteArray(ba, 0, ba.length, opts);
-				break; // if we arrive here, the last line did'nt trigger an
+				break; // if we arrive here, the last line didn't trigger an
 						// outofmemory error
 			} catch (OutOfMemoryError e) {
 				System.gc();
@@ -240,12 +250,65 @@ public abstract class Reader {
 			Matrix matrix = new Matrix();
 			matrix.postRotate(90);
 			Bitmap b = bitmap;
-			bitmap = Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(),
-					matrix, true);
+			bitmap = Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), matrix, true);
 			b.recycle();
 		}
 
 		return bitmap;
+	}
+	
+	protected final Drawable streamToTiledDrawable(InputStream is, int cols, int rows) throws IOException {
+		BitmapRegionDecoder bd = BitmapRegionDecoder.newInstance(is, true);
+		
+		// Should we rotate the bitmaps?
+		boolean rotate = false;
+		if (AUTOMATIC_ROTATION && bd.getHeight() < bd.getWidth()) {
+			rotate = true;
+		}
+		
+		// Get the closest width and height that divisible by cols and rows
+		// note1: that the last columns/rows of the image will be lost 
+		int ow, oh;
+		if (rotate) {
+			// if the image is rotated, width and height switch places
+			oh = (bd.getWidth() / cols) * cols;
+			ow = (bd.getHeight() / rows) * rows;
+		} else {
+			ow = (bd.getWidth() / cols) * cols;
+			oh = (bd.getHeight() / rows) * rows;
+		}
+		
+		// Get the final tiles width and height
+		int tw = ow / cols;
+		int th = oh / rows;
+		// create the tiles
+		ArrayList<Bitmap> tiles = new ArrayList<Bitmap>();
+		
+		for(int i=0; i<rows; i++) {
+			for(int j=0; j<cols; j++) {
+				if (rotate) {
+					int left = th * i;
+					int top = tw * (cols - j - 1);
+					int right = left + th;
+					int bottom = top + tw;
+
+					Matrix matrix = new Matrix();
+					matrix.postRotate(90);
+					Bitmap b = bd.decodeRegion(new Rect(left, top, right, bottom), null);
+					tiles.add(Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), matrix, true));
+					b.recycle();
+				} else {
+					int left = tw * j;
+					int top = th * i;
+					int right = left + tw;
+					int bottom = top + th;
+					tiles.add(bd.decodeRegion(new Rect(left, top, right, bottom), null));
+				}
+			}
+		}
+		
+		
+		return new TiledDrawable(tiles, cols, rows);
 	}
 
 	/**

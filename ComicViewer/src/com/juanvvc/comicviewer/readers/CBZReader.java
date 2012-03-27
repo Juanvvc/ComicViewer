@@ -11,11 +11,13 @@ import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import com.juanvvc.comicviewer.myLog;
-
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+
+import com.juanvvc.comicviewer.myLog;
 
 /**
  * A reader for ZIP files.
@@ -91,7 +93,7 @@ public class CBZReader extends Reader {
 	 * @return The drawable of the file
 	 * @throws ReaderException If there is a problem loading the image. The most likely problem is OutOfMemory
 	 */
-	private Drawable getDrawableFromZipEntry(final ZipEntry entry, final int initialscale)throws ReaderException {
+	private Drawable getDrawableFromZipEntry(final Resources res, final ZipEntry entry, final int initialscale)throws ReaderException {
 		try {
 			// you cannot use:
 			// Drawable.createFromStream(this.archive.getInputStream(entry),
@@ -107,8 +109,7 @@ public class CBZReader extends Reader {
 				bos.write(tmp, 0, ret);
 			}
 
-			return new BitmapDrawable(this.byteArrayToBitmap(bos.toByteArray(),
-					initialscale));
+			return new BitmapDrawable(res, this.byteArrayToBitmap(bos.toByteArray(), initialscale));
 
 		} catch (Exception ex) {
 			throw new ReaderException(ex.getMessage());
@@ -120,20 +121,47 @@ public class CBZReader extends Reader {
 
 	@Override
 	public final Drawable getPage(final int page) throws ReaderException {
-		if (page < 0 || page >= this.countPages()) {
-			return null;
+//		if (page < 0 || page >= this.countPages()) {
+//			return null;
+//		}
+//		return this.getDrawableFromZipEntry(res, this.entries.get(page), 1);
+		try {
+			InputStream is = this.archive.getInputStream(this.entries.get(page));
+			return this.streamToTiledDrawable(is,  COLUMNS, ROWS);
+		} catch (IOException e) {
+			myLog.e(TAG, e.toString());
 		}
-		return this.getDrawableFromZipEntry(this.entries.get(page), 1);
+		return null;
 	}
 
 	@Override
-	public final Drawable getFastPage(final int page, final int initialscale)
-			throws ReaderException {
+	public final Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException {
 		if (page < 0 || page >= this.countPages()) {
 			return null;
 		}
-		return this.getDrawableFromZipEntry(this.entries.get(page),
-				initialscale);
+		try {
+			// you cannot use:
+			// Drawable.createFromStream(this.archive.getInputStream(entry),
+			// entry.getName());
+			// this will trigger lots of OutOfMemory errors.
+			// see Reader.byteArrayBitmap for an explanation.
+			InputStream is = this.archive.getInputStream(this.entries.get(page));
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] tmp = new byte[4096];
+			int ret = 0;
+
+			while ((ret = is.read(tmp)) > 0) {
+				bos.write(tmp, 0, ret);
+			}
+
+			return this.byteArrayToBitmap(bos.toByteArray(), initialscale);
+
+		} catch (Exception ex) {
+			throw new ReaderException(ex.getMessage());
+		} catch (OutOfMemoryError err) {
+			throw new ReaderException(
+					this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+		}
 	}
 
 	@Override
