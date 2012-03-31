@@ -14,21 +14,31 @@ import android.database.sqlite.SQLiteOpenHelper;
  * @author juanvi
  */
 public class ComicDBHelper extends SQLiteOpenHelper {
+	/** The name of this database. */
 	private static final String DATABASE_NAME = "comicdb.db";
-	private static final int DATABASE_VERSION = 4;
+	/** The version of this database. */
+	private static final int DATABASE_VERSION = 5;
+	/** A tag to be used in debugging. */
 	private static final String TAG = "database";
+	/** The max number of bookmarks to return. */
+	public static final int MAX_NUMBER_BOOKMARKS = 100;
 
-	public ComicDBHelper(Context context) {
+	/** Creates this helper.
+	 * @param context The context of the application
+	 */
+	public ComicDBHelper(final Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
-	public void onCreate(SQLiteDatabase db) {
+	@Override
+	public final void onCreate(final SQLiteDatabase db) {
 		myLog.v(TAG, "Creating the database");
 		db.execSQL("CREATE TABLE comics(_id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, read INTEGER, last_page INTEGER, pages INTEGER, last_access TEST);");
 		db.execSQL("CREATE TABLE bookmarks(_id INTEGER PRIMARY KEY, comicid INTEGER NOT NULL, page INTEGER NOT NULL);");
 	}
 
-	public void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
+	@Override
+	public final void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
 		myLog.w(TAG, "Updating database from " + oldVersion + " to "
 				+ newVersion);
 		db.execSQL("DROP TABLE IF EXISTS comics");
@@ -90,7 +100,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	 * Gets a ComicInfo object from the database. The database does not set
 	 * neither collection nor reader.
 	 *
-	 * @param comicid
+	 * @param comicid The id of the comic to retrieve
 	 * @return The ComicInfo, or null if not found
 	 */
 	public final ComicInfo getComicInfo(final long comicid) {
@@ -129,10 +139,10 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	 * Update the information of a comic in the database. info.page and
 	 * info.countpages are never used in the updating, but
 	 * info.reader.getCurrentPage() and info.reader.countPages()
-	 * 
-	 * @param info
+	 *
+	 * @param info The ComicInfo of the comic to update
 	 */
-	public void updateComicInfo(ComicInfo info) {
+	public final void updateComicInfo(final ComicInfo info) {
 		if (info == null || info.id == -1) {
 			return;
 		}
@@ -141,7 +151,11 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		if (info.reader != null) {
 			cv.put("last_page", info.reader.getCurrentPage());
 		}
-		cv.put("read", (info.read ? 1 : 0));
+		if (info.read) {
+			cv.put("read", 1);
+		} else {
+			cv.put("read", 0);
+		}
 		cv.put("path", info.uri);
 		if (info.reader != null) {
 			cv.put("pages", info.reader.countPages());
@@ -169,9 +183,9 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	/**
 	 * Removes a comic from the database.
 	 *
-	 * @param comicid
+	 * @param comicid The id of the comic to remove
 	 */
-	public final void removeComic(long comicid) {
+	public final void removeComic(final long comicid) {
 		if (comicid == -1) {
 			return;
 		}
@@ -183,11 +197,10 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	}
 
 	/**
-	 * This method returns an array of bookmarks. TODO This method supposes that
-	 * there number of bookmarks is LOW (under 100, more or less)
+	 * This method returns an array of bookmarks.
+	 * TODO: This method supposes that there number of bookmarks is low (under 100)
 	 *
-	 * @param comicid
-	 *            The id of the comic. If -1, return all bookmarks
+	 * @param comicid The id of the comic. If -1, return all bookmarks
 	 * @return The bookmarks or null if bookmarks are more than 100
 	 */
 	public final BookmarkInfo[] getBookmarks(final long comicid) {
@@ -204,7 +217,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 					new String[] {"_id", "comicid", "page" }, "page>?",
 					new String[] {"-1" }, null, null, null);
 		}
-		if (cur.getCount() > 100) {
+		if (cur.getCount() > MAX_NUMBER_BOOKMARKS) {
 			return null;
 		}
 		BookmarkInfo[] ba = new BookmarkInfo[cur.getCount()];

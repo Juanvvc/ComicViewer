@@ -30,7 +30,6 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageSwitcher;
@@ -45,17 +44,16 @@ import com.juanvvc.comicviewer.readers.ReaderException;
 /**
  * Shows a comic on the screen. This class implements ViewFactory because it
  * generates the Views for the internal ImageSwitcher.
- * 
+ *
  * @author juanvi
  */
-public class ComicViewerActivity extends Activity implements ViewFactory,
-		OnTouchListener, OnGesturePerformedListener, AnimationListener {
+public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener {
 	/** The TAG constant for the myLogger. */
 	private static final String TAG = "ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread. */
 	private LoadNextPage nextFastPage = null;
 	/** A reference to the animations of the images. */
-	private Animation[] anims = { null, null, null, null };
+	private Animation[] anims = {null, null, null, null };
 	/** The gestures library. */
 	private GestureLibrary geslibrary;
 	/**
@@ -65,20 +63,22 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	private ComicInfo comicInfo = null;
 	/** Random number to identify request of bookmarks. */
 	private static final int REQUEST_BOOKMARKS = 0x21;
-	/** The directory for draws */
+	/** The directory for draws. */
 	public static final String DRAWDIR = ".draws";
 
 	// TODO: make these things options
 	/** If set, horizontal pages are automatically rotated. */
 	private static final int ANIMATION_DURATION = 500;
-	/** The scale of the fast pages. If ==1, no fast pages are used */
-	private static final int FAST_PAGES_SCALE = 2;
 	/** If set, at the end of the comic loads the next issue. */
 	private static final boolean LOAD_NEXT_ISSUE = true;
-	/** If set, the draw mode is available */
+	/** If set, the draw mode is available. */
 	private static final boolean DRAW_MODE_AVAILABLE = true;
+	/** The color for the background. */
+	public static final int BACK_COLOR = 0xff000000;
 
-	/** Called when the activity is first created. */
+
+	/** Called when the activity is first created.
+	 * @param savedInstanceState the Bundle to manage the lifecycle */
 	@Override
 	public final void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -142,7 +142,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 
 		// we listen to the events from the user
 		this.findViewById(R.id.comicvieweractivity_layout).setOnTouchListener(this);
-		
+
 		// set the colors for the toolbar
 		this.findViewById(R.id.color_blue).setBackgroundColor(0xff0000ff);
 		this.findViewById(R.id.color_green).setBackgroundColor(0xff00ff00);
@@ -167,7 +167,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	 * Saves the current comic and page. This method updates the internal state
 	 * and not the database, since the activity is not going to be stopped. We
 	 * like to modify the database as less as possible.
-	 * 
+	 *
 	 * @param savedInstanceState
 	 *            the place to save state information
 	 * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
@@ -225,7 +225,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	/**
 	 * This method supplies a View for the internal ImageSwitcher. This is were
 	 * comics pages are shown.
-	 * 
+	 *
 	 * @return A simple ImageView that fills the parent is enough.
 	 * @see android.widget.ViewSwitcher.ViewFactory#makeView()
 	 */
@@ -233,14 +233,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		MyImageView img = new MyImageView(this, true);
 		img.setDrawMode(false, -1, -1);
 		img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-		img.setLayoutParams(new ImageSwitcher.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-		img.setBackgroundColor(0xff000000);
+		img.setLayoutParams(new ImageSwitcher.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		img.setBackgroundColor(BACK_COLOR);
 		return img;
 	}
 
 	/**
 	 * Called when the screen is pressed.
-	 * 
+	 *
 	 * @see android.view.View.OnTouchListener#onTouch(android.view.View,
 	 *      android.view.MotionEvent)
 	 */
@@ -277,7 +277,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 				} catch (Exception e) {
 					myLog.e(TAG, e.toString());
 					Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
-					
+
 					try {
 						ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
 						ImageView iv = (ImageView) imgs.getCurrentView();
@@ -309,7 +309,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	 * geometric area inside the view. For example, the righ side, the left
 	 * side... There are 9 zones. From 0 to 8: header-left-center-right;
 	 * margin-left-center-margin right; footer-left-center-right
-	 * 
+	 *
 	 * @param v
 	 *            The view where the user clicked
 	 * @param x
@@ -346,9 +346,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	}
 
 	/**
-	 * Responds to a gestures. TODO: gestures are not working. Check:
+	 * Responds to a gestures.
+	 * TODO: gestures are not working. Check:
 	 * http://developer.android.com/resources/articles/gestures.html
-	 * 
+	 *
 	 * @param overlay
 	 * @param gesture
 	 * @see android.gesture.GestureOverlayView.OnGesturePerformedListener#onGesturePerformed(android.gesture.GestureOverlayView,
@@ -372,7 +373,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	/**
 	 * Given a URI (actually, a file path), this method chooses the right reader
 	 * and loads the comic.
-	 * 
+	 *
 	 * @param info
 	 *            The ComicInfo to load. info.bookmarks are set inside this
 	 *            method. The page loaded is info.page
@@ -444,7 +445,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	/**
 	 * Moves the view to a certain page. This movement makes a long jump: use
 	 * changePage() to flip a page
-	 * 
+	 *
 	 * @param page
 	 *            The page to move to.
 	 */
@@ -479,8 +480,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		}
 
 		// if the page is bookmarked, show the bookmark
-		if (this.comicInfo.bookmarks.contains(this.comicInfo.reader
-				.getCurrentPage())) {
+		if (this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
 			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
 		} else {
 			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
@@ -490,7 +490,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	/**
 	 * Changes the page currently on screen, doing an animation.
 	 * TODO: currently, this method only supports left-to-right comics.
-	 * 
+	 *
 	 * @param forward
 	 *            True if the user is moving forward, false is backward
 	 */
@@ -503,13 +503,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		// drawable of the next page
 		Drawable n = null;
 		// First, remove any draw on the current page. Views are reused, so we never know
-		((MyImageView)imgs.getCurrentView()).removeDrawing();
-		((MyImageView)imgs.getCurrentView()).setDrawMode(false, -1, -1);
+		((MyImageView) imgs.getCurrentView()).removeDrawing();
+		((MyImageView) imgs.getCurrentView()).setDrawMode(false, -1, -1);
 		try {
 			// set animations according to the movement of the user
 			this.setAnimations(forward);
 			if (forward) {
-				// check that we are not in the last page
+				// check if we are at the last page
 				if (reader.getCurrentPage() >= reader.countPages() - 1) {
 					// load the next issue in the collection
 					myLog.i(TAG, "At the end of the comic");
@@ -522,6 +522,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 												// first page. It is weird
 												// otherwise
 							this.loadComic(nextIssue);
+						} else {
+							myLog.i(TAG, "Last comic in collection");
 						}
 					}
 					return;
@@ -596,12 +598,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
 		} else {
 			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
-		}		
+		}
 	}
 
 	/**
 	 * Configures the animations of the ImageSwitcher.
-	 * 
+	 *
 	 * @param inAnim
 	 *            Animation of the page that enters during a forward movement
 	 * @param outAnim
@@ -613,19 +615,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	 * @param duration
 	 *            Duration of animations.
 	 */
-	public void configureAnimations(final int inAnim, final int outAnim,
-			final int inRevAnim, final int outRevAnim, final int duration) {
+	public final void configureAnimations(
+			final int inAnim, final int outAnim,
+			final int inRevAnim, final int outRevAnim,
+			final int duration) {
 		Context context = this.getApplicationContext();
 		anims[0] = AnimationUtils.loadAnimation(context, inAnim);
 		anims[1] = AnimationUtils.loadAnimation(context, outAnim);
 		anims[2] = AnimationUtils.loadAnimation(context, inRevAnim);
 		anims[3] = AnimationUtils.loadAnimation(context, outRevAnim);
-		// if the fast pages is on, we set the listener for the animations:
-		// the real page is loaded AFTER the animations
-		if (FAST_PAGES_SCALE > 1) {
-			anims[0].setAnimationListener(this);
-			anims[2].setAnimationListener(this);
-		}
 		for (int i = 0; i < anims.length; i++) {
 			anims[i].setDuration(duration);
 		}
@@ -633,9 +631,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	}
 
 	/**
-	 * Set the animations for the next change according to the movement of the
-	 * user
-	 * 
+	 * Set the animations for the next change according to the movement of the user.
+	 *
 	 * @param forward
 	 *            True if the user is moving the comic forward, false otherwise
 	 */
@@ -652,27 +649,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 		}
 	}
 
-	/** 
-	 * @param animation
-	 * @see android.view.animation.Animation.AnimationListener#onAnimationEnd(android.view.animation.Animation)
-	 */
-	public void onAnimationEnd(Animation animation) {
-		// TODO: remove all views except current to save memory
-	}
-
-	public void onAnimationRepeat(Animation animation) {
-	}
-
-	public void onAnimationStart(Animation animation) {
-	}
-
 	/**
 	 * This task is used to load a page in a background thread and improve the
 	 * GUI response time. Use (page is an integer):
-	 * 
+	 *
 	 * page=new LoadNextPage().execute(page); (...do whatever...) Drawable
 	 * newpage = page.get()
-	 * 
+	 *
 	 * @author juanvi
 	 */
 	private class LoadNextPage extends AsyncTask<Integer, Void, Drawable> {
@@ -685,13 +668,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			myLog.d(TAG, "Loading fast page " + page);
 			try {
 				//return ComicViewerActivity.this.comicInfo.reader.getFastPage(getResources(), page, FAST_PAGES_SCALE);
-				return ComicViewerActivity.this.comicInfo.reader.getPage(page); 
+				return ComicViewerActivity.this.comicInfo.reader.getPage(page);
 			} catch (Exception e) {
 				return ComicViewerActivity.this.getResources().getDrawable(R.drawable.outofmemory);
 			}
 		}
 
-		protected void onPostExecute(Drawable d) {
+		protected void onPostExecute(final Drawable d) {
 			myLog.d(TAG, "Next page loaded");
 		}
 	}
@@ -773,8 +756,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			this.finish();
 			return true;
 		case R.id.switch_drawing: // switch to draw mode
-			if(DRAW_MODE_AVAILABLE) {
-				MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+			if (DRAW_MODE_AVAILABLE) {
+				MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 				if (i.isDrawMode()) {
 					i.setDrawMode(false, -1, -1);
 					this.findViewById(R.id.pentoolbar).setVisibility(View.GONE);
@@ -795,11 +778,13 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 	}
 
 	/**
-	 * Gets the result of calling BookmarkExplroer. The result is the page to
-	 * show next
+	 * Gets the result of calling BookmarkExplorer.
+	 * The result is the page to show next
+	 * @param requestCode The code of the requested subactivity.
+	 * @param resultCode The resulting code
+	 * @param data The resulting data
 	 */
-	public final synchronized void onActivityResult(final int requestCode,
-			int resultCode, final Intent data) {
+	public final synchronized void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
 		if (resultCode == Activity.RESULT_OK) {
 			if (requestCode == REQUEST_BOOKMARKS) {
 				int page = data.getIntExtra("page", 0);
@@ -808,35 +793,44 @@ public class ComicViewerActivity extends Activity implements ViewFactory,
 			}
 		}
 	}
-	
-	/**  
+
+	/** Returns the name of the file that stores the drawing that the user made on that page.
+	 * TODO: this method is currently not used.
 	 * @param file The original comic file
-	 * @return The thumbnail for that file.
+	 * @param page The page of the drawing
+	 * @return The draw of that page.
 	 */
-	private File getDrawFile(File file, int page) {
+	private File getDrawFile(final File file, final int page) {
 		String name = file.getName();
 		if (name.lastIndexOf(".") > 0) {
 			name = name.substring(0, name.lastIndexOf("."));
 		}
 		return new File(file.getParent() + File.separator + DRAWDIR + File.separator + name + "-" + page + ".png");
 	}
-	
-	public void onPenToolbarDelete(final View v) {
-		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+
+	//////////////////MANAGE THE TOOLBAR
+	/** Deletes the current drawing from screen.
+	 * @param v ignored */
+	public final void onPenToolbarDelete(final View v) {
+		MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 		i.removeDrawing();
 	}
-	public void onPenToolbarColor(final View v) {
-		boolean r=((ToggleButton)this.findViewById(R.id.color_red)).isChecked();
-		boolean g=((ToggleButton)this.findViewById(R.id.color_green)).isChecked();
-		boolean b=((ToggleButton)this.findViewById(R.id.color_blue)).isChecked();
-		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+	/** Changes the color of the pen.
+	 * @param v Ignored. */
+	public final void onPenToolbarColor(final View v) {
+		boolean r = ((ToggleButton) this.findViewById(R.id.color_red)).isChecked();
+		boolean g = ((ToggleButton) this.findViewById(R.id.color_green)).isChecked();
+		boolean b = ((ToggleButton) this.findViewById(R.id.color_blue)).isChecked();
+		MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 		int newColor = 0xff000000 | (r?0xff0000:0) | (g?0x00ff00:0) | (b?0x0000ff:0);
 		i.setPainterColor(newColor);
 	}
-	public void onPenToolbarWidth(final View v) {
-		MyImageView i=(MyImageView)((ImageSwitcher)this.findViewById(R.id.switcher)).getCurrentView();
+	/** Changes the width of the current pen.
+	 * @param v ignored */
+	public final void onPenToolbarWidth(final View v) {
+		MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 		float currentWidth = i.getPainterWidth();
-		if(currentWidth<10) {
+		if (currentWidth < 10) {
 			i.setPainterWidth(30);
 		} else {
 			i.setPainterWidth(3);

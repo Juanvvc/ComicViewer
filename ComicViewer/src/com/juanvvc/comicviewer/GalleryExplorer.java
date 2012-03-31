@@ -46,8 +46,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * Within this scope, a "collection" is a directory with comics inside. Thre is
  * only one level of collections, and subdirectories are top-level collections.
  *
- * TODO rescans are forced too much. In large directories this is not a good
- * idea
+ * TODO Too many rescans are forced. In large directories this is not a good idea
  *
  * @author juanvi
  *
@@ -87,8 +86,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 
 	}
 
-	/** The Activity is going to be killed: save preferences. */
-	public final void onDestroy() {
+	/** The Activity is going to be stopped: save preferences. */
+	public final void onStop() {
 		super.onDestroy();
 		// save preferences
 		SharedPreferences settings = getPreferences(MODE_PRIVATE);
@@ -102,17 +101,18 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	 * pair <collection name, gallery>
 	 */
 	private class CollectionListAdapter extends BaseAdapter {
+		/** The context of the application. */
 		private Context context;
 		/** The comic collections that are available to the user. */
 		private ArrayList<ComicCollection> entries;
 
 		/** Creates an adapter for a list of collections.
-		 * @param context
+		 * @param c The context of the application
 		 * @param dir The base dir to create the list of collections. The collections
 		 * are this directory and all subdirectories of this.
 		 */
-		CollectionListAdapter(final Context context, final File dir) {
-			this.context = context;
+		CollectionListAdapter(final Context c, final File dir) {
+			this.context = c;
 
 			// create the list of comic collections
 			this.entries = ComicCollection.getCollections(GalleryExplorer.this,
@@ -131,9 +131,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		/**
 		 * This method creates a row for the collection list.
 		 *
-		 * @see android.widget.Adapter#getView(int, android.view.View,
-		 *      android.view.ViewGroup)
+		 * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
+		 * @param position The position of the new view
 		 * @param convertView Currently, the view is not converted and a new one is created each time
+		 * @param parent A reference to the parent
 		 * @return A row. The main view of this row is a Gallery that shows the covers
 		 * of all available comics inside the collection.
 		 */
@@ -172,6 +173,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	 * use an AsyncTask to create the cover out of the UI thread
 	 */
 	private class CoverListAdapter extends BaseAdapter {
+		/** The context of the application. */
 		private Context context;
 		/** The ComicCollection that this adapter controls.
 		 * This is a list of available comics inside the collection.
@@ -207,15 +209,13 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		 * This creates an item of the list of covers. An item is a cover and
 		 * its name.
 		 *
-		 * @see android.widget.Adapter#getView(int, android.view.View,
-		 *      android.view.ViewGroup)
+		 * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ComicInfo ci = this.entries.get(position);
 			// TODO: I tried to reuse convertView, but some images and text do
 			// not change fast enough.
-			View v = View.inflate(this.context, R.layout.galleryexploreritem,
-					null);
+			View v = View.inflate(this.context, R.layout.galleryexploreritem, null);
 			v.setBackgroundResource(this.background);
 
 			// Creates a view holder to speed up the UI thread
@@ -249,12 +249,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		public int getCount() {
 			return this.entries.size();
 		}
-
-		public Object getItem(int position) {
+		public Object getItem(final int position) {
 			return this.entries.get(position);
 		}
-
-		public long getItemId(int position) {
+		public long getItemId(final int position) {
 			return this.parentID * MAX_CHILDREN + position;
 		}
 	}
@@ -262,12 +260,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	/**
 	 * The only registered event is clicking on a cover: load the comic.
 	 *
+	 * @param gallery A reference to the list. We know that is the comic gallery
+	 * @param arg1 A reference to the clicked view. Not used.
+	 * @param position The position in the list of the selected comic.
+	 * @param id The identifier of the clicked view. Not used.
 	 * @see android.widget.AdapterView.OnItemClickListener#onItemClick(android.widget.AdapterView,
 	 *      android.view.View, int, long)
 	 */
-	public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
+	public final void onItemClick(final AdapterView<?> gallery, final View arg1, final int position, final long id) {
 		// get the file name (we know that the item is going to be a file)
-		ComicInfo ci = (ComicInfo) arg0.getAdapter().getItem(position);
+		ComicInfo ci = (ComicInfo) gallery.getAdapter().getItem(position);
 		File f = new File(ci.uri);
 		// start the comic viewer
 		Intent data = new Intent(this, ComicViewerActivity.class);
@@ -276,19 +278,22 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	}
 
 	/**
-	 * Creates a contextual menu. The only items with a contextual menu are
-	 * comics
+	 * Creates a contextual menu. The only items with a contextual menu are comics.
+	 * @param menu the context menu
+	 * @param v The view that the user clicked
+	 * @param menuInfo Information about this menu
 	 */
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+	public final void onCreateContextMenu(final ContextMenu menu, final View v, final ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.covermenu, menu);
 	}
 
-	/** Manages the contextual menu over comics */
+	/** Manages the contextual menu on specific comics.
+	 * @param item The item of the menu
+	 * @return True always. */
 	public final boolean onContextItemSelected(final MenuItem item) {
-		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item
-				.getMenuInfo();
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 
 		// get the comicinfo of the selected item
 		ComicDBHelper db = new ComicDBHelper(this);
@@ -304,8 +309,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			comicinfo.read = !comicinfo.read;
 			db.updateComicInfo(comicinfo);
 			// TODO: this do not work.
-			((ComicCollection) colAdapter.getItem(info.position
-					/ CoverListAdapter.MAX_CHILDREN)).invalidate(this);
+			((ComicCollection) colAdapter.getItem(info.position / CoverListAdapter.MAX_CHILDREN)).invalidate(this);
 			comicAdapter.notifyDataSetChanged();
 			list.invalidateViews();
 			db.close();
@@ -318,15 +322,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				// removes the comic from the database
 				db.removeComic(comicinfo.id);
 				// removes the comic from the filesystem
-				comicfile.delete();
+				if (!comicfile.delete()) {
+					myLog.w(TAG, "Comic couldn't be deleted. Secured filesystem?");
+				}
 				// removes the thumbnail from the filesystem
-				getThumbnailFile(comicfile).delete();
+				if (!getThumbnailFile(comicfile).delete()) {
+					myLog.w(TAG, "Thumbnail couldn't be deleted. Secured filesystem?");
+				}
 				// update the view
-				((ComicCollection) colAdapter.getItem(info.position
-						/ CoverListAdapter.MAX_CHILDREN)).invalidate(this);
+				((ComicCollection) colAdapter.getItem(info.position	/ CoverListAdapter.MAX_CHILDREN)).invalidate(this);
 				comicAdapter.notifyDataSetChanged();
-				colAdapter.notifyDataSetChanged();
-				list.invalidateViews();
 				Toast.makeText(this,
 						comicfile.getName() + getText(R.string.removed),
 						Toast.LENGTH_LONG).show();
@@ -335,17 +340,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 						getText(R.string.cannot_remove_directories),
 						Toast.LENGTH_LONG).show();
 			}
-			return true;
 		default:
-			return super.onContextItemSelected(item);
 		}
+		return true;
 	}
 
-	/**  
+	/**
 	 * @param file The original comic file
 	 * @return The thumbnail for that file.
 	 */
-	private File getThumbnailFile(File file) {
+	private File getThumbnailFile(final File file) {
 		String name = file.getName();
 		if (name.lastIndexOf(".") > 0) {
 			name = name.substring(0, name.lastIndexOf("."));
@@ -358,13 +362,19 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	 * @see http://developer.android.com/training/improving-layouts/smooth-scrolling.html
 	 */
 	static class ViewHolder {
+		/** The text view that shows information of the comic. */
 		TextView text;
+		/** The imageview that shows the cover. */
 		ImageView img;
+		/** The file of the comic in the filesystem. */
 		File file;
 	}
 
 	/** This is an AsyncTask to load the covers outside the UI thread. */
 	private class LoadCover extends AsyncTask<ViewHolder, Void, Drawable> {
+		/** Information about the UI of a comic.
+		 * @see http://developer.android.com/training/improving-layouts/smooth-scrolling.html
+		 */
 		private ViewHolder holder;
 
 		@Override
@@ -398,15 +408,14 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					throw new ReaderException("Not a suitable reader");
 				}
 				// Load the first page fast (scale=4)
-				BitmapDrawable bd = new BitmapDrawable(getResources(), reader.getBitmapPage(0, 4));
+				Bitmap page = reader.getBitmapPage(0, 4);
 				// in case of fail, return the broken image
-				if (bd == null) {
+				if (page == null) {
 					return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				}
 				// scale
-				Bitmap s = Bitmap.createScaledBitmap(bd.getBitmap(), 200, 300, true);
-				// recycle the original bitmap
-				bd.getBitmap().recycle();
+				Bitmap s = Bitmap.createScaledBitmap(page, 200, 300, true);
+				page.recycle();
 
 				try {
 					// save the cache file for the next time, if you can
@@ -415,7 +424,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 						// create the thumbnails directory
 						// I suppose that if the directory cannot be created, an
 						// exception will be triggered in the next line
-						cachefile.getParentFile().mkdir();
+						myLog.d(TAG, "Creating thumbnails dir: " + cachefile.getParentFile().getAbsolutePath());
+						if (!cachefile.getParentFile().mkdir()) {
+							myLog.w(TAG, "Thumbnails directory was not created");
+						}
 					}
 					// save the thumbnail
 					FileOutputStream out = new FileOutputStream(cachefile.getAbsoluteFile());
@@ -433,7 +445,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			}
 		}
 
-		protected void onPostExecute(Drawable d) {
+		@Override
+		protected void onPostExecute(final Drawable d) {
 			super.onPostExecute(d);
 			this.holder.img.setImageDrawable(d);
 		}
@@ -464,8 +477,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		case R.id.rescan: // rescan collection
 			ListView collections = (ListView) findViewById(R.id.collections);
 			collections.invalidate();
-			collections.setAdapter(new CollectionListAdapter(this, new File(
-					this.comicDir)));
+			collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
 			return true;
 		case R.id.bookmarks: // show the bookmarks activity
 			intent = new Intent(getBaseContext(), BookmarksExplorer.class);
@@ -478,9 +490,13 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		}
 	}
 
-	/** Get the result of a called activity. */
-	public synchronized void onActivityResult(final int requestCode,
-			int resultCode, final Intent data) {
+	/** Get the result of a called activity.
+	 * Currently, we use these subactivities: DirExplorer to get the comics directories,
+	 * BookmarkExplorer to show the current bookmarks and ComicViewer to show a comic.
+	 * @param requestCode The code that we used to call the subactivity
+	 * @param resultCode The code that the subactivity returned
+	 * @param data The data that the subactivity returned */
+	public final synchronized void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
 		if (resultCode == Activity.RESULT_OK) {
 			if (requestCode == REQUEST_DIRECTORY) {
 				// Activity "select a directory for the comic collection"

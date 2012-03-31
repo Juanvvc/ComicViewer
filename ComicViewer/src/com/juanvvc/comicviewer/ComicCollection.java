@@ -172,7 +172,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 				break;
 			}
 		}
-		if (n > -1 && n < size()) {
+		if (n > -1 && n < size() - 1) {
 			return this.get(n + 1);
 		} else {
 			return null;

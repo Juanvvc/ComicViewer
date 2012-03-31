@@ -3,7 +3,6 @@ package com.juanvvc.comicviewer.readers;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,13 +10,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import com.juanvvc.comicviewer.myLog;
-
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+
+import com.juanvvc.comicviewer.myLog;
 
 /**
  * A reader for directories of images.
@@ -39,14 +36,15 @@ public class DirReader extends Reader {
 	 */
 	public DirReader(final Context newContext, final String newUri) throws ReaderException {
 		super(newContext, newUri);
-		if (uri != null) {
-			myLog.v(TAG, "Usig DirReader on " + uri);
-			this.load(uri);
+		if (newUri != null) {
+			myLog.v(TAG, "Usig DirReader on " + newUri);
+			this.load(newUri);
 		}
 	}
 
 	@Override
 	public final void load(final String uri) throws ReaderException {
+		super.load(uri);
 		File root = new File(uri);
 		if (!root.isDirectory()) {
 			throw new ReaderException("Not a directory");
@@ -67,6 +65,10 @@ public class DirReader extends Reader {
 			public int compare(final File lhs, final File rhs) {
 				String n1 = lhs.getName();
 				String n2 = rhs.getName();
+				if (IGNORE_CASE) {
+					n1 = n1.toLowerCase();
+					n2 = n2.toLowerCase();
+				}
 				return n1.compareTo(n2);
 			}
 		});
@@ -79,13 +81,13 @@ public class DirReader extends Reader {
 				return null;
 			}
 			InputStream is = new FileInputStream(this.entries.get(page));
-			return this.streamToTiledDrawable(is, COLUMNS, ROWS );
+			return this.streamToTiledDrawable(is, COLUMNS, ROWS);
 
 		} catch (Exception ex) {
 			throw new ReaderException(ex.getMessage());
 		} catch (OutOfMemoryError err) {
 			throw new ReaderException(
-					this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+					this.getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
 	}
 
@@ -95,7 +97,7 @@ public class DirReader extends Reader {
 			if (page < 0 || page >= this.countPages()) {
 				return null;
 			}
-			
+
 			// you cannot use:
 			// Drawable.createFromStream(this.archive.getInputStream(entry),
 			// entry.getName());
@@ -116,14 +118,8 @@ public class DirReader extends Reader {
 			throw new ReaderException(ex.getMessage());
 		} catch (OutOfMemoryError err) {
 			throw new ReaderException(
-					this.context
-							.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+					this.getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
-	}
-
-	@Override
-	public void close() {
-		// nothing to do here
 	}
 
 	@Override

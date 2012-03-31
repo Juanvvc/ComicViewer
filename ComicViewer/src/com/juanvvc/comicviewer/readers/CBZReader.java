@@ -12,9 +12,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.juanvvc.comicviewer.myLog;
@@ -47,6 +45,7 @@ public class CBZReader extends Reader {
 	@Override
 	public final void load(final String uri) throws ReaderException {
 		try {
+			super.load(uri);
 			myLog.i(TAG, "Loading URI" + uri);
 			this.archive = new ZipFile(uri);
 			// get the entries of the file and sort them alphabetically
@@ -65,58 +64,29 @@ public class CBZReader extends Reader {
 				public int compare(final ZipEntry lhs, final ZipEntry rhs) {
 					String n1 = lhs.getName();
 					String n2 = rhs.getName();
+					if (IGNORE_CASE) {
+						n1 = n1.toLowerCase();
+						n2 = n2.toLowerCase();
+					}
 					return n1.compareTo(n2);
 				}
 
 			});
 			super.load(uri);
 		} catch (IOException e) {
-			this.uri = null;
 			throw new ReaderException("ZipFile cannot be read: " + e.toString());
 		}
 	}
 
 	@Override
 	public final void close() {
+		super.close();
 		try {
 			this.archive.close();
 		} catch (IOException e) {
 			myLog.e(TAG, e.toString());
 		}
 		this.archive = null;
-		this.currentPage = -1;
-	}
-
-	/** Gets a drawable from a entry in the ZIP file.
-	 * @param entry The entry to load
-	 * @param initialscale The initial scale of the image to load. If 1, load a high quality version of the image
-	 * @return The drawable of the file
-	 * @throws ReaderException If there is a problem loading the image. The most likely problem is OutOfMemory
-	 */
-	private Drawable getDrawableFromZipEntry(final Resources res, final ZipEntry entry, final int initialscale)throws ReaderException {
-		try {
-			// you cannot use:
-			// Drawable.createFromStream(this.archive.getInputStream(entry),
-			// entry.getName());
-			// this will trigger lots of OutOfMemory errors.
-			// see Reader.byteArrayBitmap for an explanation.
-			InputStream is = this.archive.getInputStream(entry);
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			byte[] tmp = new byte[4096];
-			int ret = 0;
-
-			while ((ret = is.read(tmp)) > 0) {
-				bos.write(tmp, 0, ret);
-			}
-
-			return new BitmapDrawable(res, this.byteArrayToBitmap(bos.toByteArray(), initialscale));
-
-		} catch (Exception ex) {
-			throw new ReaderException(ex.getMessage());
-		} catch (OutOfMemoryError err) {
-			throw new ReaderException(
-					this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
-		}
 	}
 
 	@Override
@@ -160,7 +130,7 @@ public class CBZReader extends Reader {
 			throw new ReaderException(ex.getMessage());
 		} catch (OutOfMemoryError err) {
 			throw new ReaderException(
-					this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+					getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
 	}
 

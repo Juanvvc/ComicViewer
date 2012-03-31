@@ -27,22 +27,24 @@ import com.juanvvc.comicviewer.myLog;
  */
 public abstract class Reader {
 	/** The URI of the currently loaded reader. */
-	protected String uri = null;
+	private String uri = null;
 	/** The current page. */
-	protected int currentPage = -1;
+	private int currentPage = -1;
 	/**In some load page strategies, the max size of the page to load.
 	 *  (Currently, not in use) */
 	public static final int MAX_BITMAP_SIZE = 1024;
 	/** The context of the application. */
-	protected Context context;
+	private Context context;
 	/** A constant tag name, for logging. */
 	protected static final String TAG = "Reader";
-	/** Number of columns in the tiled page, by default */
+	/** Number of columns in the tiled page, by default. */
 	public static final int COLUMNS = 6;
-	/** Number of rows in the tiled page, by default */
+	/** Number of rows in the tiled page, by default. */
 	public static final int ROWS = 8;
-	
-	
+	/** If set, ignore case when ordering pages of the comic. */
+	public static final boolean IGNORE_CASE = true;
+
+
 	/**
 	 * If set, horizontal pages rotate to match the screen.
 	 * This assumes that screen is portrait, and this was mandatory in the XML.
@@ -96,7 +98,7 @@ public abstract class Reader {
 	 * Loads a URI into this reader. You need to override this method in you
 	 * reader, calling to the parent.load(uri)
 	 *
-	 * @param uri
+	 * @param uri The URI of the comic to load
 	 * @throws ReaderException
 	 */
 	public void load(String uri) throws ReaderException {
@@ -106,8 +108,12 @@ public abstract class Reader {
 		this.currentPage = -1;
 	}
 
-	/** Closes the reader. */
-	public abstract void close();
+	/** Closes the reader.
+	 * Always call to this method in any class you extend. */
+	public void close() {
+		this.uri = null;
+		this.currentPage = -1;
+	}
 
 	/** @return the number pages of the reader. */
 	public abstract int countPages();
@@ -176,11 +182,10 @@ public abstract class Reader {
 	 * The last versions of Android have a very annoying feature: graphics are
 	 * always HW accelerated, bitmaps are always loaded as OPENGL_TEXTURES, and
 	 * a HW limit applies: MAX_BITMAP_SIZE at most.
-	 * http://groups.google.com/group
-	 * /android-developers/browse_thread/thread/2352c776651b6f99 Some report
-	 * (http
-	 * ://stackoverflow.com/questions/7428996/hw-accelerated-activity-how-to
-	 * -get-opengl-texture-size-limit) that the minimum is 2048. In my device,
+	 * http://groups.google.com/group/android-developers/browse_thread/thread/2352c776651b6f99
+	 * Some report
+	 * (http://stackoverflow.com/questions/7428996/hw-accelerated-activity-how-to-get-opengl-texture-size-limit)
+	 * that the minimum is 2048. In my device,
 	 * that does not work. 1024 does. Conclusion: in current devices, you cannot
 	 * load a bitmap larger (width or height) than MAX_BITMAP_SIZE pixels. Fact:
 	 * many CBRs use images larger than that. OutOfMemory errors appear.
@@ -215,7 +220,6 @@ public abstract class Reader {
 		// // now, set the scale according to the image size: 1, 2, 3...
 		// opts.inSampleSize = Math.max(opts.outHeight,
 		// opts.outWidth)/MAX_BITMAP_SIZE+1;
-		// //TODO: apply a smart scaler
 		// opts.inScaled=true;
 		// // set a high quality scale (did really works?)
 		// opts.inPreferQualityOverSpeed=true;
@@ -256,18 +260,25 @@ public abstract class Reader {
 
 		return bitmap;
 	}
-	
-	protected final Drawable streamToTiledDrawable(InputStream is, int cols, int rows) throws IOException {
+
+	/**
+	 * @param is A stream to read the image and create a tiled drawable
+	 * @param cols Number of columns in the final image
+	 * @param rows Number of rows in the final image
+	 * @return A tiled drawable with the contensts of the stream
+	 * @throws IOException After any error
+	 */
+	protected final Drawable streamToTiledDrawable(final InputStream is, final int cols, final int rows) throws IOException {
 		BitmapRegionDecoder bd = BitmapRegionDecoder.newInstance(is, true);
-		
+
 		// Should we rotate the bitmaps?
 		boolean rotate = false;
 		if (AUTOMATIC_ROTATION && bd.getHeight() < bd.getWidth()) {
 			rotate = true;
 		}
-		
+
 		// Get the closest width and height that divisible by cols and rows
-		// note1: that the last columns/rows of the image will be lost 
+		// note1: that the last columns/rows of the image will be lost
 		int ow, oh;
 		if (rotate) {
 			// if the image is rotated, width and height switch places
@@ -277,15 +288,15 @@ public abstract class Reader {
 			ow = (bd.getWidth() / cols) * cols;
 			oh = (bd.getHeight() / rows) * rows;
 		}
-		
+
 		// Get the final tiles width and height
 		int tw = ow / cols;
 		int th = oh / rows;
 		// create the tiles
 		ArrayList<Bitmap> tiles = new ArrayList<Bitmap>();
-		
-		for(int i=0; i<rows; i++) {
-			for(int j=0; j<cols; j++) {
+
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
 				if (rotate) {
 					int left = th * i;
 					int top = tw * (cols - j - 1);
@@ -306,8 +317,6 @@ public abstract class Reader {
 				}
 			}
 		}
-		
-		
 		return new TiledDrawable(tiles, cols, rows);
 	}
 
@@ -353,4 +362,10 @@ public abstract class Reader {
 		return CBRReader.manages(uri) || CBZReader.manages(uri) || DirReader.manages(uri);
 	}
 
+	/**
+	 * @return The context of this reader
+	 */
+	public final Context getContext() {
+		return this.context;
+	}
 }

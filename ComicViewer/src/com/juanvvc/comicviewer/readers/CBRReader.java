@@ -1,7 +1,6 @@
 
 package com.juanvvc.comicviewer.readers;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,7 @@ public class CBRReader extends Reader {
 			this.load(uri);
 		}
 	}
-	
+
 	@Override
 	public final void load(final String uri) throws ReaderException {
 		super.load(uri);
@@ -54,13 +53,12 @@ public class CBRReader extends Reader {
 		try {
 			this.archive = new Archive(new File(uri));
 		} catch (Exception e) {
-			this.uri = null;
 			throw new ReaderException(e.getMessage());
 		}
 		// throws an exception if the file is encrypted
 		if (this.archive.isEncrypted()) {
 			this.archive = null;
-			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.encrypted_file));
+			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.encrypted_file));
 		}
 		this.entries = this.archive.getFileHeaders();
 		// removes files that are not .jpg or .png
@@ -77,6 +75,10 @@ public class CBRReader extends Reader {
 			public int compare(final FileHeader lhs, final FileHeader rhs) {
 				String n1 = lhs.getFileNameString();
 				String n2 = rhs.getFileNameString();
+				if (IGNORE_CASE) {
+					n1 = n1.toLowerCase();
+					n2 = n2.toLowerCase();
+				}
 				return n1.compareTo(n2);
 			}
 
@@ -85,13 +87,13 @@ public class CBRReader extends Reader {
 
 	@Override
 	public final void close() {
+		super.close();
 		try {
 			this.archive.close();
 		} catch (IOException e) {
 			myLog.e(TAG, e.toString());
 		}
 		this.archive = null;
-		this.currentPage = -1;
 
 	}
 
@@ -105,7 +107,7 @@ public class CBRReader extends Reader {
 		} catch (Exception e) {
 			myLog.e(TAG, "Cannot read page: " + e.toString());
 		} catch (OutOfMemoryError err) {
-			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
 		return null;
 	}
@@ -124,7 +126,7 @@ public class CBRReader extends Reader {
 		} catch (Exception e) {
 			throw new ReaderException("Cannot read page: " + e.getMessage());
 		} catch (OutOfMemoryError err) {
-			throw new ReaderException(this.context.getString(com.juanvvc.comicviewer.R.string.outofmemory));
+			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
 	}
 
@@ -151,35 +153,38 @@ public class CBRReader extends Reader {
 		}
 		return this.entries.size();
 	}
-	
+
 	/**
 	 * Returns an {@link InputStream} that will allow to read the file and
 	 * stream it. Please note that this method will create a new Thread and an a
 	 * pair of Pipe streams.
-	 * 
+	 *
 	 * (From: https://github.com/edmund-wagner/junrar/blob/master/unrar/src/main/java/com/github/junrar/Archive.java)
-	 * 
-	 * @param header
-	 *            the header to be extracted
-	 * @throws RarException
-	 * @throws IOException
-	 *             if any IO error occur
+	 *
+	 * @param hd the header to be extracted
+	 * @throws IOException if any IO error occurs
+	 * @return The input stream of the entry
 	 */
-	public InputStream extractToInputStream(final FileHeader hd) throws RarException, IOException {
+	public final InputStream extractToInputStream(final FileHeader hd) throws IOException {
 		final PipedInputStream in = new PipedInputStream(32 * 1024);
 		final PipedOutputStream out = new PipedOutputStream(in);
 
 		// creates a new thread that will write data to the pipe. Data will be
 		// available in another InputStream, connected to the OutputStream.
+		// Warning: using this method, we cannot handle exceptions!
 		new Thread(new Runnable() {
 			public void run() {
 				try {
 					archive.extractFile(hd, out);
 				} catch (RarException e) {
+					myLog.e(TAG, e.toString());
+				} catch (OutOfMemoryError e) {
+					myLog.e(TAG, e.toString());
 				} finally {
 					try {
 						out.close();
 					} catch (IOException e) {
+						myLog.e(TAG, e.toString());
 					}
 				}
 			}
