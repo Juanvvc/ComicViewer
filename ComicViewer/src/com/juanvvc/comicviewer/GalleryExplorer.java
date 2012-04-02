@@ -3,6 +3,9 @@ package com.juanvvc.comicviewer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -441,6 +444,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				return new BitmapDrawable(getResources(), s);
 			} catch (Exception e) {
 				myLog.e(TAG, e.toString());
+				myLog.e(TAG, stackTraceToString(e));
 				return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
@@ -571,4 +575,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		}
 	}
 
+	/** Utility method to print the stack trace of an exception.
+	 * From: http://www.javapractices.com/topic/TopicAction.do?Id=78
+	 *
+	 * @param e An exception
+	 * @return A string with the stack trace of an exception
+	 */
+	private static String stackTraceToString(final Exception e) {
+		final Writer result = new StringWriter();
+		final PrintWriter printWriter = new PrintWriter(result);
+		e.printStackTrace(printWriter);
+		return result.toString();
+	}
 }

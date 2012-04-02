@@ -32,26 +32,26 @@ public abstract class Reader {
 	private int currentPage = -1;
 	/**In some load page strategies, the max size of the page to load.
 	 *  (Currently, not in use) */
-	public static final int MAX_BITMAP_SIZE = 1024;
+//	public static final int MAX_BITMAP_SIZE = 1024;
 	/** The context of the application. */
 	private Context context;
 	/** A constant tag name, for logging. */
 	protected static final String TAG = "Reader";
+	/** Constant to return in getPageCount() when there is file. */
+	public static final int NOFILE = -100;
 	/** Number of columns in the tiled page, by default. */
 	public static final int COLUMNS = 6;
 	/** Number of rows in the tiled page, by default. */
 	public static final int ROWS = 8;
+
+	// TODO: make these options configurable
 	/** If set, ignore case when ordering pages of the comic. */
 	public static final boolean IGNORE_CASE = true;
-
-
 	/**
 	 * If set, horizontal pages rotate to match the screen.
 	 * This assumes that screen is portrait, and this was mandatory in the XML.
 	 */
-	private static final boolean AUTOMATIC_ROTATION = true;
-	/** Constant to return in getPageCount() when there is file. */
-	public static final int NOFILE = -100;
+	public static final boolean AUTOMATIC_ROTATION = true;
 
 	/** Create a new reader from a uri.
 	 * @param newContext Context of the application
@@ -344,6 +344,8 @@ public abstract class Reader {
 				return new CBZReader(context, uri);
 			} else if (DirReader.manages(uri)) {
 				return new DirReader(context, uri);
+			} else if (PDFReader.manages(uri)) {
+				return new PDFReader(context, uri);
 			}
 		} catch (ReaderException e) {
 			myLog.w(TAG,  e.toString());
@@ -359,7 +361,7 @@ public abstract class Reader {
 	 * @return True if there is a known reader that manages this type of URI
 	 */
 	public static final boolean existsReader(final String uri) {
-		return CBRReader.manages(uri) || CBZReader.manages(uri) || DirReader.manages(uri);
+		return CBRReader.manages(uri) || CBZReader.manages(uri) || DirReader.manages(uri) || PDFReader.manages(uri);
 	}
 
 	/**

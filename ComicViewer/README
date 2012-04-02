@@ -21,6 +21,9 @@ file of this library, but sources can be found at
 https://github.com/edmund-wagner/junrar
 It uses its own license, not approved by the FSF.
 
+This project used native library MuPDF to show PDF content.
+The JNI interface is from mpietrzak, http://code.google.com/p/apv/
+
 The rest of the code is under a GPLv3 license.
 
 (c) 2012 Juanvi Vera
