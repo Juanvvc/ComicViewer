@@ -49,7 +49,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * Within this scope, a "collection" is a directory with comics inside. Thre is
  * only one level of collections, and subdirectories are top-level collections.
  *
- * TODO Too many rescans are forced. In large directories this is not a good idea
+ * TODO: Too many rescans are forced. In large directories this is not a good idea
  *
  * @author juanvi
  *
@@ -311,7 +311,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		case R.id.switch_read: // switches the read status of a comic
 			comicinfo.read = !comicinfo.read;
 			db.updateComicInfo(comicinfo);
-			// TODO: this do not work.
+			// TODO: this do not work as expected
 			((ComicCollection) colAdapter.getItem(info.position / CoverListAdapter.MAX_CHILDREN)).invalidate(this);
 			comicAdapter.notifyDataSetChanged();
 			list.invalidateViews();
@@ -482,6 +482,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			ListView collections = (ListView) findViewById(R.id.collections);
 			collections.invalidate();
 			collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+			// TODO: remove .thumbnails directories and old comics from the database
 			return true;
 		case R.id.bookmarks: // show the bookmarks activity
 			intent = new Intent(getBaseContext(), BookmarksExplorer.class);

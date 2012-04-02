@@ -48,6 +48,7 @@ public class MyImageView extends ImageView implements OnTouchListener {
 		  painter.setStyle(Paint.Style.STROKE);
 		  painter.setStrokeJoin(Paint.Join.ROUND);
 		  painter.setStrokeCap(Paint.Cap.ROUND);
+		  this.setDrawVisible(true);
 		  this.setPainterWidth(3);
 		  this.removeDrawing();
 		  this.setDrawMode(false, -1, -1);
