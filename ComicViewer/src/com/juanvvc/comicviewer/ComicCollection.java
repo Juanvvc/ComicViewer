@@ -14,11 +14,14 @@ import com.juanvvc.comicviewer.readers.Reader;
 
 /**
  * Manages a collection of comics. A collection of comics is an ordered set of
- * comics that are (hopefully) realted. Usually, it is a directory in the
- * filesystem
- * 
+ * comics that are (hopefully) related. The most common collection is a
+ * directory in the filesystem.
+ *
+ * This class has methods to manage collections and create collection
+ * from directories and subdirectories.
+ *
  * @author juanvi
- * 
+ *
  */
 public class ComicCollection extends ArrayList<ComicInfo> {
 	private static final long serialVersionUID = 1L;
@@ -32,23 +35,23 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 
 	/**
 	 * Creates a collection from a list of files.
-	 * 
-	 * @param name
-	 * @param list
+	 *
+	 * @param n The human readable name for this collection
+	 * @param list Initial items for this collection.
 	 */
-	public ComicCollection(final String name, List<ComicInfo> list) {
+	public ComicCollection(final String n, final List<ComicInfo> list) {
 		super(list);
-		this.name = name;
+		this.name = n;
 	}
 
 	/**
-	 * Creates an empty collection with a name
-	 * 
-	 * @param name
+	 * Creates an empty collection with a name.
+	 *
+	 * @param n The human readable name for this collection
 	 */
-	public ComicCollection(final String name) {
+	public ComicCollection(final String n) {
 		super();
-		this.name = name;
+		this.name = n;
 	}
 
 	/**
@@ -59,15 +62,16 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	}
 
 	/**
-	 * Given a directory, identify the ComicCollections that are inside them.
+	 * Given a directory, identify the ComicCollections that are in the directory.
+	 * Collections are the directory and any subdirectory (at any level).
 	 * This method only creates one level of collections: top directories and
 	 * subdirectories are all of them collections of the same level.
 	 *
-	 * @param context
-	 * @param root
+	 * @param context The context of the application.
+	 * @param root The root directory to scan.
 	 * @return A list of collections inside a directory
 	 */
-	public static ArrayList<ComicCollection> getCollections(Context context, File root) {
+	public static ArrayList<ComicCollection> getCollections(final Context context, final File root) {
 		if (root == null) {
 			return null;
 		}
@@ -81,10 +85,14 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		Iterator<File> itr = contents.iterator();
 		while (itr.hasNext()) {
 			File nf = itr.next();
-			// remove from the list normal files and the thumbnails directory
-			if (!nf.isDirectory() || nf.getName().equals(GalleryExplorer.THUMBNAILS)) {
+			if (nf.getName().startsWith(".")) {
+				// remove from the list hidden files/directories
+				itr.remove();
+			} else if (!nf.isDirectory() || nf.getName().equals(GalleryExplorer.THUMBNAILS)) {
+				// remove from the list normal files and the thumbnails directory
 				itr.remove();
 			} else {
+				// if it passed the tests, recursive scan on the directory
 				collections.addAll(ComicCollection.getCollections(context, nf));
 			}
 		}
@@ -100,11 +108,11 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	 * that this include subdirectories with CBZ files, for example: these
 	 * collections are of a single level.
 	 *
-	 * @param context
-	 * @param root
+	 * @param context The context of the application
+	 * @param root The root directory to scan
 	 * @return A reference to self
 	 */
-	public final ComicCollection populate(Context context, File root) {
+	public final ComicCollection populate(final Context context, final File root) {
 		this.clear();
 
 		// get the files in the directory
@@ -123,8 +131,8 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		ComicDBHelper db = new ComicDBHelper(context);
 		while (itr.hasNext()) {
 			File nf = itr.next();
-			// remove from the list the thumbnails directory
-			if (nf.getName().equals(GalleryExplorer.THUMBNAILS)) {
+			// remove from the list the thumbnails directory and any other hidden dir/file
+			if (nf.getName().equals(GalleryExplorer.THUMBNAILS) || nf.getName().startsWith(".")) {
 				continue;
 			} else if (!Reader.existsReader(nf.getAbsolutePath())) {
 				// if there is not a manager for the file, continue
@@ -136,8 +144,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 			// there, create one
 			// Comics are only inserted into the database when read for the
 			// first time, to save resources
-			ComicInfo c = db.getComicInfo(db.getComicID(nf.getAbsolutePath(),
-					false));
+			ComicInfo c = db.getComicInfo(db.getComicID(nf.getAbsolutePath(), false));
 			if (c == null) {
 				c = new ComicInfo();
 				c.uri = nf.getAbsolutePath();
@@ -181,7 +188,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 
 	/** Re-populates the collection.
 	 * For example, call this method when you detect that a file has been removed
-	 * @param context
+	 * @param context The context of the application
 	 */
 	public final void invalidate(final Context context) {
 		if (this.rootDir == null) {
@@ -190,3 +197,4 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		this.populate(context, this.rootDir);
 	}
 }
+

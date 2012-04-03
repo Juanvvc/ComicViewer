@@ -26,7 +26,7 @@ public class PDFReader extends Reader {
 
 	/** If not set, returns a generic image in getBitmapPage(0).
 	 * That method is only usually used to get the cover of a page */
-	public static final boolean USE_GENERIC_COVER = true;
+	public static final boolean USE_GENERIC_COVER = false;
 
 	/** Create a new CBRReader from a uri.
 	 * @param context Context of the application

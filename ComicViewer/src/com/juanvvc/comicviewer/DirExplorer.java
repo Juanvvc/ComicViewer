@@ -234,7 +234,9 @@ public class DirExplorer extends ListActivity {
 		TreeMap<String, String> filesMap = new TreeMap<String, String>();
 		TreeMap<String, String> filesPathMap = new TreeMap<String, String>();
 		for (File file : files) {
-			if (file.isDirectory()) {
+			if (file.getName().startsWith(".")) {
+				// ignore hidden directories/files
+			} else if (file.isDirectory()) {
 				String dirName = file.getName();
 				dirsMap.put(dirName, dirName);
 				dirsPathMap.put(dirName, file.getPath());
