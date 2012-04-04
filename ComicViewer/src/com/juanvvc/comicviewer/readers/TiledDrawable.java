@@ -14,12 +14,16 @@ import android.graphics.drawable.Drawable;
  *
  */
 public class TiledDrawable extends Drawable {
-	/** Scale the image to fill the whole screen. */
-	public static final int STRECHED = 0;
-	/** Do not scale the image. */
-	public static final int CENTERED_ORIGINAL_SIZE = 1;
-	/** Scale the image to fill the screen, using original proportion. */
-	public static final int CENTERED_FILL_SCREEN = 2;
+	/** How to draw this drawable. */
+	public enum Mode {
+		/** Scale the image to fill the whole screen. */
+		STRECHED,
+		/** Do not scale the image. */
+		CENTERED_ORIGINAL_SIZE,
+		/** Scale the image to fill the screen, using original proportion. */
+		CENTERED_FILL_SCREEN
+	};
+
 	/** The list of tiles.
 	 * All tiles must have the same size, but this is not checked anywhere!	 */
 	private ArrayList<Bitmap> tiles = null;
@@ -28,7 +32,7 @@ public class TiledDrawable extends Drawable {
 	/** Number of rows. */
 	private int rows;
 	/** The scale mode. */
-	private int mode;
+	private Mode mode;
 	/** the width of a tile.
 	 * All tiles must have the same size, but this is not checked anywhere!
 	 */
@@ -51,7 +55,7 @@ public class TiledDrawable extends Drawable {
 		this.tiles = t;
 		this.cols = c;
 		this.rows = r;
-		this.setMode(CENTERED_FILL_SCREEN);
+		this.setMode(Mode.CENTERED_FILL_SCREEN);
 		Bitmap b = tiles.get(0);
 		tileHeight = b.getHeight();
 		tileWidth = b.getWidth();
@@ -157,14 +161,14 @@ public class TiledDrawable extends Drawable {
 	/**
 	 * @return The current scale mode
 	 */
-	public final int getMode() {
+	public final Mode getMode() {
 		return this.mode;
 	}
 
 	/**
 	 * @param m Sets the current scale mode
 	 */
-	public final void setMode(final int m) {
+	public final void setMode(final Mode m) {
 		this.mode = m;
 	}
 

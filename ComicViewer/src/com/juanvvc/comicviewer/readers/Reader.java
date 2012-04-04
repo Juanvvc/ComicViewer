@@ -286,8 +286,8 @@ public abstract class Reader {
 		int ow, oh;
 		if (rotate) {
 			// if the image is rotated, width and height switch places
-			oh = (bd.getWidth() / cols) * cols;
-			ow = (bd.getHeight() / rows) * rows;
+			oh = (bd.getWidth() / rows) * rows;
+			ow = (bd.getHeight() / cols) * cols;
 		} else {
 			ow = (bd.getWidth() / cols) * cols;
 			oh = (bd.getHeight() / rows) * rows;

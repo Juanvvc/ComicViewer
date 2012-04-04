@@ -84,38 +84,49 @@ public class PDFReader extends Reader {
 		PDF.Size size = new PDF.Size();
 		file.getPageSize(page, size);
 
-		// calculate an appropriate zoom level to fill the screen
-		// this enhance the quality of the rendered page.
-		if (AUTOMATIC_ZOOM && getWidth() != -1) {
-			if (size.width < getWidth()) {
-				// calculate the zoom level
-				zoom = ZOOM100 * getWidth() / size.width;
-				// if the zoom changes, the pdf size changes accordingly
-				size.width = (int) (1.0 * zoom * size.width / ZOOM100);
-				size.height = (int) (1.0 * zoom * size.width / ZOOM100);
-				myLog.d(TAG, "Using zoom level of " + zoom);
-			} else {
-				myLog.d(TAG, "PDF page larger than viewport");
-			}
-			// TODO: calculate appropriate number of columns and rows 
-		} else {
-			myLog.w(TAG, "Viewport size not set or not automatic zoom");
-		}
-
 		// test if we have to rotate the screen
 		if (AUTOMATIC_ROTATION && size.width > size.height) {
 			rotate = true;
 		}
-		rotate = false; // TODO: rotation is not working: deactivate
-		myLog.d(TAG, "PDF page of size " + size.width + "x" + size.height);
+
+		// calculate an appropriate zoom level to fill the screen
+		// this enhance the quality of the rendered page.
+		if (AUTOMATIC_ZOOM && getWidth() != -1) {
+			if (rotate) {
+				if (size.height < getWidth()) {
+					// calculate the zoom level
+					zoom = ZOOM100 * getWidth() / size.height;
+					// if the zoom changes, the pdf size changes accordingly
+					size.width = (int) (1.0 * zoom * size.width / ZOOM100);
+					size.height = (int) (1.0 * zoom * size.height / ZOOM100);
+					myLog.d(TAG, "Using zoom level of " + zoom);
+				} else {
+					myLog.d(TAG, "PDF page larger than viewport");
+				}
+			} else {
+				if (size.width < getWidth()) {
+					// calculate the zoom level
+					zoom = ZOOM100 * getWidth() / size.width;
+					// if the zoom changes, the pdf size changes accordingly
+					size.width = (int) (1.0 * zoom * size.width / ZOOM100);
+					size.height = (int) (1.0 * zoom * size.height / ZOOM100);
+					myLog.d(TAG, "Using zoom level of " + zoom);
+				} else {
+					myLog.d(TAG, "PDF page larger than viewport");
+				}
+			}
+			// TODO: calculate appropriate number of columns and rows 
+		} else {
+			myLog.w(TAG, "Viewport size not set or no automatic zoom");
+		}
 
 		// Get the closest width and height that divisible by cols and rows
-		// note1: that the last columns/rows of the image will be lost
+		// note1: the last columns/rows of pixels in the image will be lost
 		int ow, oh;
 		if (rotate) {
 			// if the image is rotated, width and height switch places
-			oh = (size.width / cols) * cols;
-			ow = (size.height / rows) * rows;
+			oh = (size.width / rows) * rows;
+			ow = (size.height / cols) * cols;
 		} else {
 			ow = (size.width / cols) * cols;
 			oh = (size.height / rows) * rows;
@@ -131,8 +142,8 @@ public class PDFReader extends Reader {
 					int left = th * i;
 					int top = tw * (cols - j - 1);
 
-					PDF.Size tilesize = new PDF.Size(tw, th);
-					int[] pixels = file.renderPage(page, zoom, left, top, 00, false, false, tilesize);
+					PDF.Size tilesize = new PDF.Size(th, tw);
+					int[] pixels = file.renderPage(page, zoom, left, top, 0, false, false, tilesize);
 					Bitmap b = Bitmap.createBitmap(pixels, tilesize.width, tilesize.height, Bitmap.Config.RGB_565);
 
 					Matrix matrix = new Matrix();
