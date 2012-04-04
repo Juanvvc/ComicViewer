@@ -23,10 +23,18 @@ import com.juanvvc.comicviewer.myLog;
 public class PDFReader extends Reader {
 	/** The PDF file. */
 	private PDF file = null;
+	/** For MuPDF, the zoom level that corresponds to 100% */
+	private static final int ZOOM100 = 1000;
+	
+	///// TODO: make this options configurable
 
 	/** If not set, returns a generic image in getBitmapPage(0).
 	 * That method is only usually used to get the cover of a page */
 	public static final boolean USE_GENERIC_COVER = false;
+	/** If set, zoom the pages to fill the screen.
+	 * This enhances the quality of the render, but increases the process time and memory.
+	 */
+	public static final boolean AUTOMATIC_ZOOM = true;
 
 	/** Create a new CBRReader from a uri.
 	 * @param context Context of the application
@@ -65,27 +73,41 @@ public class PDFReader extends Reader {
 	public final Drawable getPage(final int page) throws ReaderException {
 		ArrayList<Bitmap> tiles = new ArrayList<Bitmap>();
 
-		// TODO: additional rows and columns make the decoding process too slow
-		// Anyway, this must be set automatically and not manually
+		// too high values make the rendering too slow
+		// too low values trigger OutOfMemoryError
 		int cols = 2; //COLUMNS;
 		int rows = 2; //ROWS;
-		int zoom = 1000; // 1000 means 100%
-		
+		int zoom = ZOOM100; // 1000 means 100%
+
 		// Should we rotate the bitmaps?
 		boolean rotate = false;
 		PDF.Size size = new PDF.Size();
 		file.getPageSize(page, size);
 
+		// calculate an appropriate zoom level to fill the screen
+		// this enhance the quality of the rendered page.
+		if (AUTOMATIC_ZOOM && getWidth() != -1) {
+			if (size.width < getWidth()) {
+				// calculate the zoom level
+				zoom = ZOOM100 * getWidth() / size.width;
+				// if the zoom changes, the pdf size changes accordingly
+				size.width = (int) (1.0 * zoom * size.width / ZOOM100);
+				size.height = (int) (1.0 * zoom * size.width / ZOOM100);
+				myLog.d(TAG, "Using zoom level of " + zoom);
+			} else {
+				myLog.d(TAG, "PDF page larger than viewport");
+			}
+			// TODO: calculate appropriate number of columns and rows 
+		} else {
+			myLog.w(TAG, "Viewport size not set or not automatic zoom");
+		}
+
+		// test if we have to rotate the screen
 		if (AUTOMATIC_ROTATION && size.width > size.height) {
 			rotate = true;
 		}
 		rotate = false; // TODO: rotation is not working: deactivate
 		myLog.d(TAG, "PDF page of size " + size.width + "x" + size.height);
-		
-		// calculate an appropriate zoom level.
-//		Display display = getContext().getWindowManager().getDefaultDisplay();
-//		Point size = new Point();
-//		display.getSize(size);
 
 		// Get the closest width and height that divisible by cols and rows
 		// note1: that the last columns/rows of the image will be lost

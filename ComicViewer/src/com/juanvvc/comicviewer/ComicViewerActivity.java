@@ -419,7 +419,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 			protected void onPostExecute(final ComicInfo info) {
 				ComicViewerActivity.this.comicInfo = info;
-				if (info != null) {
+				if (info != null && info.reader != null) {
+					// sets the width and height of the reader
+					// TODO: probably, this is better set in MyImageView.onSizeChanged()
+					View v = ComicViewerActivity.this.findViewById(R.id.switcher);
+					info.reader.setViewportSize(v.getWidth(), v.getHeight());
+					// moves to the selected page
 					ComicViewerActivity.this.moveToPage(info.page);
 				}
 			}
@@ -665,9 +670,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				return null;
 			}
 			int page = params[0].intValue();
-			myLog.d(TAG, "Loading fast page " + page);
+			myLog.d(TAG, "Buffering page " + page);
 			try {
-				//return ComicViewerActivity.this.comicInfo.reader.getFastPage(getResources(), page, FAST_PAGES_SCALE);
 				return ComicViewerActivity.this.comicInfo.reader.getPage(page);
 			} catch (Exception e) {
 				return ComicViewerActivity.this.getResources().getDrawable(R.drawable.outofmemory);

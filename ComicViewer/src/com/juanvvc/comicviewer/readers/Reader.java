@@ -43,6 +43,10 @@ public abstract class Reader {
 	public static final int COLUMNS = 6;
 	/** Number of rows in the tiled page, by default. */
 	public static final int ROWS = 8;
+	/** The width of the viewport. -1 if not set. */
+	private int viewportWidth = -1;
+	/** The height of the viewport. -1 if not set. */
+	private int viewportHeight = -1;
 
 	// TODO: make these options configurable
 	/** If set, ignore case when ordering pages of the comic. */
@@ -330,6 +334,29 @@ public abstract class Reader {
 	public static boolean manages(final String uri) {
 		return false;
 	}
+
+	/** This reader is informed about the available screen size.
+	 * The pages that are returned by the other methods may use this information
+	 * to enhance the results
+	 *
+	 * @param width The width of the viewport, in pixels
+	 * @param height The height of the viewport, in pixels
+	 */
+	public final void setViewportSize(final int width, final int height) {
+		viewportHeight = height;
+		viewportWidth = width;
+	}
+
+	/** @return The width of the viewport, or -1 if not set */
+	public final int getWidth() {
+		return viewportWidth;
+	}
+
+	/** @return The height of the viewport, or -1 if not set */
+	public final int getHeight() {
+		return viewportHeight;
+	}
+
 
 	/**
 	 * @param context The context of the current application
