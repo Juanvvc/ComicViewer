@@ -705,26 +705,39 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				return true;
 			}
 			break;
-		case R.id.switch_bookmark: // switch the bookmark state. Not sure if
-									// useful
+		case R.id.switch_bookmark: // switch the bookmark state.
+			// since you can do this by pressing a corner on the screen,
+			// I'm not sure if it is useful to have a menu entry for this.
 			if (this.comicInfo != null) {
 				switchBookmark();
 			}
 			break;
-		case R.id.bookmarks:
+		case R.id.bookmarks: // show the bookmark list
 			if (this.comicInfo != null) {
-				// the information of the bookmarks must be updated in the
-				// database
-				ComicDBHelper db = new ComicDBHelper(this);
-				db.updateComicInfo(this.comicInfo);
-				db.close();
-				// show the bookmark list
-				Intent intent = new Intent(this, BookmarksExplorer.class);
-				intent.putExtra("comicid", this.comicInfo.id);
-				startActivityForResult(intent, REQUEST_BOOKMARKS);
+				// first: if there are not bookmarks... why bother?
+				if (this.comicInfo.bookmarks.size() > 0) {
+					// the information of the current bookmarks must be updated in the database
+					ComicDBHelper db = new ComicDBHelper(this);
+					// first: if the comic is not in the database, insert
+					if (this.comicInfo.id == -1) {
+						// note that this call either insert the comic in
+						// the database... or returns the right id.
+						// comics cannot be inserted twice.
+						comicInfo.id = db.getComicID(comicInfo.uri, true);
+					}
+					// update the information
+					db.updateComicInfo(this.comicInfo);
+					db.close();
+					// show the bookmark list
+					Intent intent = new Intent(this, BookmarksExplorer.class);
+					intent.putExtra("comicid", this.comicInfo.id);
+					startActivityForResult(intent, REQUEST_BOOKMARKS);
+				} else {
+					Toast.makeText(this, this.getString(R.string.no_bookmarks), Toast.LENGTH_SHORT).show();
+				}
 			}
 			break;
-		case R.id.go_to_page:
+		case R.id.go_to_page: // go to a page (ask the user)
 			if (this.comicInfo != null) {
 				final EditText input = new EditText(this);
 				input.setInputType(DEFAULT_KEYS_DIALER);
@@ -752,7 +765,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 								}).setNegativeButton("Cancel", null).show();
 			}
 			break;
-		case R.id.close: // close this viewer
+		case R.id.close: // close this activity
 			this.finish();
 			return true;
 		case R.id.switch_drawing: // switch to draw mode

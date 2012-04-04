@@ -28,6 +28,11 @@
     <string name="cannot_remove_directories">No se pueden borrar los directorios</string>
     <string name="removed">" fue eliminado"</string>
     <string name="loading">"Cargando "</string>
-    <string name="go_to_page">Vé a página&#8230;</string>
+    <string name="go_to_page">Vé a página&#8230;</string>    
+    <string name="switch_drawing">Activa/desactiva modo dibujo</string>
+    <string name="switch_drawing_visible">Dibujo visible/invisible</string>
+    <string name="rubber">Borra dibujo</string>
+    <string name="draw_mode_not_available">El modo dibujo no está disponible</string>
+    <string name="no_bookmarks">No existen marcas</string>
 
 </resources>

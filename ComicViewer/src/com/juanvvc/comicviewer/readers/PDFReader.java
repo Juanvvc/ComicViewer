@@ -70,7 +70,7 @@ public class PDFReader extends Reader {
 		int cols = 2; //COLUMNS;
 		int rows = 2; //ROWS;
 		int zoom = 1000; // 1000 means 100%
-
+		
 		// Should we rotate the bitmaps?
 		boolean rotate = false;
 		PDF.Size size = new PDF.Size();
@@ -81,6 +81,11 @@ public class PDFReader extends Reader {
 		}
 		rotate = false; // TODO: rotation is not working: deactivate
 		myLog.d(TAG, "PDF page of size " + size.width + "x" + size.height);
+		
+		// calculate an appropriate zoom level.
+//		Display display = getContext().getWindowManager().getDefaultDisplay();
+//		Point size = new Point();
+//		display.getSize(size);
 
 		// Get the closest width and height that divisible by cols and rows
 		// note1: that the last columns/rows of the image will be lost
