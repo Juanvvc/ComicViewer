@@ -1,13 +1,7 @@
 package com.juanvvc.comicviewer;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import com.juanvvc.comicviewer.readers.TiledDrawable;
-
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -17,6 +11,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ImageView;
+
+import com.juanvvc.comicviewer.readers.TiledDrawable;
 
 /** Custom ImageView to allow drawings on the images.
  * @author juanvi
@@ -34,6 +30,8 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	private boolean drawMode = false;
 	/** The drawing. */
 	private Bitmap buffer = null;
+	/** If true, the drawing was edited. */
+	private boolean edited = false;
 
 	/** Constructs a new MyImageView.
 	 * @param context The context of the application
@@ -95,6 +93,7 @@ public class MyImageView extends ImageView implements OnTouchListener {
 			buffer.recycle();
 			this.buffer = b;
 			this.invalidate();
+			edited = true;
 		}
 	}
 
@@ -161,11 +160,23 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	    	myLog.d(TAG, "Path moved");
 	    } else if (event.getAction() == MotionEvent.ACTION_UP) {
 	    	// end of a path
-			currentPath.lineTo(event.getX(), event.getY());
-			Canvas c = new Canvas(this.buffer);
-			c.drawPath(currentPath, this.painter);
+	    	currentPath.lineTo(event.getX(), event.getY());
+
+	    	// if current buffer is not mutable, change that
+	    	if (this.buffer == null || !this.buffer.isMutable()) {
+	    		Bitmap b = Bitmap.createBitmap(this.getWidth(), this.getHeight(), Bitmap.Config.ARGB_4444);
+	    		Canvas c = new Canvas(b);
+	    		c.drawBitmap(this.buffer, 0, 0, null);
+	    		c.drawPath(currentPath, this.painter);
+	    		this.buffer.recycle();
+	    		this.buffer = b;
+	    	} else {
+	    		Canvas c = new Canvas(this.buffer);
+	    		c.drawPath(currentPath, this.painter);
+	    	}
 			this.invalidate();
 			myLog.d(TAG, "Path finished");
+			edited = true;
 	    } else {
 	    	myLog.d(TAG, "Event number: " + event.getAction());
 	    }
@@ -230,21 +241,24 @@ public class MyImageView extends ImageView implements OnTouchListener {
 		super.setImageResource(rid);
 	}
 
-	// TODO: currently, these functions are not used anywhere
-	public void saveDraw(final String drawLocation) throws IOException {
-		if (this.buffer == null || drawLocation == null) {
-			return;
-		}
-		FileOutputStream out = new FileOutputStream(drawLocation);
-		this.buffer.compress(Bitmap.CompressFormat.PNG, 90, out);
-		out.close();
+	/** @return The bitmap of the current drawing. */
+	public final Bitmap getCurrentDrawing() {
+		return this.buffer;
 	}
-	public void loadDraw(final String drawLocation) {
-		try {
-			buffer = BitmapFactory.decodeFile(drawLocation, null);
-		} catch (Exception e) {
-			myLog.e(TAG, "Error reading saved draw: " +  e.toString());
-		}
+
+	/** @param b The current drawing. It will be copied on the internal buffer. */
+	public final void setCurrentDrawing(final Bitmap b) {
+		this.buffer = b;
+	}
+
+	/** @return True is the Drawing was edited from last call to setEdited(false). */
+	public final boolean isEdited() {
+		return edited;
+	}
+
+	/** @param e The edited status of this drawing. */
+	public final void setEdited(final boolean e) {
+		this.edited = e;
 	}
 }
 

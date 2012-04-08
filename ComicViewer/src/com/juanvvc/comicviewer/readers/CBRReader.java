@@ -103,7 +103,7 @@ public class CBRReader extends Reader {
 			return null;
 		}
 		try {
-			return this.streamToTiledDrawable(this.extractToInputStream(this.entries.get(page)),  COLUMNS, ROWS);
+			return this.streamToTiledDrawable(this.extractToInputStream(this.entries.get(page)));
 		} catch (Exception e) {
 			myLog.e(TAG, "Cannot read page: " + e.toString());
 		} catch (OutOfMemoryError err) {
@@ -158,6 +158,12 @@ public class CBRReader extends Reader {
 	 * Returns an {@link InputStream} that will allow to read the file and
 	 * stream it. Please note that this method will create a new Thread and an a
 	 * pair of Pipe streams.
+	 * TODO: This method load the entire file into memory. This is a restriction of
+	 * the current RAR library (JunRAR) and with large images creates OutOfMemoryError.
+	 * I cannot fix this issue without rewriting JunRAR, something that I'm not going
+	 * to do. Either wait for a better alternative, switch to a native library or just
+	 * do not use CBRs (for example, convert CBRs to CBZs in a computer, something that
+	 * takes under a second)
 	 *
 	 * (From: https://github.com/edmund-wagner/junrar/blob/master/unrar/src/main/java/com/github/junrar/Archive.java)
 	 *

@@ -30,19 +30,12 @@ public abstract class Reader {
 	private String uri = null;
 	/** The current page. */
 	private int currentPage = -1;
-	/**In some load page strategies, the max size of the page to load.
-	 *  (Currently, not in use) */
-//	public static final int MAX_BITMAP_SIZE = 1024;
 	/** The context of the application. */
 	private Context context;
 	/** A constant tag name, for logging. */
 	protected static final String TAG = "Reader";
 	/** Constant to return in getPageCount() when there is file. */
 	public static final int NOFILE = -100;
-	/** Number of columns in the tiled page, by default. */
-	public static final int COLUMNS = 6;
-	/** Number of rows in the tiled page, by default. */
-	public static final int ROWS = 8;
 	/** The width of the viewport. -1 if not set. */
 	private int viewportWidth = -1;
 	/** The height of the viewport. -1 if not set. */
@@ -56,6 +49,14 @@ public abstract class Reader {
 	 * This assumes that screen is portrait, and this was mandatory in the XML.
 	 */
 	public static final boolean AUTOMATIC_ROTATION = true;
+	/** The max size of the tiles to load.
+	 * In Android, Bitmaps are managed as OpenGL textures. There is
+	 * a (hardware dependent) limit for the texture size. It seems that
+	 * the current minimum is 2048 pixels. Anyway, large bitmaps cause
+	 * OutOfMemoryExceptions event if they are below the limit.
+	 * Unfortunately, small  bitmaps cause large load times for
+	 * example in the PDFReader. Tweak this with care. */
+	public static final int MAX_BITMAP_SIZE = 512;
 
 	/** Create a new reader from a uri.
 	 * @param newContext Context of the application
@@ -267,12 +268,10 @@ public abstract class Reader {
 
 	/**
 	 * @param is A stream to read the image and create a tiled drawable
-	 * @param cols Number of columns in the final image
-	 * @param rows Number of rows in the final image
 	 * @return A tiled drawable with the contensts of the stream
 	 * @throws IOException After any error
 	 */
-	protected final Drawable streamToTiledDrawable(final InputStream is, final int cols, final int rows) throws IOException {
+	protected final Drawable streamToTiledDrawable(final InputStream is) throws IOException {
 		BitmapRegionDecoder bd = BitmapRegionDecoder.newInstance(is, true);
 
 		// Should we rotate the bitmaps?
@@ -281,17 +280,25 @@ public abstract class Reader {
 			rotate = true;
 		}
 
+		int cols = 1;
+		int rows = 1;
+
 		// Get the closest width and height that divisible by cols and rows
 		// note1: that the last columns/rows of the image will be lost
 		int ow, oh;
 		if (rotate) {
+			cols = this.getSuitableCols(bd.getHeight());
+			rows = this.getSuitableRows(bd.getWidth());
 			// if the image is rotated, width and height switch places
 			oh = (bd.getWidth() / rows) * rows;
 			ow = (bd.getHeight() / cols) * cols;
 		} else {
+			cols = this.getSuitableCols(bd.getWidth());
+			rows = this.getSuitableRows(bd.getHeight());
 			ow = (bd.getWidth() / cols) * cols;
 			oh = (bd.getHeight() / rows) * rows;
 		}
+		myLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
 
 		// Get the final tiles width and height
 		int tw = ow / cols;
@@ -396,5 +403,31 @@ public abstract class Reader {
 	 */
 	public final Context getContext() {
 		return this.context;
+	}
+
+	/** @param pw The width of the whole page
+	 * @return A suitable number of columns for this page.
+	 * @see com.juanvvc.comicviewer.readers.Reader.MAX_BITMAP_SIZE */
+	public final int getSuitableCols(final int pw) {
+		// tiles must have an integer number of columns, and each column has
+		// MAX_BITMAP_SIZE pixels at most
+		int col = 1;
+		while (pw / col > MAX_BITMAP_SIZE) {
+			col++;
+		}
+		return col;
+	}
+
+	/** @param ph The height of the whole page
+	 * @return A suitable number of rows for this page.
+	 * @see com.juanvvc.comicviewer.readers.Reader.MAX_BITMAP_SIZE */
+	public final int getSuitableRows(final int ph) {
+		// tiles must have an integer number of columns, and each column has
+		// MAX_BITMAP_SIZE pixels at most
+		int row = 1;
+		while (ph / row > MAX_BITMAP_SIZE) {
+			row++;
+		}
+		return row;
 	}
 }

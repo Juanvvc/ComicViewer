@@ -81,7 +81,7 @@ public class DirReader extends Reader {
 				return null;
 			}
 			InputStream is = new FileInputStream(this.entries.get(page));
-			return this.streamToTiledDrawable(is, COLUMNS, ROWS);
+			return this.streamToTiledDrawable(is);
 
 		} catch (Exception ex) {
 			throw new ReaderException(ex.getMessage());

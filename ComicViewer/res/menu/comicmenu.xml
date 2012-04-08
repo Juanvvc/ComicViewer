@@ -1,7 +1,7 @@
 
     <menu xmlns:android="http://schemas.android.com/apk/res/android">
         <item android:id="@+id/switch_drawing" android:checkable="true" android:showAsAction="ifRoom" android:title="@string/switch_drawing" android:icon="@drawable/pencil"></item>
-<!--         <item android:id="@+id/switch_drawing_visible" android:title="@string/switch_drawing_visible" android:checkable="true" android:showAsAction="ifRoom" android:icon="@drawable/eye"></item> -->
+        <item android:id="@+id/switch_drawing_visible" android:title="@string/switch_drawing_visible" android:checkable="true" android:showAsAction="ifRoom" android:icon="@drawable/eye"></item>
         <item android:id="@+id/first_page" android:title="@string/first_page"></item>
         <item android:id="@+id/last_page" android:title="@string/last_page"></item>
         <item android:id="@+id/go_to_page" android:title="@string/go_to_page"></item><item android:id="@+id/switch_bookmark" android:title="@string/switch_bookmark"></item>

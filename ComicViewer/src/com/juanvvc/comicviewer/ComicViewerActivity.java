@@ -38,6 +38,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.ViewSwitcher.ViewFactory;
 
+import com.juanvvc.comicviewer.readers.DrawingReader;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
@@ -65,6 +66,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	private static final int REQUEST_BOOKMARKS = 0x21;
 	/** The directory for draws. */
 	public static final String DRAWDIR = ".draws";
+	/** In drawing mode, the drawing reader to save drawings. */
+	private DrawingReader drawingReader = null;
+
+	/** In loadComic(), if comifInfo.current == FIRST_PAGE, load the first page. */
+	private static final int FIRST_PAGE = 0;
+	/** In loadComic(), if comifInfo.current == LAST_PAGE, load the last page.
+	 * comicInfo may be instantiated before having a reader, and comicInfo.countpages
+	 * cannot be trusted. Then, we use an arbitrary page number to force loadComic()
+	 * to move to the last page when the reader is available. */
+	private static final int LAST_PAGE = -100;
 
 	// TODO: make these things options
 	/** If set, horizontal pages are automatically rotated. */
@@ -376,7 +387,8 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 *
 	 * @param info
 	 *            The ComicInfo to load. info.bookmarks are set inside this
-	 *            method. The page loaded is info.page
+	 *            method. The page to be shown is info.page. If info.page == FIRST_PAGE,
+	 *            go to the first page. If info.page == LAST_PAGE, go to last page.
 	 */
 	public final void loadComic(final ComicInfo info) {
 		myLog.i(TAG, "Loading comic " + info.uri + " at page " + info.page);
@@ -392,6 +404,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			info.bookmarks = ci.bookmarks;
 		} else {
 			info.bookmarks = new ArrayList<Integer>();
+		}
+
+		// create a drawing reader for this comic
+		try {
+			// the constructor does nearly nothing, it is save to put this here.
+			this.drawingReader = new DrawingReader(this, ci.uri);
+		} catch (ReaderException e) {
+			// this is never thrown, as far as I know
+			myLog.w(TAG, "Exception while creating DrawingReader: " + e.toString());
 		}
 
 		// the comic is loaded in the background, since there is lots of things to do
@@ -425,7 +446,19 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					View v = ComicViewerActivity.this.findViewById(R.id.switcher);
 					info.reader.setViewportSize(v.getWidth(), v.getHeight());
 					// moves to the selected page
-					ComicViewerActivity.this.moveToPage(info.page);
+					switch(info.page) {
+					case FIRST_PAGE:
+						ComicViewerActivity.this.moveToPage(0);
+						break;
+					case LAST_PAGE:
+						// Remember: if the comic was not read in the past, you don't know which is the
+						// last page index. Use LAST_PAGE constant to force "go to last page"
+						// TODO: the animation is wrong in this case. No easy way to fix this.
+						ComicViewerActivity.this.moveToPage(info.reader.countPages() - 1);
+						break;
+					default:
+						ComicViewerActivity.this.moveToPage(info.page);
+					}
 				}
 			}
 		}).execute(info);
@@ -508,8 +541,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		// drawable of the next page
 		Drawable n = null;
 		// First, remove any draw on the current page. Views are reused, so we never know
-		((MyImageView) imgs.getCurrentView()).removeDrawing();
-		((MyImageView) imgs.getCurrentView()).setDrawMode(false, -1, -1);
+		MyImageView myview = ((MyImageView) imgs.getCurrentView());
+		if (myview.isEdited() && this.drawingReader != null) {
+			this.drawingReader.saveDrawing(this.comicInfo.reader.getCurrentPage(), myview.getCurrentDrawing());
+		}
+		myview.removeDrawing();
+		myview.setDrawMode(false, -1, -1);
 		try {
 			// set animations according to the movement of the user
 			this.setAnimations(forward);
@@ -523,9 +560,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 						ComicInfo nextIssue = this.comicInfo.collection.next(this.comicInfo);
 						if (nextIssue != null) {
 							myLog.i(TAG, "Next issue: " + nextIssue.uri);
-							nextIssue.page = 0; // we load the next issue at the
-												// first page. It is weird
-												// otherwise
+							nextIssue.page = FIRST_PAGE; // we load the next issue at the first page. It is weird otherwise
 							this.loadComic(nextIssue);
 						} else {
 							myLog.i(TAG, "Last comic in collection");
@@ -543,6 +578,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					// Cache the next page in the background
 					this.nextFastPage = (LoadNextPage) new LoadNextPage().execute(reader.getCurrentPage() + 1);
 				} else {
+					// TODO: this blocks the UI thread!
 					// get the cached page.
 					n = this.nextFastPage.get();
 					// move to the next page "by hand"
@@ -554,20 +590,32 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					this.nextFastPage = (LoadNextPage) new LoadNextPage().execute(reader.getCurrentPage() + 1);
 				}
 			} else {
+				// Moving backwards
+				
+				this.stopThreads();
+
 				// check that we are not in the first page
 				if (reader.getCurrentPage() == 0) {
+					// load the next issue in the collection
+					myLog.i(TAG, "First page of rhe comic");
+					if (LOAD_NEXT_ISSUE && this.comicInfo.collection != null) {
+						myLog.d(TAG, "Loading prev issue");
+						ComicInfo prevIssue = this.comicInfo.collection.prev(this.comicInfo);
+						if (prevIssue != null) {
+							myLog.i(TAG, "Prev issue: " + prevIssue.uri);
+							prevIssue.page = LAST_PAGE; // we load the last page of the prev issue. It is weird otherwise
+							this.loadComic(prevIssue);
+						} else {
+							myLog.i(TAG, "First comic in collection");
+						}
+					}
 					return;
 				}
 				// move to the prev page "by hand".
 				// This is faster and safer than this.comicInfo.reader.prev()
 				// since we may be using scaled images
 				this.comicInfo.reader.moveTo(reader.getCurrentPage() - 1);
-				// if the user is moving backwards, the background thread (if
-				// existed) was
-				// loading the NEXT page. Stop it now.
-				if (this.nextFastPage != null) {
-					this.nextFastPage.cancel(true);
-				}
+				// TODO: this blocks the UI Thread!
 				n = this.comicInfo.reader.getPage(reader.getCurrentPage());
 				// and load the next page from the prev. That is, the currently
 				// displayed page.
@@ -603,6 +651,17 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
 		} else {
 			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
+		}
+
+		// load the drawing, if any
+		// TODO: memory problems here? Out of this thread? Test this.
+		if (this.drawingReader != null) {
+			MyImageView m = (MyImageView) imgs.getCurrentView();
+			try {
+				m.setCurrentDrawing(drawingReader.getBitmapPage(comicInfo.reader.getCurrentPage(), 1));
+			} catch (ReaderException e) {
+				myLog.w(TAG, "Exception reading drawing: " + e.toString());
+			}
 		}
 	}
 
@@ -655,11 +714,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	}
 
 	/**
-	 * This task is used to load a page in a background thread and improve the
+	 * This task is used to cache a page in a background thread and improve the
 	 * GUI response time. Use (page is an integer):
 	 *
-	 * page=new LoadNextPage().execute(page); (...do whatever...) Drawable
-	 * newpage = page.get()
+	 * page=new LoadNextPage().execute(page);
+	 * (when necessary)
+	 * Drawable newpage = page.get()
 	 *
 	 * @author juanvi
 	 */
@@ -775,18 +835,31 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		case R.id.switch_drawing: // switch to draw mode
 			if (DRAW_MODE_AVAILABLE) {
 				MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
-				if (i.isDrawMode()) {
-					i.setDrawMode(false, -1, -1);
-					this.findViewById(R.id.pentoolbar).setVisibility(View.GONE);
-				} else {
-					i.setDrawMode(true, -1, -1);
-					this.findViewById(R.id.pentoolbar).setVisibility(View.VISIBLE);
-					this.onPenToolbarColor(null);
+				if (i.isDrawVisible()) {
+					if (i.isDrawMode()) {
+						i.setDrawMode(false, -1, -1);
+						this.findViewById(R.id.pentoolbar).setVisibility(View.GONE);
+					} else {
+						i.setDrawMode(true, -1, -1);
+						this.findViewById(R.id.pentoolbar).setVisibility(View.VISIBLE);
+						this.onPenToolbarColor(null);
+					}
 				}
 			} else {
 				new AlertDialog.Builder(this).setIcon(R.drawable.icon)
 					.setTitle(this.getText(R.string.draw_mode_not_available))
 					.setPositiveButton(android.R.string.ok, null).show();
+			}
+			return true;
+		case R.id.switch_drawing_visible:
+			if (DRAW_MODE_AVAILABLE) {
+				// remember: the imageswitcher has two MyImageViews: we switch the visible mode in both
+				MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(0);
+				i.setDrawVisible(!i.isDrawVisible());
+				i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(1);
+				i.setDrawVisible(!i.isDrawVisible());
+				// and redraw the current one
+				((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView().invalidate();
 			}
 			return true;
 		default:
@@ -811,26 +884,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}
 	}
 
-	/** Returns the name of the file that stores the drawing that the user made on that page.
-	 * TODO: this method is currently not used.
-	 * @param file The original comic file
-	 * @param page The page of the drawing
-	 * @return The draw of that page.
-	 */
-	private File getDrawFile(final File file, final int page) {
-		String name = file.getName();
-		if (name.lastIndexOf(".") > 0) {
-			name = name.substring(0, name.lastIndexOf("."));
-		}
-		return new File(file.getParent() + File.separator + DRAWDIR + File.separator + name + "-" + page + ".png");
-	}
-
 	//////////////////MANAGE THE TOOLBAR
 	/** Deletes the current drawing from screen.
 	 * @param v ignored */
 	public final void onPenToolbarDelete(final View v) {
 		MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 		i.removeDrawing();
+		if (this.drawingReader != null && comicInfo != null && comicInfo.reader != null) {
+			this.drawingReader.removeDrawing(this.comicInfo.reader.getCurrentPage());
+			i.setEdited(false);
+		}
 	}
 	/** Changes the color of the pen.
 	 * @param v Ignored. */
@@ -852,5 +915,21 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		} else {
 			i.setPainterWidth(3);
 		}
+	}
+
+	@Override
+	public void finish() {
+		// check the drawing
+		if (this.drawingReader != null) {
+			MyImageView mi = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
+			if (mi.isEdited() && this.comicInfo != null && this.comicInfo.reader != null) {
+				this.drawingReader.saveDrawing(this.comicInfo.reader.getCurrentPage(), mi.getCurrentDrawing());
+			}
+		}
+		// if threads are not stopped, they run on the background. At the end, they may change
+		// views that are not available, and the whole application crashes. True story.
+		// In addition, save the current state of the comic
+		this.close();
+		super.finish();
 	}
 }

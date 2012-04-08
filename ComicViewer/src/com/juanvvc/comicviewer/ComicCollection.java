@@ -114,6 +114,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	 */
 	public final ComicCollection populate(final Context context, final File root) {
 		this.clear();
+		this.rootDir = root;
 
 		// get the files in the directory
 		ArrayList<File> f = new ArrayList<File>(Arrays.asList(root.listFiles()));
@@ -161,10 +162,10 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 	}
 
 	/**
-	 * Given a comic in this directory, return the next one in the collection.
+	 * Given a comic in this collection, return the next comic.
 	 *
 	 * @param current The information of the current comic
-	 * @return The next comic, or null if there is no next comic of the comic is
+	 * @return The next comic, or null if there is no next comic available or current is
 	 *         not in the collection
 	 */
 	public final ComicInfo next(final ComicInfo current) {
@@ -181,6 +182,32 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		}
 		if (n > -1 && n < size() - 1) {
 			return this.get(n + 1);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Given a comic in this collection, return the prev comic.
+	 *
+	 * @param current The information of the current comic
+	 * @return The next comic, or null if there is no prev comic or current is
+	 *         not in the collection
+	 */
+	public final ComicInfo prev(final ComicInfo current) {
+		int n = -1;
+		// since the ComicInfo object may be created by an external entity such
+		// as ComicDBHelper,
+		// we cannot use this.indexOf(current)
+		// an alternative may be implementing ComicInfo.equals().
+		for (int i = 0; i < this.size(); i++) {
+			if (this.get(i).uri.equals(current.uri)) {
+				n = i;
+				break;
+			}
+		}
+		if (n > 0) {
+			return this.get(n - 1);
 		} else {
 			return null;
 		}

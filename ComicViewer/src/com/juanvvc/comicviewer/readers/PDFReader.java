@@ -23,11 +23,10 @@ import com.juanvvc.comicviewer.myLog;
 public class PDFReader extends Reader {
 	/** The PDF file. */
 	private PDF file = null;
-	/** For MuPDF, the zoom level that corresponds to 100% */
+	/** In MuPDF library, the zoom level that corresponds to 100%. */
 	private static final int ZOOM100 = 1000;
-	
-	///// TODO: make this options configurable
 
+	///// TODO: make this options configurable
 	/** If not set, returns a generic image in getBitmapPage(0).
 	 * That method is only usually used to get the cover of a page */
 	public static final boolean USE_GENERIC_COVER = false;
@@ -71,12 +70,13 @@ public class PDFReader extends Reader {
 
 	@Override
 	public final Drawable getPage(final int page) throws ReaderException {
+		// check limits
+		if (this.file == null || page < 0 || page >= this.file.getPageCount()) {
+			return null;
+		}
+
 		ArrayList<Bitmap> tiles = new ArrayList<Bitmap>();
 
-		// too high values make the rendering too slow
-		// too low values trigger OutOfMemoryError
-		int cols = 2; //COLUMNS;
-		int rows = 2; //ROWS;
 		int zoom = ZOOM100; // 1000 means 100%
 
 		// Should we rotate the bitmaps?
@@ -84,10 +84,19 @@ public class PDFReader extends Reader {
 		PDF.Size size = new PDF.Size();
 		file.getPageSize(page, size);
 
+		int cols = 2;
+		int rows = 2;
+
 		// test if we have to rotate the screen
 		if (AUTOMATIC_ROTATION && size.width > size.height) {
 			rotate = true;
+			cols = this.getSuitableCols(size.height);
+			rows = this.getSuitableRows(size.width);
+		} else {
+			cols = this.getSuitableCols(size.width);
+			rows = this.getSuitableRows(size.height);
 		}
+		myLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
 
 		// calculate an appropriate zoom level to fill the screen
 		// this enhance the quality of the rendered page.
@@ -115,7 +124,6 @@ public class PDFReader extends Reader {
 					myLog.d(TAG, "PDF page larger than viewport");
 				}
 			}
-			// TODO: calculate appropriate number of columns and rows 
 		} else {
 			myLog.w(TAG, "Viewport size not set or no automatic zoom");
 		}

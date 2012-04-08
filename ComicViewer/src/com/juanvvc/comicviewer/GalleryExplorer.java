@@ -39,6 +39,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.juanvvc.comicviewer.readers.DrawingReader;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
@@ -58,7 +59,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	/** An arbitrary name to help debugging. */
 	private static final String TAG = "GalleryExplorer";
 	/** The name of the thumbnails directory. */
-	static final String THUMBNAILS = ".thumbnails";
+	public static final String THUMBNAILS = ".thumbnails";
 	/** Random number to identify request of directories. */
 	private static final int REQUEST_DIRECTORY = 0x8e;
 	/** Random number to identify request of bookmarks. */
@@ -147,8 +148,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			// create the cover gallery with an adapter
 			Gallery g = (Gallery) v.findViewById(R.id.cover_gallery);
 			GalleryExplorer.this.registerForContextMenu(g);
-			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection,
-					position));
+			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection,	position));
 			// create the gallery name
 			((TextView) v.findViewById(R.id.collection_name))
 					.setText(collection.getName());
@@ -258,6 +258,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		public long getItemId(final int position) {
 			return this.parentID * MAX_CHILDREN + position;
 		}
+		
+		public void reloadCollection() {
+			this.entries.invalidate(GalleryExplorer.this);
+			this.notifyDataSetChanged();
+		}
 	}
 
 	/**
@@ -300,10 +305,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 
 		// get the comicinfo of the selected item
 		ComicDBHelper db = new ComicDBHelper(this);
-		// get the adapters
-		BaseAdapter colAdapter = (BaseAdapter) ((ListView) this.findViewById(R.id.collections)).getAdapter();
-		ListView list = (ListView) this.findViewById(R.id.collections);
-		BaseAdapter comicAdapter = (BaseAdapter) ((Gallery) info.targetView.getParent()).getAdapter();
+		CoverListAdapter comicAdapter = (CoverListAdapter) ((Gallery) info.targetView.getParent()).getAdapter();
 		String comicuri = ((ComicInfo) comicAdapter.getItem(info.position)).uri;
 		ComicInfo comicinfo = db.getComicInfo(db.getComicID(comicuri, true));
 
@@ -311,37 +313,42 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		case R.id.switch_read: // switches the read status of a comic
 			comicinfo.read = !comicinfo.read;
 			db.updateComicInfo(comicinfo);
-			// TODO: this do not work as expected
-			((ComicCollection) colAdapter.getItem(info.position / CoverListAdapter.MAX_CHILDREN)).invalidate(this);
-			comicAdapter.notifyDataSetChanged();
-			list.invalidateViews();
 			db.close();
+			comicAdapter.reloadCollection();
+
 			return true;
 		case R.id.remove_comic: // deletes the comic
 			myLog.i(TAG, "Removing comic");
 			File comicfile = new File(comicinfo.uri);
 			if (!comicfile.isDirectory()) {
-				// TODO: we cannot remove directories at the moment
 				// removes the comic from the database
 				db.removeComic(comicinfo.id);
+				db.close();
 				// removes the comic from the filesystem
 				if (!comicfile.delete()) {
 					myLog.w(TAG, "Comic couldn't be deleted. Secured filesystem?");
 				}
+				// removes the drawing from the file system, if any
+				try {
+					(new DrawingReader(this, comicinfo.uri)).removeAllDrawings();
+				} catch (Exception e) {
+					myLog.w(TAG, "Cannot remove drawings: " + e.toString());
+				}
 				// removes the thumbnail from the filesystem
-				if (!getThumbnailFile(comicfile).delete()) {
+				File th = getThumbnailFile(comicfile);
+				if (!th.delete()) {
 					myLog.w(TAG, "Thumbnail couldn't be deleted. Secured filesystem?");
 				}
+				// if the thumbnails directory is empty, remove
+				if (th.getParentFile().list().length == 0) {
+					th.getParentFile().delete();
+				}
+
 				// update the view
-				((ComicCollection) colAdapter.getItem(info.position	/ CoverListAdapter.MAX_CHILDREN)).invalidate(this);
-				comicAdapter.notifyDataSetChanged();
-				Toast.makeText(this,
-						comicfile.getName() + getText(R.string.removed),
-						Toast.LENGTH_LONG).show();
+				comicAdapter.reloadCollection();
+				Toast.makeText(this, comicfile.getName() + getText(R.string.removed), Toast.LENGTH_LONG).show();
 			} else {
-				Toast.makeText(this,
-						getText(R.string.cannot_remove_directories),
-						Toast.LENGTH_LONG).show();
+				Toast.makeText(this, getText(R.string.cannot_remove_directories), Toast.LENGTH_LONG).show();
 			}
 		default:
 		}

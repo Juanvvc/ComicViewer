@@ -97,7 +97,7 @@ public class CBZReader extends Reader {
 //		return this.getDrawableFromZipEntry(res, this.entries.get(page), 1);
 		try {
 			InputStream is = this.archive.getInputStream(this.entries.get(page));
-			return this.streamToTiledDrawable(is,  COLUMNS, ROWS);
+			return this.streamToTiledDrawable(is);
 		} catch (IOException e) {
 			myLog.e(TAG, e.toString());
 		}
