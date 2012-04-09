@@ -851,15 +851,18 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					.setPositiveButton(android.R.string.ok, null).show();
 			}
 			return true;
-		case R.id.switch_drawing_visible:
+		case R.id.switch_drawing_visible: // switches the drawing on and off
 			if (DRAW_MODE_AVAILABLE) {
+				MyImageView im = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
 				// remember: the imageswitcher has two MyImageViews: we switch the visible mode in both
-				MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(0);
-				i.setDrawVisible(!i.isDrawVisible());
-				i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(1);
-				i.setDrawVisible(!i.isDrawVisible());
-				// and redraw the current one
-				((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView().invalidate();
+				if (!im.isDrawMode()) { // do not change view if draw mode is active
+					MyImageView i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(0);
+					i.setDrawVisible(!i.isDrawVisible());
+					i = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getChildAt(1);
+					i.setDrawVisible(!i.isDrawVisible());
+					// and redraw the current one
+					im.invalidate();
+				}
 			}
 			return true;
 		default:

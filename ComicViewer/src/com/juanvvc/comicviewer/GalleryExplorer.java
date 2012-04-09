@@ -150,8 +150,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			GalleryExplorer.this.registerForContextMenu(g);
 			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection,	position));
 			// create the gallery name
-			((TextView) v.findViewById(R.id.collection_name))
-					.setText(collection.getName());
+			((TextView) v.findViewById(R.id.collection_name)).setText(collection.getName());
 			// gallery items listen to clicks!
 			g.setOnItemClickListener(GalleryExplorer.this);
 			return v;
@@ -459,7 +458,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		@Override
 		protected void onPostExecute(final Drawable d) {
 			super.onPostExecute(d);
-			this.holder.img.setImageDrawable(d);
+			try {
+				this.holder.img.setImageDrawable(d);
+			} catch (Exception e) {
+				// if the view is not available, an exception is thrown. Just ignore.
+			}
 		}
 	}
 
@@ -579,6 +582,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					intent.putExtra("page", page);
 					this.startActivityForResult(intent, REQUEST_VIEWER);
 				}
+			} else {
+				// TODO: return from comicvieweractivity: reload the collection
 			}
 		}
 	}
