@@ -491,7 +491,11 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		case R.id.rescan: // rescan collection
 			ListView collections = (ListView) findViewById(R.id.collections);
 			collections.invalidate();
-			collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+			if (this.comicDir == null) {
+				Toast.makeText(this, R.string.please_select_directory, Toast.LENGTH_LONG);
+			} else {
+				collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+			}
 			// TODO: remove .thumbnails directories and old comics from the database
 			return true;
 		case R.id.bookmarks: // show the bookmarks activity
