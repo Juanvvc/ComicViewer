@@ -32,6 +32,8 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	private Bitmap buffer = null;
 	/** If true, the drawing was edited. */
 	private boolean edited = false;
+	/** If inner drawable is TiledDrawable, the mode of the TiledDrawable. */
+	private TiledDrawable.Mode tiledDrawableMode = TiledDrawable.Mode.CENTERED_FILL_SCREEN;
 
 	/** Constructs a new MyImageView.
 	 * @param context The context of the application
@@ -205,7 +207,7 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	}
 
 	/** Recycles the memory of the current drawable. */
-	private void onloadCurrentImage() {
+	private void unloadCurrentImage() {
 		Drawable currentd = this.getDrawable();
 		if (currentd != null) {
 			if (currentd instanceof BitmapDrawable) {
@@ -228,7 +230,10 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	 * @param d The new drawable
 	 */
 	public final void setImageDrawable(final Drawable d) {
-		this.onloadCurrentImage();
+		this.unloadCurrentImage();
+		if (d instanceof TiledDrawable) {
+			((TiledDrawable) d).setMode(this.tiledDrawableMode);
+		}
 		super.setImageDrawable(d);
 	}
 
@@ -237,7 +242,7 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	 * @param rid the identifier of the image resource
 	 */
 	public final void setImageResource(final int rid) {
-		this.onloadCurrentImage();
+		this.unloadCurrentImage();
 		super.setImageResource(rid);
 	}
 
@@ -259,6 +264,20 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	/** @param e The edited status of this drawing. */
 	public final void setEdited(final boolean e) {
 		this.edited = e;
+	}
+
+	/** Changes the mode of the TiledDrawable. */
+	public final void switchMode() {
+		Drawable d = this.getDrawable();
+		if (d instanceof TiledDrawable) {
+			TiledDrawable.Mode m = ((TiledDrawable) d).getMode();
+			this.tiledDrawableMode = TiledDrawable.Mode.STRECHED;
+			if (((TiledDrawable) d).getMode() == TiledDrawable.Mode.STRECHED) {
+				this.tiledDrawableMode = TiledDrawable.Mode.CENTERED_FILL_SCREEN;
+			}
+			((TiledDrawable) d).setMode(this.tiledDrawableMode);
+			postInvalidate();
+		}
 	}
 }
 

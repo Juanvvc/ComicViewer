@@ -2,6 +2,8 @@ package com.juanvvc.comicviewer.readers;
 
 import java.util.ArrayList;
 
+import com.juanvvc.comicviewer.MyLog;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -14,6 +16,9 @@ import android.graphics.drawable.Drawable;
  *
  */
 public class TiledDrawable extends Drawable {
+	/** Use during debugging. */
+	private static final String TAG = "TiledDrawable";
+	
 	/** How to draw this drawable. */
 	public enum Mode {
 		/** Scale the image to fill the whole screen. */
@@ -63,6 +68,10 @@ public class TiledDrawable extends Drawable {
 
 	@Override
 	public final void draw(final Canvas canvas) {
+		if (this.mode == null) {
+			MyLog.w(TAG, "Mode was null! Using default mode");
+			this.setMode(Mode.CENTERED_FILL_SCREEN);
+		}
 		switch(this.mode) {
 		case CENTERED_FILL_SCREEN:
 			this.drawCenteredFillScreen(canvas);

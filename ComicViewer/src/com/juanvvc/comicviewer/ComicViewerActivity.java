@@ -258,9 +258,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if (this.comicInfo == null) {
 			return false;
 		}
+
+		ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
+		MyImageView iv = (MyImageView) imgs.getCurrentView();
+
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			int zone = this.getZone(v, event.getX(), event.getY());
 			switch (zone) {
+			case 0: // left side of the header
+				iv.switchMode();
+				break;
 			case 1: // center of header. In landscape mode, go back a page
 			case 3: // left margin
 				this.changePage(false);
@@ -271,8 +278,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					this.stopThreads();
 					System.gc();
 
-					ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
-					ImageView iv = (ImageView) imgs.getCurrentView();
 					iv.setImageDrawable(this.comicInfo.reader.current());
 
 					// shows the position of the user in the comic on the screen
@@ -289,8 +294,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
 
 					try {
-						ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
-						ImageView iv = (ImageView) imgs.getCurrentView();
 						// try to load a scaled version
 						iv.setImageDrawable(new BitmapDrawable(
 								getResources(),
