@@ -50,8 +50,6 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * Within this scope, a "collection" is a directory with comics inside. Thre is
  * only one level of collections, and subdirectories are top-level collections.
  *
- * TODO: Too many rescans are forced. In large directories this is not a good idea
- *
  * @author juanvi
  *
  */
@@ -84,8 +82,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					.setPositiveButton(android.R.string.ok, null).show();
 		} else {
 			ListView collections = (ListView) findViewById(R.id.collections);
-			collections.setAdapter(new CollectionListAdapter(this, new File(
-					this.comicDir)));
+			collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
 		}
 
 	}
@@ -119,8 +116,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			this.context = c;
 
 			// create the list of comic collections
-			this.entries = ComicCollection.getCollections(GalleryExplorer.this,
-					dir);
+			this.entries = ComicCollection.getCollections(GalleryExplorer.this, dir);
 			// sort directories alphabetically
 			Collections.sort(this.entries, new Comparator<ComicCollection>() {
 				public int compare(final ComicCollection lhs, final ComicCollection rhs) {
@@ -317,7 +313,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 
 			return true;
 		case R.id.remove_comic: // deletes the comic
-			myLog.i(TAG, "Removing comic");
+			MyLog.i(TAG, "Removing comic");
 			File comicfile = new File(comicinfo.uri);
 			if (!comicfile.isDirectory()) {
 				// removes the comic from the database
@@ -325,18 +321,18 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				db.close();
 				// removes the comic from the filesystem
 				if (!comicfile.delete()) {
-					myLog.w(TAG, "Comic couldn't be deleted. Secured filesystem?");
+					MyLog.w(TAG, "Comic couldn't be deleted. Secured filesystem?");
 				}
 				// removes the drawing from the file system, if any
 				try {
 					(new DrawingReader(this, comicinfo.uri)).removeAllDrawings();
 				} catch (Exception e) {
-					myLog.w(TAG, "Cannot remove drawings: " + e.toString());
+					MyLog.w(TAG, "Cannot remove drawings: " + e.toString());
 				}
 				// removes the thumbnail from the filesystem
 				File th = getThumbnailFile(comicfile);
 				if (!th.delete()) {
-					myLog.w(TAG, "Thumbnail couldn't be deleted. Secured filesystem?");
+					MyLog.w(TAG, "Thumbnail couldn't be deleted. Secured filesystem?");
 				}
 				// if the thumbnails directory is empty, remove
 				if (th.getParentFile().list().length == 0) {
@@ -403,12 +399,12 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				// look for the cover in the thumbnails directory. If found, we
 				// are done
 				if (cachefile.exists()) {
-					myLog.v(TAG, "Cache found: " + cachefile.getName());
+					MyLog.v(TAG, "Cache found: " + cachefile.getName());
 					return new BitmapDrawable(getResources(), BitmapFactory.decodeFile(cachefile.getAbsolutePath()));
 				}
 
 				// if we are here, the thumbnail was not found
-				myLog.v(TAG, "Cache not found, creating: " + cachefile.getName());
+				MyLog.v(TAG, "Cache not found, creating: " + cachefile.getName());
 
 				// Load the comic file, and then the first image
 				// select the comic reader
@@ -433,24 +429,24 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 						// create the thumbnails directory
 						// I suppose that if the directory cannot be created, an
 						// exception will be triggered in the next line
-						myLog.d(TAG, "Creating thumbnails dir: " + cachefile.getParentFile().getAbsolutePath());
+						MyLog.d(TAG, "Creating thumbnails dir: " + cachefile.getParentFile().getAbsolutePath());
 						if (!cachefile.getParentFile().mkdir()) {
-							myLog.w(TAG, "Thumbnails directory was not created");
+							MyLog.w(TAG, "Thumbnails directory was not created");
 						}
 					}
 					// save the thumbnail
 					FileOutputStream out = new FileOutputStream(cachefile.getAbsoluteFile());
 					s.compress(Bitmap.CompressFormat.PNG, 90, out);
 					out.close();
-					myLog.v(TAG, "Cache file created: " + cachefile.getName());
+					MyLog.v(TAG, "Cache file created: " + cachefile.getName());
 				} catch (IOException eio) {
-					myLog.w(TAG, "Cannot create the cache file: " + eio.toString());
+					MyLog.w(TAG, "Cannot create the cache file: " + eio.toString());
 				}
 
 				return new BitmapDrawable(getResources(), s);
 			} catch (Exception e) {
-				myLog.e(TAG, e.toString());
-				myLog.e(TAG, stackTraceToString(e));
+				MyLog.e(TAG, e.toString());
+				MyLog.e(TAG, stackTraceToString(e));
 				return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 			}
 		}
@@ -525,7 +521,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				if (filePath == null) {
 					return;
 				}
-				myLog.i(TAG, "Selected: " + filePath);
+				MyLog.i(TAG, "Selected: " + filePath);
 
 				// Four cases:
 				// 1.- The user selected an existing file. Remove the file and

@@ -32,14 +32,14 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 
 	@Override
 	public final void onCreate(final SQLiteDatabase db) {
-		myLog.v(TAG, "Creating the database");
+		MyLog.v(TAG, "Creating the database");
 		db.execSQL("CREATE TABLE comics(_id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, read INTEGER, last_page INTEGER, pages INTEGER, last_access TEST);");
 		db.execSQL("CREATE TABLE bookmarks(_id INTEGER PRIMARY KEY, comicid INTEGER NOT NULL, page INTEGER NOT NULL);");
 	}
 
 	@Override
 	public final void onUpgrade(final SQLiteDatabase db, final int oldVersion, final int newVersion) {
-		myLog.w(TAG, "Updating database from " + oldVersion + " to "
+		MyLog.w(TAG, "Updating database from " + oldVersion + " to "
 				+ newVersion);
 		db.execSQL("DROP TABLE IF EXISTS comics");
 		db.execSQL("DROP TABLE IF EXISTS bookmarks");
@@ -53,7 +53,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 	 * @return the ID of the created comic
 	 */
 	private long createNewComic(final String uri) {
-		myLog.v(TAG, "New comic in the database: " + uri);
+		MyLog.v(TAG, "New comic in the database: " + uri);
 		SQLiteDatabase db = this.getWritableDatabase();
 		ContentValues cv = new ContentValues();
 		cv.put("last_page", 0);
@@ -92,7 +92,7 @@ public class ComicDBHelper extends SQLiteOpenHelper {
 		}
 		cur.close();
 		db.close();
-		myLog.v(TAG, "Comic '" + uri + "': " + id);
+		MyLog.v(TAG, "Comic '" + uri + "': " + id);
 		return id;
 	}
 

@@ -153,11 +153,11 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	      currentPath = new Path();
 	      currentPath.moveTo(event.getX(), event.getY());
 	      currentPath.lineTo(event.getX(), event.getY());
-	      myLog.d(TAG, "Path started");
+	      MyLog.d(TAG, "Path started");
 	    } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 	    	// add intermediate points to the path
 	    	currentPath.lineTo(event.getX(), event.getY());
-	    	myLog.d(TAG, "Path moved");
+	    	MyLog.d(TAG, "Path moved");
 	    } else if (event.getAction() == MotionEvent.ACTION_UP) {
 	    	// end of a path
 	    	currentPath.lineTo(event.getX(), event.getY());
@@ -175,10 +175,10 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	    		c.drawPath(currentPath, this.painter);
 	    	}
 			this.invalidate();
-			myLog.d(TAG, "Path finished");
+			MyLog.d(TAG, "Path finished");
 			edited = true;
 	    } else {
-	    	myLog.d(TAG, "Event number: " + event.getAction());
+	    	MyLog.d(TAG, "Event number: " + event.getAction());
 	    }
 	    // returning true is mandatory to recive ACTION_MOVE and ACTION_UP events.
 	    // this also means that the container won't recive the event
@@ -210,13 +210,13 @@ public class MyImageView extends ImageView implements OnTouchListener {
 		if (currentd != null) {
 			if (currentd instanceof BitmapDrawable) {
 				try {
-					myLog.d(TAG, "Recycling old BitmapDrawable");
+					MyLog.d(TAG, "Recycling old BitmapDrawable");
 					((BitmapDrawable) currentd).getBitmap().recycle();
 				} catch (Exception e) {
-					myLog.w(TAG, e.toString());
+					MyLog.w(TAG, e.toString());
 				}
 			} else if (currentd instanceof TiledDrawable) {
-				myLog.d(TAG, "Recycling old TiledDrawable");
+				MyLog.d(TAG, "Recycling old TiledDrawable");
 				((TiledDrawable) currentd).recycle();
 			}
 			super.setImageDrawable(null);

@@ -11,16 +11,23 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 
 import com.juanvvc.comicviewer.GalleryExplorer;
-import com.juanvvc.comicviewer.myLog;
+import com.juanvvc.comicviewer.MyLog;
 
+/** Manages a reader for drawings on pages of another reader.
+ * You can browse drawings as any other document using prev() and next().
+ * @author juanvi
+ */
 public class DrawingReader extends Reader {
 	/** The directory to save drawings. */
 	private File fileDir;
 
-	/** Creates a new manager for drawings. */
-	public DrawingReader(Context newContext, String newUri)	throws ReaderException {
-		super(newContext, newUri);
-		load(newUri);
+	/** Creates a new manager for drawings.
+	 * @param ctx The context of the reader.
+	 * @param uri The URI to load
+	 * @throws ReaderException after any exception */
+	public DrawingReader(final Context ctx, final String uri) throws ReaderException {
+		super(ctx, uri);
+		load(uri);
 	}
 
 	@Override
@@ -67,9 +74,9 @@ public class DrawingReader extends Reader {
 		File f = getFileForPage(page);
 		if (f.exists()) {
 			if (f.delete()) {
-				myLog.v(TAG, "Drawing removed for page: " + page);
+				MyLog.v(TAG, "Drawing removed for page: " + page);
 			} else {
-				myLog.w(TAG, "Cannot remove drawing: " + f.getAbsolutePath());
+				MyLog.w(TAG, "Cannot remove drawing: " + f.getAbsolutePath());
 			}
 		}
 	}
@@ -86,9 +93,9 @@ public class DrawingReader extends Reader {
 			}
 			// next, delete dir
 			if (fileDir.delete()) {
-				myLog.v(TAG, "All drawings deleted");
+				MyLog.v(TAG, "All drawings deleted");
 			} else {
-				myLog.w(TAG, "Cannot remove drawing directory");
+				MyLog.w(TAG, "Cannot remove drawing directory");
 			}
 		}
 	}
@@ -107,23 +114,23 @@ public class DrawingReader extends Reader {
 
 		// create the drawing directory, if not exist
 		if (!fileDir.exists()) {
-			myLog.i(TAG, "Creating drawing directory in " + fileDir.getAbsolutePath());
+			MyLog.i(TAG, "Creating drawing directory in " + fileDir.getAbsolutePath());
 			if (!fileDir.mkdir()) {
-				myLog.w(TAG, "Cannot create the drawing directory. Reason unknown.");
+				MyLog.w(TAG, "Cannot create the drawing directory. Reason unknown.");
 				return;
 			}
 		}
 		File f = this.getFileForPage(page);
-		myLog.v(TAG, "Saving drawing on file " + f.getAbsolutePath());
+		MyLog.v(TAG, "Saving drawing on file " + f.getAbsolutePath());
 
 		try {
 			FileOutputStream out = new FileOutputStream(f);
 			b.compress(Bitmap.CompressFormat.PNG, 90, out);
 			out.close();
 		} catch (FileNotFoundException e) {
-			myLog.e(TAG, "File not found" + e.toString());
+			MyLog.e(TAG, "File not found" + e.toString());
 		} catch (IOException e) {
-			myLog.e(TAG, "Error writing drawing: " + e.toString());
+			MyLog.e(TAG, "Error writing drawing: " + e.toString());
 		}
 	}
 

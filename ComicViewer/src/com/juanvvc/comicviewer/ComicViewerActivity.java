@@ -49,7 +49,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * @author juanvi
  */
 public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener {
-	/** The TAG constant for the myLogger. */
+	/** The TAG constant for the MyLogger. */
 	private static final String TAG = "ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread. */
 	private LoadNextPage nextFastPage = null;
@@ -169,7 +169,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		// findViewById(R.id.gestures);
 		// gestures.addOnGesturePerformedListener(this);
 		// }else{
-		// myLog.w(TAG, "No gestures available");
+		// MyLog.w(TAG, "No gestures available");
 		// }
 
 	}
@@ -187,8 +187,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	public final void onSaveInstanceState(final Bundle savedInstanceState) {
 		if (this.comicInfo != null) {
 			savedInstanceState.putString("uri", this.comicInfo.reader.getURI());
-			savedInstanceState.putInt("page",
-					this.comicInfo.reader.getCurrentPage());
+			savedInstanceState.putInt("page", this.comicInfo.reader.getCurrentPage());
 		}
 		super.onSaveInstanceState(savedInstanceState);
 	}
@@ -212,7 +211,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * database. Typically, this is never called manually
 	 */
 	public final void close() {
-		myLog.i(TAG, "Closing comic viewer");
+		MyLog.i(TAG, "Closing comic viewer");
 
 		this.stopThreads();
 
@@ -286,7 +285,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 								Toast.LENGTH_SHORT).show();
 					}
 				} catch (Exception e) {
-					myLog.e(TAG, e.toString());
+					MyLog.e(TAG, e.toString());
 					Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
 
 					try {
@@ -297,7 +296,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 								getResources(),
 								this.comicInfo.reader.getBitmapPage(this.comicInfo.reader.getCurrentPage(), 4)));
 					} catch (Exception e2) {
-						myLog.e(TAG, e2.toString());
+						MyLog.e(TAG, e2.toString());
 					}
 				}
 				break;
@@ -376,7 +375,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			if (prediction.score > 1.0) {
 				// Show the spell
 				Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT).show();
-				myLog.d(TAG, prediction.name);
+				MyLog.d(TAG, prediction.name);
 			}
 		}
 	}
@@ -391,7 +390,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 *            go to the first page. If info.page == LAST_PAGE, go to last page.
 	 */
 	public final void loadComic(final ComicInfo info) {
-		myLog.i(TAG, "Loading comic " + info.uri + " at page " + info.page);
+		MyLog.i(TAG, "Loading comic " + info.uri + " at page " + info.page);
 
 		close();
 
@@ -409,10 +408,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		// create a drawing reader for this comic
 		try {
 			// the constructor does nearly nothing, it is save to put this here.
-			this.drawingReader = new DrawingReader(this, ci.uri);
+			this.drawingReader = new DrawingReader(this, info.uri);
 		} catch (ReaderException e) {
 			// this is never thrown, as far as I know
-			myLog.w(TAG, "Exception while creating DrawingReader: " + e.toString());
+			MyLog.w(TAG, "Exception while creating DrawingReader: " + e.toString());
 		}
 
 		// the comic is loaded in the background, since there is lots of things to do
@@ -554,16 +553,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// check if we are at the last page
 				if (reader.getCurrentPage() >= reader.countPages() - 1) {
 					// load the next issue in the collection
-					myLog.i(TAG, "At the end of the comic");
+					MyLog.i(TAG, "At the end of the comic");
 					if (LOAD_NEXT_ISSUE && this.comicInfo.collection != null) {
-						myLog.d(TAG, "Loading next issue");
+						MyLog.d(TAG, "Loading next issue");
 						ComicInfo nextIssue = this.comicInfo.collection.next(this.comicInfo);
 						if (nextIssue != null) {
-							myLog.i(TAG, "Next issue: " + nextIssue.uri);
+							MyLog.i(TAG, "Next issue: " + nextIssue.uri);
 							nextIssue.page = FIRST_PAGE; // we load the next issue at the first page. It is weird otherwise
 							this.loadComic(nextIssue);
 						} else {
-							myLog.i(TAG, "Last comic in collection");
+							MyLog.i(TAG, "Last comic in collection");
 						}
 					}
 					return;
@@ -597,16 +596,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				// check that we are not in the first page
 				if (reader.getCurrentPage() == 0) {
 					// load the next issue in the collection
-					myLog.i(TAG, "First page of rhe comic");
+					MyLog.i(TAG, "First page of rhe comic");
 					if (LOAD_NEXT_ISSUE && this.comicInfo.collection != null) {
-						myLog.d(TAG, "Loading prev issue");
+						MyLog.d(TAG, "Loading prev issue");
 						ComicInfo prevIssue = this.comicInfo.collection.prev(this.comicInfo);
 						if (prevIssue != null) {
-							myLog.i(TAG, "Prev issue: " + prevIssue.uri);
+							MyLog.i(TAG, "Prev issue: " + prevIssue.uri);
 							prevIssue.page = LAST_PAGE; // we load the last page of the prev issue. It is weird otherwise
 							this.loadComic(prevIssue);
 						} else {
-							myLog.i(TAG, "First comic in collection");
+							MyLog.i(TAG, "First comic in collection");
 						}
 					}
 					return;
@@ -628,7 +627,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			PrintWriter printWriter = new PrintWriter(result);
 			e.printStackTrace(printWriter);
 
-			myLog.e(TAG, e.toString() + result.toString());
+			MyLog.e(TAG, e.toString() + result.toString());
 			n = getResources().getDrawable(R.drawable.outofmemory);
 			this.stopThreads();
 		}
@@ -644,23 +643,23 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					(this.comicInfo.reader.getCurrentPage() + 1) + "/"
 							+ this.comicInfo.reader.countPages(),
 					Toast.LENGTH_SHORT).show();
-		}
-
-		// if the current page is bookmarked, show the bookmark
-		if (this.comicInfo.bookmarks != null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
-			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
-		} else {
-			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
-		}
-
-		// load the drawing, if any
-		// TODO: memory problems here? Out of this thread? Test this.
-		if (this.drawingReader != null) {
-			MyImageView m = (MyImageView) imgs.getCurrentView();
-			try {
-				m.setCurrentDrawing(drawingReader.getBitmapPage(comicInfo.reader.getCurrentPage(), 1));
-			} catch (ReaderException e) {
-				myLog.w(TAG, "Exception reading drawing: " + e.toString());
+		
+			// if the current page is bookmarked, show the bookmark
+			if (this.comicInfo.bookmarks != null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
+				this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
+			} else {
+				this.findViewById(R.id.bookmark).setVisibility(View.GONE);
+			}
+			
+			// load the drawing, if any
+			// TODO: memory problems here? Out of this thread? Test this.
+			if (this.drawingReader != null) {
+				MyImageView m = (MyImageView) imgs.getCurrentView();
+				try {
+					m.setCurrentDrawing(drawingReader.getBitmapPage(comicInfo.reader.getCurrentPage(), 1));
+				} catch (ReaderException e) {
+					MyLog.w(TAG, "Exception reading drawing: " + e.toString());
+				}
 			}
 		}
 	}
@@ -730,7 +729,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				return null;
 			}
 			int page = params[0].intValue();
-			myLog.d(TAG, "Buffering page " + page);
+			MyLog.d(TAG, "Buffering page " + page);
 			try {
 				return ComicViewerActivity.this.comicInfo.reader.getPage(page);
 			} catch (Exception e) {
@@ -739,7 +738,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}
 
 		protected void onPostExecute(final Drawable d) {
-			myLog.d(TAG, "Next page loaded");
+			MyLog.d(TAG, "Next page loaded");
 		}
 	}
 
@@ -822,7 +821,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 											ComicViewerActivity.this
 													.moveToPage(page - 1);
 										} catch (NumberFormatException e) {
-											myLog.e(TAG, e.toString());
+											MyLog.e(TAG, e.toString());
 										}
 									}
 
@@ -881,7 +880,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		if (resultCode == Activity.RESULT_OK) {
 			if (requestCode == REQUEST_BOOKMARKS) {
 				int page = data.getIntExtra("page", 0);
-				myLog.i(TAG, "Bookmark to page " + page);
+				MyLog.i(TAG, "Bookmark to page " + page);
 				this.moveToPage(page);
 			}
 		}

@@ -16,7 +16,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import com.juanvvc.comicviewer.myLog;
+import com.juanvvc.comicviewer.MyLog;
 
 import de.innosystec.unrar.Archive;
 import de.innosystec.unrar.exception.RarException;
@@ -48,7 +48,7 @@ public class CBRReader extends Reader {
 	@Override
 	public final void load(final String uri) throws ReaderException {
 		super.load(uri);
-		myLog.i(TAG, "Loading URI" + uri);
+		MyLog.i(TAG, "Loading URI" + uri);
 		// tries to open the RAR file
 		try {
 			this.archive = new Archive(new File(uri));
@@ -91,7 +91,7 @@ public class CBRReader extends Reader {
 		try {
 			this.archive.close();
 		} catch (IOException e) {
-			myLog.e(TAG, e.toString());
+			MyLog.e(TAG, e.toString());
 		}
 		this.archive = null;
 
@@ -105,7 +105,7 @@ public class CBRReader extends Reader {
 		try {
 			return this.streamToTiledDrawable(this.extractToInputStream(this.entries.get(page)));
 		} catch (Exception e) {
-			myLog.e(TAG, "Cannot read page: " + e.toString());
+			MyLog.e(TAG, "Cannot read page: " + e.toString());
 		} catch (OutOfMemoryError err) {
 			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.outofmemory));
 		}
@@ -183,14 +183,14 @@ public class CBRReader extends Reader {
 				try {
 					archive.extractFile(hd, out);
 				} catch (RarException e) {
-					myLog.e(TAG, e.toString());
+					MyLog.e(TAG, e.toString());
 				} catch (OutOfMemoryError e) {
-					myLog.e(TAG, e.toString());
+					MyLog.e(TAG, e.toString());
 				} finally {
 					try {
 						out.close();
 					} catch (IOException e) {
-						myLog.e(TAG, e.toString());
+						MyLog.e(TAG, e.toString());
 					}
 				}
 			}

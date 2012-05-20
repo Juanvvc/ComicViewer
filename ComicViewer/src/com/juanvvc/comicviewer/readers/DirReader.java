@@ -14,7 +14,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import com.juanvvc.comicviewer.myLog;
+import com.juanvvc.comicviewer.MyLog;
 
 /**
  * A reader for directories of images.
@@ -37,7 +37,7 @@ public class DirReader extends Reader {
 	public DirReader(final Context newContext, final String newUri) throws ReaderException {
 		super(newContext, newUri);
 		if (newUri != null) {
-			myLog.v(TAG, "Usig DirReader on " + newUri);
+			MyLog.v(TAG, "Usig DirReader on " + newUri);
 			this.load(newUri);
 		}
 	}

@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapFactory.Options;
@@ -14,7 +13,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-import com.juanvvc.comicviewer.myLog;
+import com.juanvvc.comicviewer.MyLog;
 
 /**
  * This class manages comics. It is used to load a comic, get a page, and move
@@ -133,7 +132,7 @@ public abstract class Reader {
 	 * @param page The index of the page to move, starting at 0.
 	 */
 	public final void moveTo(final int page) {
-		myLog.v(TAG, "Moving to " + page);
+		MyLog.v(TAG, "Moving to " + page);
 		if (page < 0 || page >= this.countPages()) {
 			return;
 		}
@@ -252,7 +251,7 @@ public abstract class Reader {
 				System.gc();
 			}
 			opts.inSampleSize *= 2;
-			myLog.d(TAG, "Using scale " + opts.inSampleSize);
+			MyLog.d(TAG, "Using scale " + opts.inSampleSize);
 		}
 
 		if (AUTOMATIC_ROTATION && bitmap.getHeight() < bitmap.getWidth()) {
@@ -298,7 +297,7 @@ public abstract class Reader {
 			ow = (bd.getWidth() / cols) * cols;
 			oh = (bd.getHeight() / rows) * rows;
 		}
-		myLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
+		MyLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
 
 		// Get the final tiles width and height
 		int tw = ow / cols;
@@ -382,7 +381,7 @@ public abstract class Reader {
 				return new PDFReader(context, uri);
 			}
 		} catch (ReaderException e) {
-			myLog.w(TAG,  e.toString());
+			MyLog.w(TAG,  e.toString());
 		}
 		return null;
 	}

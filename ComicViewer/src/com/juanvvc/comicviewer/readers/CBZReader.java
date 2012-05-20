@@ -15,7 +15,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import com.juanvvc.comicviewer.myLog;
+import com.juanvvc.comicviewer.MyLog;
 
 /**
  * A reader for ZIP files.
@@ -46,7 +46,7 @@ public class CBZReader extends Reader {
 	public final void load(final String uri) throws ReaderException {
 		try {
 			super.load(uri);
-			myLog.i(TAG, "Loading URI" + uri);
+			MyLog.i(TAG, "Loading URI" + uri);
 			this.archive = new ZipFile(uri);
 			// get the entries of the file and sort them alphabetically
 			this.entries = Collections.list(this.archive.entries());
@@ -84,7 +84,7 @@ public class CBZReader extends Reader {
 		try {
 			this.archive.close();
 		} catch (IOException e) {
-			myLog.e(TAG, e.toString());
+			MyLog.e(TAG, e.toString());
 		}
 		this.archive = null;
 	}
@@ -99,7 +99,7 @@ public class CBZReader extends Reader {
 			InputStream is = this.archive.getInputStream(this.entries.get(page));
 			return this.streamToTiledDrawable(is);
 		} catch (IOException e) {
-			myLog.e(TAG, e.toString());
+			MyLog.e(TAG, e.toString());
 		}
 		return null;
 	}

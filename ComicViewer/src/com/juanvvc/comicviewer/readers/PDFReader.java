@@ -10,8 +10,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 
+import com.juanvvc.comicviewer.MyLog;
 import com.juanvvc.comicviewer.R;
-import com.juanvvc.comicviewer.myLog;
 
 /**
  * A reader for ZIP files.
@@ -50,11 +50,11 @@ public class PDFReader extends Reader {
 	@Override
 	public final void load(final String uri) throws ReaderException {
 		super.load(uri);
-		myLog.i(TAG, "Loading URI" + uri);
+		MyLog.i(TAG, "Loading URI" + uri);
 		try {
 			file = new PDF(new File(uri), 1);
 		} catch (UnsatisfiedLinkError e) {
-			myLog.e(TAG, "PDF library not available");
+			MyLog.e(TAG, "PDF library not available");
 			file = null;
 		}
 	}
@@ -96,7 +96,7 @@ public class PDFReader extends Reader {
 			cols = this.getSuitableCols(size.width);
 			rows = this.getSuitableRows(size.height);
 		}
-		myLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
+		MyLog.d(TAG, "Using cols, rows: " + cols  + ", " + rows);
 
 		// calculate an appropriate zoom level to fill the screen
 		// this enhance the quality of the rendered page.
@@ -108,9 +108,9 @@ public class PDFReader extends Reader {
 					// if the zoom changes, the pdf size changes accordingly
 					size.width = (int) (1.0 * zoom * size.width / ZOOM100);
 					size.height = (int) (1.0 * zoom * size.height / ZOOM100);
-					myLog.d(TAG, "Using zoom level of " + zoom);
+					MyLog.d(TAG, "Using zoom level of " + zoom);
 				} else {
-					myLog.d(TAG, "PDF page larger than viewport");
+					MyLog.d(TAG, "PDF page larger than viewport");
 				}
 			} else {
 				if (size.width < getWidth()) {
@@ -119,13 +119,13 @@ public class PDFReader extends Reader {
 					// if the zoom changes, the pdf size changes accordingly
 					size.width = (int) (1.0 * zoom * size.width / ZOOM100);
 					size.height = (int) (1.0 * zoom * size.height / ZOOM100);
-					myLog.d(TAG, "Using zoom level of " + zoom);
+					MyLog.d(TAG, "Using zoom level of " + zoom);
 				} else {
-					myLog.d(TAG, "PDF page larger than viewport");
+					MyLog.d(TAG, "PDF page larger than viewport");
 				}
 			}
 		} else {
-			myLog.w(TAG, "Viewport size not set or no automatic zoom");
+			MyLog.w(TAG, "Viewport size not set or no automatic zoom");
 		}
 
 		// Get the closest width and height that divisible by cols and rows
