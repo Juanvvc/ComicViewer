@@ -56,9 +56,15 @@ public class CBRReader extends Reader {
 			throw new ReaderException(e.getMessage());
 		}
 		// throws an exception if the file is encrypted
-		if (this.archive.isEncrypted()) {
-			this.archive = null;
-			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.encrypted_file));
+		try {
+			if (this.archive.isEncrypted()) {
+				this.archive = null;
+				throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.encrypted_file));
+			}
+		} catch (NullPointerException e) {
+			// Two users reported that the last line throws sometimes a null pointer exception, not sure about the reason
+			// just managed this exception
+			throw new ReaderException(getContext().getString(com.juanvvc.comicviewer.R.string.cannot_read));
 		}
 		this.entries = this.archive.getFileHeaders();
 		// removes files that are not .jpg or .png

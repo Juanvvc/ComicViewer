@@ -34,5 +34,6 @@
     <string name="rubber">Borra dibujo</string>
     <string name="draw_mode_not_available">El modo dibujo no está disponible</string>
     <string name="no_bookmarks">No existen marcas</string>
+    <string name="cannot_read">No puedo leer el archivo</string>
 
 </resources>

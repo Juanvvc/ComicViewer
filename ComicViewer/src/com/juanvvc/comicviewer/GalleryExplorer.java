@@ -82,7 +82,16 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 					.setPositiveButton(android.R.string.ok, null).show();
 		} else {
 			ListView collections = (ListView) findViewById(R.id.collections);
-			collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+			// if the comic dir is set, but it does not exists (for example, the SD card was removed)
+			// this lines throws a NullPointerException.
+			// TODO: manage this case in a better way
+			try{
+				collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
+			} catch(NullPointerException e) {
+				new AlertDialog.Builder(this).setIcon(R.drawable.icon)
+				.setTitle(this.getText(R.string.please_select_directory))
+				.setPositiveButton(android.R.string.ok, null).show();
+			}
 		}
 
 	}

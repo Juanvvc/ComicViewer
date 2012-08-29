@@ -35,5 +35,6 @@
     <string name="rubber">Rubber</string>
     <string name="draw_mode_not_available">The draw mode is not available</string>
     <string name="no_bookmarks">No bookmarks defined</string>
+    <string name="cannot_read">Cannot read the file</string>
 
 </resources>
