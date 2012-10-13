@@ -278,51 +278,53 @@ Java_com_juanvvc_comicviewer_readers_PDF_freeMemory(
 	pdf = (pdf_t*) (*env)->GetIntField(env, this, pdf_field_id);
 	(*env)->SetIntField(env, this, pdf_field_id, 0);
 
-    if (pdf->pages) {
-        int i;
-        int pagecount;
-        pagecount = pdf_count_pages(pdf->xref);
+    if ( pdf != NULL && pdf != 0) {
+        if (pdf->pages) {
+            int i;
+            int pagecount;
+            pagecount = pdf_count_pages(pdf->xref);
 
-        for(i = 0; i < pagecount; ++i) {
-            if (pdf->pages[i]) {
-                pdf_free_page(pdf->pages[i]);
-                pdf->pages[i] = NULL;
+            for(i = 0; i < pagecount; ++i) {
+                if (pdf->pages[i]) {
+                    pdf_free_page(pdf->pages[i]);
+                    pdf->pages[i] = NULL;
+                }
             }
+
+            free(pdf->pages);
         }
 
-        free(pdf->pages);
-    }
-
-    /*
-    if (pdf->textlines) {
-        int i;
-        int pagecount;
-        pagecount = pdf_getpagecount(pdf->xref);
-        for(i = 0; i < pagecount; ++i) {
-            if (pdf->textlines[i]) {
-                pdf_droptextline(pdf->textlines[i]);
+        /*
+        if (pdf->textlines) {
+            int i;
+            int pagecount;
+            pagecount = pdf_getpagecount(pdf->xref);
+            for(i = 0; i < pagecount; ++i) {
+                if (pdf->textlines[i]) {
+                    pdf_droptextline(pdf->textlines[i]);
+                }
             }
+            free(pdf->textlines);
+            pdf->textlines = NULL;
         }
-        free(pdf->textlines);
-        pdf->textlines = NULL;
+        */
+
+        /*
+        if (pdf->drawcache) {
+            fz_freeglyphcache(pdf->drawcache);
+            pdf->drawcache = NULL;
+        }
+        */
+
+        /* pdf->fileno is dup()-ed in parse_pdf_fileno */
+        if (pdf->fileno >= 0) close(pdf->fileno);
+        if (pdf->glyph_cache)
+            fz_free_glyph_cache(pdf->glyph_cache);
+        if (pdf->xref)
+            pdf_free_xref(pdf->xref);
+
+        free(pdf);
     }
-    */
-
-    /*
-    if (pdf->drawcache) {
-        fz_freeglyphcache(pdf->drawcache);
-        pdf->drawcache = NULL;
-    }
-    */
-
-    /* pdf->fileno is dup()-ed in parse_pdf_fileno */
-    if (pdf->fileno >= 0) close(pdf->fileno);
-    if (pdf->glyph_cache)
-        fz_free_glyph_cache(pdf->glyph_cache);
-    if (pdf->xref)
-        pdf_free_xref(pdf->xref);
-
-    free(pdf);
 }
 
 

@@ -33,4 +33,4 @@ mkdir generated 2> /dev/null
 ../../scripts/fontdump generated/font_base14.h fonts/*.cff
 ../../scripts/fontdump generated/font_droid.h fonts/droid/DroidSans.ttf fonts/droid/DroidSansMono.ttf
 cd ..
-/home/juanvi/.local/bin/android-ndk-r7b/ndk-build
+ndk-build
