@@ -7,83 +7,55 @@ import java.io.Writer;
 
 import android.util.Log;
 
-/** Use this class instead of android.util.Log.
- * Simplify the process of uploading to Google Play: just set DEBUG to false and there you are.
+/** Use this class instead of android.util.Log: simplify the process of uploading to Google Play
  * @author juanvi
  */
-public final class MyLog {
-	/** Set to false in final deployment, tru during development. */
-	private static final boolean DEBUG = false;
-
-	/** Do not use this constructor. */
-	private MyLog() {
-		// do not use this constructor
+public class MyLog{
+	private static boolean DEBUG=true;
+	
+	public static void setDebug(boolean d) {
+		MyLog.DEBUG = d;
 	}
-
-	/** Shows an information message.
-	 *
-	 * @param tag Tag of the message
-	 * @param msg The message
-	 */
-	public static void i(final String tag, final String msg) {
-		if (DEBUG) {
-			Log.i(tag, msg);
-		}
+	public static boolean isDebug() {
+		return MyLog.DEBUG;
 	}
-
-	/** Shows an information message.
-	 *
-	 * @param tag Tag of the message
-	 * @param msg The message
-	 */
-	public static void d(final String tag, final String msg) {
-		if (DEBUG) {
-			Log.d(tag, msg);
-		}
+	
+	public static void i(Object o, String msg){
+		if(DEBUG) Log.i(o.getClass().getSimpleName(), msg);
 	}
-
-	/** Shows an information message.
-	 *
-	 * @param tag Tag of the message
-	 * @param msg The message
-	 */
-	public static void v(final String tag, final String msg) {
-		if (DEBUG) {
-			Log.v(tag, msg);
-		}
+	public static void d(Object o, String msg){
+		if(DEBUG) Log.d(o.getClass().getSimpleName(), msg);
 	}
-
-	/** Shows an information message.
-	 *
-	 * @param tag Tag of the message
-	 * @param msg The message
-	 */
-	public static void e(final String tag, final String msg) {
-		if (DEBUG) {
-			Log.e(tag, msg);
-		}
+	public static void v(Object o, String msg){
+		if(DEBUG) Log.v(o.getClass().getSimpleName(), msg);
 	}
-
-	/** Shows an information message.
-	 *
-	 * @param tag Tag of the message
-	 * @param msg The message
-	 */
-	public static void w(final String tag, final String msg) {
-		if (DEBUG) {
-			Log.e(tag, msg);
-		}
+	public static void e(Object o, String msg){
+		if(DEBUG) Log.e(o.getClass().getSimpleName(), msg);
 	}
-
-	/**
-	 * @param e The exception to analyze.
-	 * @return A String with the stack trace of the Exception. Useful during development.
-	 */
-	public static String stackToString(final Exception e) {
+	public static void w(Object o, String msg){
+		if(DEBUG) Log.e(o.getClass().getSimpleName(), msg);
+	}
+	
+	public static void i(String t, String msg){
+		if(DEBUG) Log.i(t, msg);
+	}
+	public static void d(String t, String msg){
+		if(DEBUG) Log.d(t, msg);
+	}
+	public static void v(String t, String msg){
+		if(DEBUG) Log.v(t, msg);
+	}
+	public static void e(String t, String msg){
+		if(DEBUG) Log.e(t, msg);
+	}
+	public static void w(String t, String msg){
+		if(DEBUG) Log.e(t, msg);
+	}
+	
+	public static String stackToString(Exception e) {
 		Writer result = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(result);
 		e.printStackTrace(printWriter);
 		return result.toString();
 	}
 }
-

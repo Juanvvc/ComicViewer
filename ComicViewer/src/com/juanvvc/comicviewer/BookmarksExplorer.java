@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-/** This activity shows a list of bookmarks on the screen.
+/** This activity shows a list of book marks on the screen.
  *
  * If the calling intent used the extra "comicid", only
  * the bookmarks of that comic are shown.

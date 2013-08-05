@@ -183,7 +183,7 @@ public class PDFReader extends Reader {
 	 */
 	@Override
 	public final Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException {
-		if (page == 0 && USE_GENERIC_COVER) {
+		if ( USE_GENERIC_COVER && page == 0) {
 			return BitmapFactory.decodeResource(this.getContext().getResources(), R.drawable.pdf_cover);
 		}
 		Drawable d = this.getPage(page);

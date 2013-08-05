@@ -13,7 +13,7 @@
     <string name="change_directory">Change Directory</string>
     <string name="remove_comic">Remove comic</string>
     <string name="switch_read">Switch Read state</string>
-    <string name="settings">Settings</string>
+    <string name="settings">Settings&#8230;</string>
     <string name="file_name">File name</string>
     <string name="newnew">New</string>
     <string name="cover">Comic cover</string>
@@ -24,17 +24,38 @@
     <string name="read">" (read)"</string>
     <string name="in">" in "</string>
     <string name="page">"Page "</string>
-    <string name="bookmark_list">Bookmark list</string>
+    <string name="bookmark_list">Bookmark list&#8230;</string>
     <string name="no_comic">Comic not found</string>
     <string name="cannot_remove_directories">Directories cannot be removed</string>
     <string name="removed">" was removed"</string>
     <string name="loading">"Loading "</string>
-    <string name="go_to_page">Go to page...</string>
+    <string name="go_to_page">Go to page&#8230;</string>
     <string name="switch_drawing">Switch drawing mode</string>
     <string name="switch_drawing_visible">Switch Drawing Visible</string>
     <string name="rubber">Rubber</string>
     <string name="draw_mode_not_available">The draw mode is not available</string>
     <string name="no_bookmarks">No bookmarks defined</string>
     <string name="cannot_read">Cannot read the file</string>
-
+    <!--  Settings menu -->
+    <string name="black">Black</string>
+    <string name="grey">Grey</string>
+    <string name="white">White</string>
+    <string name="slow">Slow</string>
+    <string name="medium">Medium</string>
+    <string name="fast">Fast</string>
+    <string name="pref_back_color">Background color</string>
+    <string name="pref_back_color_sum">Back color of the viewer screen</string>
+    <string name="pref_changepage_speed">Speed</string>
+    <string name="pref_changepage_speed_sum">Page movement speed</string>
+    <string name="pref_load_next">Load next</string>
+    <string name="pref_load_next_sum">Load next document when current issue finishes</string>
+    <string name="pref_draw_mode">Draw mode</string>
+    <string name="pref_draw_mode_sum">Make drawing on screen available</string>
+    <string name="pref_screen_on">Keep screen on</string>
+    <string name="pref_screen_on_sum">Keep the screen on while reading</string>
+    <!--  Changelog -->
+    <string name="changelog_title">Recent changes</string>
+    <string name="changelog_full_title">History</string>
+    <string name="changelog_ok_button">OK</string>
+    <string name="changelog_show_full">Show full history</string>
 </resources>

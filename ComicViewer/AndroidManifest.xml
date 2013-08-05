@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.juanvvc.comicviewer"
-    android:versionCode="6"
-    android:versionName="1.4.1" >
+    android:versionCode="7"
+    android:versionName="1.4.2" >
 
-    <uses-sdk android:minSdkVersion="15" />
+    <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <!--         android:debuggable="true" -->
@@ -13,7 +13,8 @@
 
         android:hardwareAccelerated="true"
         android:icon="@drawable/icon"
-        android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:allowBackup="true" >
         <activity
             android:name=".ComicViewerActivity"
             android:label="@string/app_name"
@@ -30,11 +31,15 @@
         </activity>
         <activity
             android:name=".DirExplorer"
-            android:label="@string/app_name" >
+            android:label="@string/change_directory" >
         </activity>
         <activity
             android:name=".BookmarksExplorer"
             android:label="@string/bookmark" >
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/settings" >
         </activity>
         <activity
             android:name=".GalleryExplorer"

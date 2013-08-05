@@ -2,7 +2,6 @@ package com.juanvvc.comicviewer.readers;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.util.List;
 
 // #ifdef pro
 // import java.util.ArrayList;

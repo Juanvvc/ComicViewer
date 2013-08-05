@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string-array name="pref_back_color_entries">
+        <item name="grey">@string/grey</item>
+        <item name="black">@string/black</item>
+        <item name="white">@string/white</item>
+    </string-array>
+    
+    <string-array name="pref_back_color_values">
+        <item name="grey">FFAAAAAA</item>
+        <item name="black">FF000000</item>
+        <item name="white">FFFFFFFF</item>
+    </string-array>
+    
+    
+    <string-array name="pref_changepage_speed_entries">
+        <item name="slow">@string/slow</item>
+        <item name="medium">@string/medium</item>
+        <item name="fast">@string/fast</item>
+    </string-array>
+    
+    <string-array name="pref_changepage_speed_values">
+        <item name="slow">1000</item>
+        <item name="medium">500</item>
+        <item name="fast">100</item>
+    </string-array>
+</resources>

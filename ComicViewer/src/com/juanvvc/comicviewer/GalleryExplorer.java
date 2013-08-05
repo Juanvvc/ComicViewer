@@ -1,5 +1,29 @@
 package com.juanvvc.comicviewer;
 
+/* ////////////////////////////////////////
+check list: before uploading a new version to Google Play:
+
+1.- Create the normal version:
+- List the changes and date in res/raw/changelog.txt
+- Check the version number in the manifiest: it should be higher than the one in Google Play
+- Commit the version to git and set a new flag:
+    git commit -a -m blahblahblah
+    git tag v2.0
+    git push --tags github
+    git push --tags linsertel
+- Set DEBUG to false in MyLog.java
+- Export the project to ComicViewer.apk
+- Signature: ~/.android/myjuanvvc.keystore
+
+2.- Back to development version:
+- Undo all changes. Easy way:
+    Exit Eclipse
+    git --hard reset
+- Open Eclipse again, ok to the warning message
+- Start a new iteration by updating the version number in the manifest: one higher
+    
+///////////////////////////////////////// */
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,7 +69,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
 
 /**
  * Shows the comic collection. This class makes extensive use of Lists and
- * Adapters
+ * Adapters. This is the main activity of this application.
  *
  * Within this scope, a "collection" is a directory with comics inside. Thre is
  * only one level of collections, and subdirectories are top-level collections.
@@ -84,7 +108,6 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			ListView collections = (ListView) findViewById(R.id.collections);
 			// if the comic dir is set, but it does not exists (for example, the SD card was removed)
 			// this lines throws a NullPointerException.
-			// TODO: manage this case in a better way
 			try{
 				collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
 			} catch(NullPointerException e) {
@@ -92,6 +115,12 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				.setTitle(this.getText(R.string.please_select_directory))
 				.setPositiveButton(android.R.string.ok, null).show();
 			}
+		}
+		
+		// if it is the first run of this version, show the changelog.txt
+		ChangeLog cl = new ChangeLog(this);
+		if (cl.firstRun() || MyLog.isDebug()) {
+			cl.getFullLogDialog().show();
 		}
 
 	}
@@ -220,8 +249,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		 */
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ComicInfo ci = this.entries.get(position);
-			// TODO: I tried to reuse convertView, but some images and text do
-			// not change fast enough.
+			// I tried to reuse convertView, but some images and text do not change fast enough.
 			View v = View.inflate(this.context, R.layout.galleryexploreritem, null);
 			v.setBackgroundResource(this.background);
 
@@ -503,12 +531,14 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			}
 			// TODO: remove .thumbnails directories and old comics from the database
 			return true;
-		case R.id.bookmarks: // show the bookmarks activity
+		case R.id.bookmarks: // show the book marks activity
 			intent = new Intent(getBaseContext(), BookmarksExplorer.class);
 			startActivityForResult(intent, REQUEST_BOOKMARKS);
 			return true;
-		case R.id.settings: // change settings (currently not implemented)
-			return true;
+		case R.id.settings: // change settings
+	        intent = new Intent(this.getApplicationContext(), SettingsActivity.class);
+	        this.startActivity(intent);
+	        return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -556,8 +586,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 									null).show();
 					f = null;
 				} else {
-					// 3.- the user selected an unexisting directory.
-					// TODO: ask if sure
+					// 3.- the user selected an not existing directory.
 					if (!f.exists()) {
 						f.mkdir();
 					}

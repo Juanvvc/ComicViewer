@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Locale;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -55,7 +56,7 @@ public class DirReader extends Reader {
 		Iterator<File> itr = this.entries.iterator();
 		while (itr.hasNext()) {
 			File e = itr.next();
-			String name = e.getName().toLowerCase();
+			String name = e.getName().toLowerCase(Locale.US);
 			if (e.isDirectory() || !(name.endsWith(".jpg") || name.endsWith(".png"))) {
 				itr.remove();
 			}
@@ -66,8 +67,8 @@ public class DirReader extends Reader {
 				String n1 = lhs.getName();
 				String n2 = rhs.getName();
 				if (IGNORE_CASE) {
-					n1 = n1.toLowerCase();
-					n2 = n2.toLowerCase();
+					n1 = n1.toLowerCase(Locale.US);
+					n2 = n2.toLowerCase(Locale.US);
 				}
 				return n1.compareTo(n2);
 			}
@@ -111,6 +112,8 @@ public class DirReader extends Reader {
 			while ((ret = is.read(tmp)) > 0) {
 				bos.write(tmp, 0, ret);
 			}
+			
+			is.close();
 
 			return this.byteArrayToBitmap(bos.toByteArray(), initialscale);
 
@@ -150,7 +153,7 @@ public class DirReader extends Reader {
 			if (contents[i].isDirectory()) {
 				continue;
 			}
-			String name = contents[i].getName().toLowerCase();
+			String name = contents[i].getName().toLowerCase(Locale.US);
 			if (name.endsWith(".jpg") || name.endsWith(".png")) {
 				numimgs++;
 			}

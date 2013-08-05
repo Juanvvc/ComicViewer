@@ -48,14 +48,13 @@ public class MyImageView extends ImageView implements OnTouchListener {
 		  painter.setStyle(Paint.Style.STROKE);
 		  painter.setStrokeJoin(Paint.Join.ROUND);
 		  painter.setStrokeCap(Paint.Cap.ROUND);
-		  this.setDrawVisible(true);
+		  this.setDrawVisible(dv);
 		  this.setPainterWidth(3);
 		  this.removeDrawing();
 		  this.setDrawMode(false, -1, -1);
 
 		  this.setOnTouchListener(this);
 
-		setDrawVisible(drawVisible);
 	}
 
 	/**
@@ -270,7 +269,6 @@ public class MyImageView extends ImageView implements OnTouchListener {
 	public final void switchMode() {
 		Drawable d = this.getDrawable();
 		if (d instanceof TiledDrawable) {
-			TiledDrawable.Mode m = ((TiledDrawable) d).getMode();
 			this.tiledDrawableMode = TiledDrawable.Mode.STRECHED;
 			if (((TiledDrawable) d).getMode() == TiledDrawable.Mode.STRECHED) {
 				this.tiledDrawableMode = TiledDrawable.Mode.CENTERED_FILL_SCREEN;

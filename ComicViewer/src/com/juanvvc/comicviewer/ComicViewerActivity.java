@@ -6,21 +6,20 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.gesture.Gesture;
 import android.gesture.GestureLibrary;
-import android.gesture.GestureOverlayView;
-import android.gesture.GestureOverlayView.OnGesturePerformedListener;
-import android.gesture.Prediction;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.method.DigitsKeyListener;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -43,12 +42,12 @@ import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
 
 /**
- * Shows a comic on the screen. This class implements ViewFactory because it
- * generates the Views for the internal ImageSwitcher.
+ * Shows a comic on the screen.
+ * This class implements ViewFactory to generate the Views for the internal ImageSwitcher.
  *
  * @author juanvi
  */
-public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener, OnGesturePerformedListener {
+public class ComicViewerActivity extends Activity implements ViewFactory, OnTouchListener {
 	/** The TAG constant for the MyLogger. */
 	private static final String TAG = "ComicViewerActivity";
 	/** A task to load pages on the background and free the main thread. */
@@ -62,7 +61,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * loaded
 	 */
 	private ComicInfo comicInfo = null;
-	/** Random number to identify request of bookmarks. */
+	/** Random number to identify request of book marks. */
 	private static final int REQUEST_BOOKMARKS = 0x21;
 	/** The directory for draws. */
 	public static final String DRAWDIR = ".draws";
@@ -77,31 +76,26 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * to move to the last page when the reader is available. */
 	private static final int LAST_PAGE = -100;
 
-	// TODO: make these things options
-	/** If set, horizontal pages are automatically rotated. */
-	private static final int ANIMATION_DURATION = 500;
+	// In these preferences, these are the default values if they are not
+	// set in SharedPreferences
+	/** The duration of the animation. */
+	private int ANIMATION_DURATION = 500;
 	/** If set, at the end of the comic loads the next issue. */
-	private static final boolean LOAD_NEXT_ISSUE = true;
+	private boolean LOAD_NEXT_ISSUE = true;
 	/** If set, the draw mode is available. */
-	private static final boolean DRAW_MODE_AVAILABLE = true;
+	private boolean DRAW_MODE_AVAILABLE = true;
 	/** The color for the background. */
-	public static final int BACK_COLOR = 0xff000000;
+	public int BACK_COLOR = 0xffaaaaaa;
 
 
 	/** Called when the activity is first created.
-	 * @param savedInstanceState the Bundle to manage the lifecycle */
+	 * @param savedInstanceState the Bundle to manage the life cycle */
 	@Override
 	public final void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		// sets the orientation portrait, mandatory
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		setContentView(R.layout.comicvieweractivity);
-
-		ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
-		imgs.setFactory(this);
-		this.configureAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
-				R.anim.slide_in_left, R.anim.slide_out_right,
-				ANIMATION_DURATION);
 
 		// load the intent, if any
 		Intent intent = this.getIntent();
@@ -126,6 +120,37 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					.setPositiveButton(android.R.string.ok, null).show();
 			return;
 		}
+		
+		// Load preferences. Use the current values as default
+		// Remember: preferences only manage string value
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		try {
+			ANIMATION_DURATION = Integer.parseInt(sharedPref.getString("pref_changepage_speed", null));
+		} catch(Exception e){
+			MyLog.w(TAG, "Cannot read ANIMATION_DURATION from preferences, reverting to default value");
+		}
+		try {
+			BACK_COLOR = (int)Long.parseLong(sharedPref.getString("pref_back_color", null), 16);
+		} catch(Exception e) {
+			MyLog.w(TAG, "Cannot read BACK_COLOR from preferences, reverting to default value: " + e.toString());
+		}
+		LOAD_NEXT_ISSUE = sharedPref.getBoolean("pref_load_next", LOAD_NEXT_ISSUE);
+		DRAW_MODE_AVAILABLE = sharedPref.getBoolean("pref_draw_mode", DRAW_MODE_AVAILABLE);
+		MyLog.d(TAG, "ANIMATION_DURATION=" + ANIMATION_DURATION);
+		MyLog.d(TAG, "BACK_COLOR=" + BACK_COLOR);
+		MyLog.d(TAG, "LOAD_NEXT_ISSUE=" + LOAD_NEXT_ISSUE);
+		MyLog.d(TAG, "DRAW_MODE_AVAILABLE=" + DRAW_MODE_AVAILABLE);
+		// if set, keep if screen on
+		if (sharedPref.getBoolean("pref_screen_on", true)) {
+			this.findViewById(R.id.comicvieweractivity_layout).setKeepScreenOn(true);
+		}
+		// configure animations
+		this.configureAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+				R.anim.slide_in_left, R.anim.slide_out_right,
+				ANIMATION_DURATION);
+		// set the factory (and hence, configure back colors)
+		ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
+		imgs.setFactory(this);
 
 		// get the information of this Comic from the database
 		ComicDBHelper db = new ComicDBHelper(this);
@@ -133,8 +158,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		info = db.getComicInfo(id);
 		db.close();
 		// if we still have no information of the comic, create it
-		// Note: info==null only after an error in the database. Possible, but
-		// rare
+		// Note: info==null only after an error in the database. Possible, but rare
 		if (info == null) {
 			info = new ComicInfo();
 			info.page = 0;
@@ -171,7 +195,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		// }else{
 		// MyLog.w(TAG, "No gestures available");
 		// }
-
+		
+		// hide the action bar
+		this.getActionBar().hide();
 	}
 
 	/**
@@ -211,10 +237,20 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * database. Typically, this is never called manually
 	 */
 	public final void close() {
-		MyLog.i(TAG, "Closing comic viewer");
+		MyLog.i(TAG, "Closing the comic");
 
+		// stop all other threads (buffer next page, load hight resolution version of current page...)
 		this.stopThreads();
+		
+		// If the current page was annotated, save the current drawing
+		if (this.drawingReader != null) {
+			MyImageView mi = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
+			if (mi.isEdited() && this.comicInfo != null && this.comicInfo.reader != null) {
+				this.drawingReader.saveDrawing(this.comicInfo.reader.getCurrentPage(), mi.getCurrentDrawing());
+			}
+		}
 
+		// If there is an open comic, close the reader, close the comic and update the info in the database
 		if (this.comicInfo != null && this.comicInfo.reader != null) {
 			if (this.comicInfo != null) {
 				ComicDBHelper db = new ComicDBHelper(this);
@@ -224,6 +260,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			this.comicInfo.reader.close();
 			this.comicInfo = null;
 		}
+	}
+	
+	@Override
+	public final void onStop() {
+		this.close();
+		super.onStop();
 	}
 
 	@Override
@@ -273,6 +315,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				this.changePage(false);
 				break;
 			case 4: // center
+				// toggle action bar
+				ActionBar abar = this.getActionBar();
+				if (abar != null) {
+					if(abar.isShowing()) {
+						abar.hide();
+					} else {
+						abar.show();
+					}
+				}
+				
 				// reload current image (it may help in some large pages)
 				try {
 					this.stopThreads();
@@ -282,16 +334,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 					// shows the position of the user in the comic on the screen
 					if (this.comicInfo != null && this.comicInfo.reader != null) {
-						Toast.makeText(
-								this,
+						this.showToast(
 								(this.comicInfo.reader.getCurrentPage() + 1)
-										+ "/"
-										+ this.comicInfo.reader.countPages(),
-								Toast.LENGTH_SHORT).show();
+								+ "/" + this.comicInfo.reader.countPages(),
+								Toast.LENGTH_SHORT);
 					}
 				} catch (Exception e) {
 					MyLog.e(TAG, e.toString());
-					Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+					this.showToast(e.toString(), Toast.LENGTH_LONG);
 
 					try {
 						// try to load a scaled version
@@ -302,6 +352,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 						MyLog.e(TAG, e2.toString());
 					}
 				}
+
 				break;
 			case 7: // center of footer. In landscape mode, advance a page
 			case 5: // right margin
@@ -368,19 +419,29 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 * @see android.gesture.GestureOverlayView.OnGesturePerformedListener#onGesturePerformed(android.gesture.GestureOverlayView,
 	 *      android.gesture.Gesture)
 	 */
-	public final void onGesturePerformed(final GestureOverlayView overlay,
-			final Gesture gesture) {
-		ArrayList<Prediction> predictions = this.geslibrary.recognize(gesture);
-		// We want at least one prediction
-		if (predictions.size() > 0) {
-			Prediction prediction = predictions.get(0);
-			// We want at least some confidence in the result
-			if (prediction.score > 1.0) {
-				// Show the spell
-				Toast.makeText(this, prediction.name, Toast.LENGTH_SHORT).show();
-				MyLog.d(TAG, prediction.name);
-			}
+//	public final void onGesturePerformed(final GestureOverlayView overlay,
+//			final Gesture gesture) {
+//		ArrayList<Prediction> predictions = this.geslibrary.recognize(gesture);
+//		// We want at least one prediction
+//		if (predictions.size() > 0) {
+//			Prediction prediction = predictions.get(0);
+//			// We want at least some confidence in the result
+//			if (prediction.score > 1.0) {
+//				// Show the spell
+//				showToast(prediction.name, Toast.LENGTH_SHORT);
+//				MyLog.d(TAG, prediction.name);
+//			}
+//		}
+//	}
+	
+	private Toast myToast=null;
+	/** Shows a toast on the screen */
+	private void showToast(String msg, int duration) {
+		if(myToast != null) {
+			myToast.cancel();
 		}
+		myToast = Toast.makeText(this, msg, duration);
+		myToast.show();
 	}
 
 	/**
@@ -397,7 +458,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 		close();
 
-		Toast.makeText(this, getText(R.string.loading) + info.uri, Toast.LENGTH_LONG).show();
+		showToast(getText(R.string.loading) + info.uri, Toast.LENGTH_LONG);
 
 		// load information about the bookmarks from the database
 		ComicDBHelper db = new ComicDBHelper(this);
@@ -453,8 +514,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 						ComicViewerActivity.this.moveToPage(0);
 						break;
 					case LAST_PAGE:
-						// Remember: if the comic was not read in the past, you don't know which is the
-						// last page index. Use LAST_PAGE constant to force "go to last page"
 						// TODO: the animation is wrong in this case. No easy way to fix this.
 						ComicViewerActivity.this.moveToPage(info.reader.countPages() - 1);
 						break;
@@ -512,11 +571,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 		// shows the position of the user in the comic on the screen
 		if (this.comicInfo != null && this.comicInfo.reader != null) {
-			Toast.makeText(
-					this,
+			showToast(
 					(this.comicInfo.reader.getCurrentPage() + 1) + "/"
 							+ this.comicInfo.reader.countPages(),
-					Toast.LENGTH_SHORT).show();
+					Toast.LENGTH_SHORT);
 		}
 
 		// if the page is bookmarked, show the bookmark
@@ -529,7 +587,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 	/**
 	 * Changes the page currently on screen, doing an animation.
-	 * TODO: currently, this method only supports left-to-right comics.
+	 * Currently, this method only supports left-to-right comics.
 	 *
 	 * @param forward
 	 *            True if the user is moving forward, false is backward
@@ -621,7 +679,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				n = this.comicInfo.reader.getPage(reader.getCurrentPage());
 				// and load the next page from the prev. That is, the currently
 				// displayed page.
-				// TODO: I'm sure that there is room for improvements here
+				// TODO: I'm sure that there is room for improvements here. This page is already loaded!
 				this.nextFastPage = (LoadNextPage) new LoadNextPage().execute(reader.getCurrentPage() + 1);
 			}
 
@@ -641,11 +699,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 		// shows the position of the user in the comic on the screen
 		if (this.comicInfo != null && this.comicInfo.reader != null) {
-			Toast.makeText(
-					this,
+			showToast(
 					(this.comicInfo.reader.getCurrentPage() + 1) + "/"
 							+ this.comicInfo.reader.countPages(),
-					Toast.LENGTH_SHORT).show();
+					Toast.LENGTH_SHORT);
 		
 			// if the current page is bookmarked, show the bookmark
 			if (this.comicInfo.bookmarks != null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
@@ -655,7 +712,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			}
 			
 			// load the drawing, if any
-			// TODO: memory problems here? Out of this thread? Test this.
 			if (this.drawingReader != null) {
 				MyImageView m = (MyImageView) imgs.getCurrentView();
 				try {
@@ -799,7 +855,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					intent.putExtra("comicid", this.comicInfo.id);
 					startActivityForResult(intent, REQUEST_BOOKMARKS);
 				} else {
-					Toast.makeText(this, this.getString(R.string.no_bookmarks), Toast.LENGTH_SHORT).show();
+					showToast(this.getString(R.string.no_bookmarks), Toast.LENGTH_SHORT);
 				}
 			}
 			break;
@@ -924,13 +980,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 	@Override
 	public void finish() {
-		// check the drawing
-		if (this.drawingReader != null) {
-			MyImageView mi = (MyImageView) ((ImageSwitcher) this.findViewById(R.id.switcher)).getCurrentView();
-			if (mi.isEdited() && this.comicInfo != null && this.comicInfo.reader != null) {
-				this.drawingReader.saveDrawing(this.comicInfo.reader.getCurrentPage(), mi.getCurrentDrawing());
-			}
-		}
 		// if threads are not stopped, they run on the background. At the end, they may change
 		// views that are not available, and the whole application crashes. True story.
 		// In addition, save the current state of the comic

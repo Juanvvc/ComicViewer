@@ -24,6 +24,9 @@ It uses its own license, not approved by the FSF.
 This project used native library MuPDF to show PDF content.
 The JNI interface is from mpietrzak, http://code.google.com/p/apv/
 
+This project uses the lirbary by Karsten Priegnitz to show changelogs
+http://code.google.com/p/android-change-log/
+
 The rest of the code is under a GPLv3 license.
 
 (c) 2012 Juanvi Vera
