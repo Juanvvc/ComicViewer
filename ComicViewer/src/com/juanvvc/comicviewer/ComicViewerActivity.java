@@ -102,12 +102,14 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		int savedPage = -1;
 		ComicInfo info;
 		if (intent.getExtras() != null && intent.getExtras().containsKey("uri")) {
+			MyLog.d(TAG, "Loading comic from intent");
 			uri = intent.getExtras().getString("uri");
 			if (intent.getExtras().containsKey("page")) {
 				savedPage = intent.getExtras().getInt("page");
 			}
 		} else if (savedInstanceState != null
 				&& savedInstanceState.containsKey("uri")) {
+			MyLog.d(TAG, "Loading comic from internal state");
 			// load the save state, if any
 			uri = savedInstanceState.getString("uri");
 			if (savedInstanceState.containsKey("page")) {
@@ -263,7 +265,15 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	
 	@Override
 	public final void onStop() {
-		this.close();
+		// update the information in the database (without closing the comic)
+		// Notice that this update could happen several times. For example, onStop() and then onDestroy()
+		if (this.comicInfo != null && this.comicInfo.reader != null) {
+			if (this.comicInfo != null) {
+				ComicDBHelper db = new ComicDBHelper(this);
+				db.updateComicInfo(this.comicInfo);
+				db.close();
+			}
+		}
 		super.onStop();
 	}
 
@@ -297,6 +307,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	 */
 	public boolean onTouch(View v, MotionEvent event) {
 		if (this.comicInfo == null) {
+			MyLog.w(TAG, "Event on the screen and no comic loaded");
 			return false;
 		}
 

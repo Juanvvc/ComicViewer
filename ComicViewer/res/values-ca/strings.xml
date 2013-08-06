@@ -9,7 +9,7 @@
     <string name="switch_bookmark">Marcar/Desmarcar</string>
     <string name="close">Eixir</string>
     <string name="rescan">Recarrega col·lecció</string>
-    <string name="change_directory">Canvia carpeta</string>
+    <string name="change_directory">Carpeta de còmics</string>
     <string name="remove_comic">Esborra còmic</string>
     <string name="switch_read">Canvia estat llegit</string>
     <string name="settings">Opcions&#8230;</string>

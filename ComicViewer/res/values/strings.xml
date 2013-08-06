@@ -10,7 +10,7 @@
     <string name="switch_bookmark">Switch Bookmark</string>
     <string name="close">Close</string>
     <string name="rescan">Re-scan collection</string>
-    <string name="change_directory">Change Directory</string>
+    <string name="change_directory">Comic directory</string>
     <string name="remove_comic">Remove comic</string>
     <string name="switch_read">Switch Read state</string>
     <string name="settings">Settings&#8230;</string>

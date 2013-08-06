@@ -9,7 +9,7 @@
     <string name="switch_bookmark">Marcar/Desmarcar</string>
     <string name="close">Cerrar</string>
     <string name="rescan">Recarga colección</string>
-    <string name="change_directory">Cambia directorio</string>
+    <string name="change_directory">Directorio de cómics</string>
     <string name="remove_comic">Borrar cómic</string>
     <string name="switch_read">Cambiar estado leído</string>
     <string name="settings">Opciones&#8230;</string>
