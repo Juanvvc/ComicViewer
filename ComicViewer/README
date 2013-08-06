@@ -23,6 +23,7 @@ It uses its own license, not approved by the FSF.
 
 This project used native library MuPDF to show PDF content.
 The JNI interface is from mpietrzak, http://code.google.com/p/apv/
+You will need to compile this library. See build-native.sh in jni directory
 
 This project uses the lirbary by Karsten Priegnitz to show changelogs
 http://code.google.com/p/android-change-log/

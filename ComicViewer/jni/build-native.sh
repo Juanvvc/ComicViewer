@@ -1,36 +1,58 @@
 #!/bin/sh
-# make sure ndk-build is in path
+
+if ! which ndk-build >/dev/null 2>&1; then
+	echo "ndk-build not found in PATH"
+	exit 1
+fi
 
 SCRIPTDIR=`dirname $0`
-MUPDF_FILE=mupdf-snapshot-20111207.tar.gz
-MUPDF=mupdf
-#MUPDF_FILE=mupdf-0.9-source.tar.gz
-#MUPDF=mupdf-0.9
-FREETYPE=freetype-2.4.6
-OPENJPEG=openjpeg_v1_4_sources_r697
+MUPDF=mupdf-cff6f809da556624fb1de34725935278093182e1
+FREETYPE=freetype-2.4.10
+OPENJPEG=openjpeg-2.0.0
 JBIG2DEC=jbig2dec-0.11
-JPEGSRC=jpegsrc.v8a.tar.gz
-JPEGDIR=jpeg-8a
+JPEGSRC=jpegsrc.v8d.tar.gz
+JPEGDIR=jpeg-8d
 
-cd $SCRIPTDIR/../deps
-tar xvf $FREETYPE.tar.bz2
-tar xvf $JPEGSRC
-tar xvf $MUPDF_FILE
-tar xvf $OPENJPEG.tgz
-tar xvf $JBIG2DEC.tar.gz
-cp $OPENJPEG/libopenjpeg/*.[ch] ../jni/openjpeg/
-echo '#define PACKAGE_VERSION' '"'$OPENJPEG'"' > ../jni/openjpeg/opj_config.h
+cd "$SCRIPTDIR/../deps"
+
+echo "extracting deps"
+tar xf $FREETYPE.tar.bz2 && echo "freetype extracted" &
+tar xf $JPEGSRC && echo "jpeg extracted" &
+(unxz < $MUPDF.tar.xz | tar -xf -) && echo "mupdf extracted" &
+tar xf $OPENJPEG.tar.gz && echo "openjpeg extracted" &
+tar xf $JBIG2DEC.tar.gz && echo "jbig2dec extracted" &
+wait
+
+echo "copying openjpeg"
+cp $OPENJPEG/src/lib/openjp2/*.[ch] ../jni/openjpeg/
+cp opj_config.h ../jni/openjpeg/.
+
+echo "copying jpeg"
 cp $JPEGDIR/*.[ch] ../jni/jpeg/
+
+echo "copying jbig2dec"
 cp $JBIG2DEC/* ../jni/jbig2dec/
+
+echo "copying mupdf"
 for x in draw fitz pdf ; do
     cp -r $MUPDF/$x/*.[ch] ../jni/mupdf/$x/
 done
-cp -r $MUPDF/fonts ../jni/mupdf/
-cp -r $FREETYPE/{src,include} ../jni/freetype/
-gcc -o ../scripts/fontdump $MUPDF/scripts/fontdump.c
-cd ../jni/mupdf
-mkdir generated 2> /dev/null
-../../scripts/fontdump generated/font_base14.h fonts/*.cff
-../../scripts/fontdump generated/font_droid.h fonts/droid/DroidSans.ttf fonts/droid/DroidSansMono.ttf
+
+echo "patching mupdf"
 cd ..
+patch jni/mupdf/fitz/fitz.h jni/mupdf-apv/fitz/apv_fitz.h.patch
+patch -o jni/mupdf-apv/fitz/apv_doc_document.c jni/mupdf/fitz/doc_document.c jni/mupdf-apv/fitz/apv_doc_document.c.patch
+patch -o jni/mupdf-apv/pdf/apv_pdf_cmap_table.c jni/mupdf/pdf/pdf_cmap_table.c jni/mupdf-apv/pdf/apv_pdf_cmap_table.c.patch
+patch -o jni/mupdf-apv/pdf/apv_pdf_fontfile.c jni/mupdf/pdf/pdf_fontfile.c jni/mupdf-apv/pdf/apv_pdf_fontfile.c.patch
+cd deps
+
+
+echo "copying freetype"
+cp -r $FREETYPE/src ../jni/freetype/
+cp -r $FREETYPE/include ../jni/freetype/
+cd ..
+
+echo "running ndk-build"
 ndk-build
+
+echo "build-native done"

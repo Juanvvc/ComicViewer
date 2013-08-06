@@ -14,7 +14,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.gesture.GestureLibrary;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -55,7 +54,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	/** A reference to the animations of the images. */
 	private Animation[] anims = {null, null, null, null };
 	/** The gestures library. */
-	private GestureLibrary geslibrary;
+//	private GestureLibrary geslibrary;
 	/**
 	 * Information in the DB about the loaded comic. If null, no comic was
 	 * loaded

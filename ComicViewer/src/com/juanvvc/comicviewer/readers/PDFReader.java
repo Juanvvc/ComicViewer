@@ -13,6 +13,8 @@ import android.graphics.drawable.Drawable;
 import com.juanvvc.comicviewer.MyLog;
 import com.juanvvc.comicviewer.R;
 
+import cx.hell.android.lib.pdf.PDF;
+
 /**
  * A reader for ZIP files.
  *
@@ -151,7 +153,7 @@ public class PDFReader extends Reader {
 					int top = tw * (cols - j - 1);
 
 					PDF.Size tilesize = new PDF.Size(th, tw);
-					int[] pixels = file.renderPage(page, zoom, left, top, 0, false, false, tilesize);
+					int[] pixels = file.renderPage(page, zoom, left, top, 0, false, tilesize);
 					Bitmap b = Bitmap.createBitmap(pixels, tilesize.width, tilesize.height, Bitmap.Config.RGB_565);
 
 					Matrix matrix = new Matrix();
@@ -163,7 +165,7 @@ public class PDFReader extends Reader {
 					int top = th * i;
 
 					PDF.Size tilesize = new PDF.Size(tw, th);
-					int[] pixels = file.renderPage(page, zoom, left, top, 0, false, false, tilesize);
+					int[] pixels = file.renderPage(page, zoom, left, top, 0, false, tilesize);
 					Bitmap b = Bitmap.createBitmap(pixels, tilesize.width, tilesize.height, Bitmap.Config.RGB_565);
 					tiles.add(b);
 				}

@@ -23,6 +23,7 @@ $ 1.4.2
   % Version 1.4.2
   _ 2013-08-05
     * Show changelog dialog (this message!)
+    * Uses a newer version of mupdf: still has memory problems, but errors do not close the app
     * Catalan translation
     * Settings menu
     * Use more area of the screen 
