@@ -429,4 +429,17 @@ public abstract class Reader {
 		}
 		return row;
 	}
+	
+	/** Returns a bitmap with the cover of the book.
+	 * The default behavior is returning the first page of the book, scaled down */
+	public Bitmap getCover() throws ReaderException {
+		return this.getBitmapPage(0, 8);
+	}
+	
+	/** Returns true if the reader allows the creation of caches of covers.
+	 * By default, this method returns true. Change the method if the reader need
+	 * to change the cover every time, or the cover must not be cached */
+	public boolean allowCoverCache() {
+		return true;
+	}
 }

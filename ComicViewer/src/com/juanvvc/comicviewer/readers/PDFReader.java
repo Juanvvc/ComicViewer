@@ -4,11 +4,13 @@ import java.io.File;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 
 import com.juanvvc.comicviewer.MyLog;
 import com.juanvvc.comicviewer.R;
@@ -30,12 +32,12 @@ public class PDFReader extends Reader {
 
 	///// TODO: make this options configurable
 	/** If not set, returns a generic image in getBitmapPage(0).
-	 * That method is only usually used to get the cover of a page */
-	public static final boolean USE_GENERIC_COVER = false;
+	 * That method is only used to get the cover of a page */
+	private boolean USE_GENERIC_COVER = false;
 	/** If set, zoom the pages to fill the screen.
 	 * This enhances the quality of the render, but increases the process time and memory.
 	 */
-	public static final boolean AUTOMATIC_ZOOM = true;
+	private static final boolean AUTOMATIC_ZOOM = true;
 
 	/** Create a new CBRReader from a uri.
 	 * @param context Context of the application
@@ -47,6 +49,11 @@ public class PDFReader extends Reader {
 		if (uri != null) {
 			this.load(uri);
 		}
+		
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		// use the current value as the default value
+		USE_GENERIC_COVER = preferences.getBoolean("pref_pdf_cover", USE_GENERIC_COVER);
+		
 	}
 
 	@Override
@@ -175,9 +182,6 @@ public class PDFReader extends Reader {
 	}
 
 	/** Returns a page as a bitmap.
-	 * Loading a page using this method is slow, since we have to load the complete page with getPage() and
-	 * then paint the resulting Drawable in a new Bitmap. Hence, to speed up the process for covers,
-	 * if page == 0 and USE_GENERIC_COVER is set, this method returns R.drawable.pdf_cover.
 	 * @param page The number of the page to load
 	 * @param initialscale Unused
 	 * @throws ReaderException if anything went wrong
@@ -185,15 +189,29 @@ public class PDFReader extends Reader {
 	 */
 	@Override
 	public final Bitmap getBitmapPage(final int page, final int initialscale) throws ReaderException {
-		if ( USE_GENERIC_COVER && page == 0) {
-			return BitmapFactory.decodeResource(this.getContext().getResources(), R.drawable.pdf_cover);
-		}
 		Drawable d = this.getPage(page);
 		PDF.Size size = new PDF.Size();
 		file.getPageSize(page, size);
 		Bitmap b = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.RGB_565);
 		d.draw(new Canvas(b));
 		return b;
+	}
+	
+	 /** Loading a cover may be slow for the PDF library. Hence, to speed up the process for covers,
+	 * if USE_GENERIC_COVER is set, this method returns R.drawable.pdf_cover */
+	@Override
+	public final Bitmap getCover() throws ReaderException {
+		if ( USE_GENERIC_COVER ) {
+			return BitmapFactory.decodeResource(this.getContext().getResources(), R.drawable.pdf_cover);
+		} else {
+			return super.getCover();
+		}
+	}
+	
+	/** Do not allow the creation of cover caches if USE_GENERIC_COVER is on */
+	@Override
+	public final boolean allowCoverCache() {
+		return !USE_GENERIC_COVER;
 	}
 
 	@Override

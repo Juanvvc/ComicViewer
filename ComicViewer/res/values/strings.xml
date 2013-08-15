@@ -10,22 +10,22 @@
     <string name="switch_bookmark">Switch Bookmark</string>
     <string name="close">Close</string>
     <string name="rescan">Re-scan collection</string>
-    <string name="change_directory">Comic directory</string>
-    <string name="remove_comic">Remove comic</string>
+    <string name="change_directory">Books directory</string>
+    <string name="remove_comic">Remove book</string>
     <string name="switch_read">Switch Read state</string>
     <string name="settings">Settings&#8230;</string>
     <string name="file_name">File name</string>
     <string name="newnew">New</string>
-    <string name="cover">Comic cover</string>
+    <string name="cover">Book cover</string>
     <string name="bookmark">Bookmark</string>
-    <string name="please_select_directory">Please, select the comics directory</string>
+    <string name="please_select_directory">Please, select the books directory</string>
     <string name="system_directory">" is a system directory and cannot be used. Please, select a subdirectory."</string>
     <string name="no_suitable_reader">Not suitable reader for </string>
     <string name="read">" (read)"</string>
     <string name="in">" in "</string>
     <string name="page">"Page "</string>
     <string name="bookmark_list">Bookmark list&#8230;</string>
-    <string name="no_comic">Comic not found</string>
+    <string name="no_comic">Book not found</string>
     <string name="cannot_remove_directories">Directories cannot be removed</string>
     <string name="removed">" was removed"</string>
     <string name="loading">"Loading "</string>
@@ -53,6 +53,8 @@
     <string name="pref_draw_mode_sum">Make drawing on screen available</string>
     <string name="pref_screen_on">Keep screen on</string>
     <string name="pref_screen_on_sum">Keep the screen on while reading</string>
+    <string name="pref_pdf_cover">Use a generic cover for PDF files</string>
+    <string name="pref_pdf_cover_sum">Reading PDF files may be slow. Use generic covers to improve stability</string>
     <!--  Changelog -->
     <string name="changelog_title">Recent changes</string>
     <string name="changelog_full_title">History</string>

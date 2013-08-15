@@ -433,51 +433,64 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			String uri = this.holder.file.getAbsolutePath();
 			File cachefile = GalleryExplorer.this.getThumbnailFile(this.holder.file);
 			try {
-				// look for the cover in the thumbnails directory. If found, we
-				// are done
-				if (cachefile.exists()) {
-					MyLog.v(TAG, "Cache found: " + cachefile.getName());
-					return new BitmapDrawable(getResources(), BitmapFactory.decodeFile(cachefile.getAbsolutePath()));
-				}
-
-				// if we are here, the thumbnail was not found
-				MyLog.v(TAG, "Cache not found, creating: " + cachefile.getName());
-
-				// Load the comic file, and then the first image
-				// select the comic reader
+				// First, try to load the file.
 				reader = Reader.getReader(GalleryExplorer.this, uri);
 				if (reader == null) {
 					throw new ReaderException("Not a suitable reader");
 				}
-				// Load the first page fast (scale=4)
-				Bitmap page = reader.getBitmapPage(0, 4);
+				
+				// look for the cover in the thumbnails directory. If found, we
+				// are done
+				if (reader.allowCoverCache() && cachefile.exists()) {
+					MyLog.v(TAG, "Cache found: " + cachefile.getName());
+					return new BitmapDrawable(getResources(), BitmapFactory.decodeFile(cachefile.getAbsolutePath()));
+				}
+
+				// if we are here, the thumbnail was not found.. or not allowed
+				MyLog.v(TAG, "Cache not found, creating: " + cachefile.getName());
+
+				// Load the cover of the book
+				Bitmap page = reader.getCover();
 				// in case of fail, return the broken image
 				if (page == null) {
 					return new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), R.drawable.broken));
 				}
 				// scale
 				Bitmap s = Bitmap.createScaledBitmap(page, 200, 300, true);
-				page.recycle();
-
-				try {
-					// save the cache file for the next time, if you can
-					// THIS NEEDS WRITING PERMISSIONS
-					if (!cachefile.getParentFile().exists()) {
-						// create the thumbnails directory
-						// I suppose that if the directory cannot be created, an
-						// exception will be triggered in the next line
-						MyLog.d(TAG, "Creating thumbnails dir: " + cachefile.getParentFile().getAbsolutePath());
-						if (!cachefile.getParentFile().mkdir()) {
-							MyLog.w(TAG, "Thumbnails directory was not created");
+				
+				if(reader.allowCoverCache()) {
+					try {
+						// save the cache file for the next time, if you can
+						// THIS NEEDS WRITING PERMISSIONS
+						if (!cachefile.getParentFile().exists()) {
+							// create the thumbnails directory
+							// I suppose that if the directory cannot be created, an
+							// exception will be triggered in the next line
+							MyLog.d(TAG, "Creating thumbnails dir: " + cachefile.getParentFile().getAbsolutePath());
+							if (!cachefile.getParentFile().mkdir()) {
+								MyLog.w(TAG, "Thumbnails directory was not created");
+							}
+						}
+						// save the thumbnail
+						FileOutputStream out = new FileOutputStream(cachefile.getAbsoluteFile());
+						s.compress(Bitmap.CompressFormat.PNG, 90, out);
+						out.close();
+						MyLog.v(TAG, "Cache file created: " + cachefile.getName());
+					} catch (IllegalStateException e) {
+						// trying to save a resource image
+						MyLog.w(TAG, "Trying to save a resource!");
+						// remove the thumbnail, if exists
+						if(cachefile.exists()) {
+							cachefile.delete();
+						}
+					} catch (IOException eio) {
+						// any other error
+						MyLog.w(TAG, "Cannot create the cache file: " + eio.toString());
+						// remove the thumbnail, if exists
+						if(cachefile.exists()) {
+							cachefile.delete();
 						}
 					}
-					// save the thumbnail
-					FileOutputStream out = new FileOutputStream(cachefile.getAbsoluteFile());
-					s.compress(Bitmap.CompressFormat.PNG, 90, out);
-					out.close();
-					MyLog.v(TAG, "Cache file created: " + cachefile.getName());
-				} catch (IOException eio) {
-					MyLog.w(TAG, "Cannot create the cache file: " + eio.toString());
 				}
 
 				return new BitmapDrawable(getResources(), s);

@@ -39,6 +39,13 @@
             android:summary="@string/pref_screen_on_sum"
             android:defaultValue="true"
      />
+     
+     <CheckBoxPreference
+            android:key="pref_pdf_cover"
+            android:title="@string/pref_pdf_cover"
+            android:summary="@string/pref_pdf_cover_sum"
+            android:defaultValue="false"
+     />
     
 
 </PreferenceScreen>

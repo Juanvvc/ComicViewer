@@ -2,7 +2,7 @@
 <!-- Layout of a cover item: it shows the cover and the comic name
 This layout is used in the GalleryExplorer activity -->
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content" >
 
         <ImageView
@@ -18,10 +18,12 @@ This layout is used in the GalleryExplorer activity -->
 
         <TextView
             android:id="@+id/coveritem_text"
-            android:layout_width="wrap_content"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_alignLeft="@+id/coveritem_img"
             android:layout_below="@+id/coveritem_img"
+            android:gravity="center_horizontal"
+            android:scrollHorizontally="true"
             android:text="@string/nodata" />
 
     </RelativeLayout>

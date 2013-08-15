@@ -52,6 +52,8 @@
     <string name="pref_draw_mode_sum">Activa els dibuixos sobre les pàgines</string>
 	<string name="pref_screen_on">Pantalla sempre activa</string>
     <string name="pref_screen_on_sum">Manté la pantalla encesa mentres durant la lectura</string>
+    <string name="pref_pdf_cover">Mostra cobertes genèriques pels PDFs</string>
+    <string name="pref_pdf_cover_sum">Llegir fitxers PDF pot ser llent. Marqueu aquesta casella per millorar el rendiment</string>
     <!--  Changelog -->
     <string name="changelog_title">Canvis recents</string>
     <string name="changelog_full_title">Història</string>
