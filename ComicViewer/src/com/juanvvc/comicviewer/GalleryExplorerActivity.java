@@ -46,6 +46,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -59,10 +60,14 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.Gallery;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
 import com.juanvvc.comicviewer.readers.DrawingReader;
 import com.juanvvc.comicviewer.readers.Reader;
 import com.juanvvc.comicviewer.readers.ReaderException;
@@ -77,7 +82,7 @@ import com.juanvvc.comicviewer.readers.ReaderException;
  * @author juanvi
  *
  */
-public class GalleryExplorer extends Activity implements OnItemClickListener {
+public class GalleryExplorerActivity extends Activity implements OnItemClickListener {
 	/** An arbitrary name to help debugging. */
 	private static final String TAG = "GalleryExplorer";
 	/** The name of the thumbnails directory. */
@@ -90,6 +95,8 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 	private static final int REQUEST_VIEWER = 0x5a;
 	/** The directory that contents the comics. */
 	private String comicDir = null;
+	/** If true, it is the donate version */
+	private static final boolean DONATE_VERSION = false;
 
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -116,6 +123,23 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				.setPositiveButton(android.R.string.ok, null).show();
 			}
 		}
+		
+        // Create the ads
+        if (!DONATE_VERSION) {
+        	LinearLayout layout = (LinearLayout)findViewById(R.id.galleryexplorer_layout);
+	        AdView adView = new AdView(this, AdSize.BANNER, "a1521fd980922d0");
+	        layout.addView(adView, 0);	        
+	        AdRequest adRequest = new AdRequest();
+	        if (MyLog.isDebug()) {
+	        	adRequest.addTestDevice("874C587B68F6782F0CD99504C02613A8"); // Tablet
+	        	adRequest.addTestDevice("DD57E9E77A859C5F4EE8C1F52334557B"); // HTC Phone
+	        	adRequest.addTestDevice("6BBDE7DC8D834F4C186AB2A8A4B64D9B"); //CHUWI
+	        }
+	        adView.loadAd(adRequest);
+        } else {
+        	// if we are in the donate version, make sure the debug options are not set. Useful for debugging.
+        	MyLog.setDebug(false);
+        }
 		
 		// if it is the first run of this version, show the changelog.txt
 		ChangeLog cl = new ChangeLog(this);
@@ -154,7 +178,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			this.context = c;
 
 			// create the list of comic collections
-			this.entries = ComicCollection.getCollections(GalleryExplorer.this, dir);
+			this.entries = ComicCollection.getCollections(GalleryExplorerActivity.this, dir);
 			// sort directories alphabetically
 			Collections.sort(this.entries, new Comparator<ComicCollection>() {
 				public int compare(final ComicCollection lhs, final ComicCollection rhs) {
@@ -181,12 +205,12 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			View v = View.inflate(this.context, R.layout.galleryexplorerrow, null);
 			// create the cover gallery with an adapter
 			Gallery g = (Gallery) v.findViewById(R.id.cover_gallery);
-			GalleryExplorer.this.registerForContextMenu(g);
-			g.setAdapter(new CoverListAdapter(GalleryExplorer.this, collection,	position));
+			GalleryExplorerActivity.this.registerForContextMenu(g);
+			g.setAdapter(new CoverListAdapter(GalleryExplorerActivity.this, collection,	position));
 			// create the gallery name
 			((TextView) v.findViewById(R.id.collection_name)).setText(collection.getName());
 			// gallery items listen to clicks!
-			g.setOnItemClickListener(GalleryExplorer.this);
+			g.setOnItemClickListener(GalleryExplorerActivity.this);
 			return v;
 		}
 
@@ -268,7 +292,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 			// add some information about the state of the comic
 			if (ci.read) {
 				holder.text.setText(name
-						+ GalleryExplorer.this.getText(R.string.read));
+						+ GalleryExplorerActivity.this.getText(R.string.read));
 			} else if (ci.page > 0 && ci.countpages > -1) {
 				holder.text.setText(name + " (" + (ci.page + 1) + "/"
 						+ ci.countpages + ")");
@@ -292,7 +316,7 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 		}
 		
 		public void reloadCollection() {
-			this.entries.invalidate(GalleryExplorer.this);
+			this.entries.invalidate(GalleryExplorerActivity.this);
 			this.notifyDataSetChanged();
 		}
 	}
@@ -431,10 +455,10 @@ public class GalleryExplorer extends Activity implements OnItemClickListener {
 				// TODO: automatic scan?
 			}
 			String uri = this.holder.file.getAbsolutePath();
-			File cachefile = GalleryExplorer.this.getThumbnailFile(this.holder.file);
+			File cachefile = GalleryExplorerActivity.this.getThumbnailFile(this.holder.file);
 			try {
 				// First, try to load the file.
-				reader = Reader.getReader(GalleryExplorer.this, uri);
+				reader = Reader.getReader(GalleryExplorerActivity.this, uri);
 				if (reader == null) {
 					throw new ReaderException("Not a suitable reader");
 				}

@@ -10,7 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 
-import com.juanvvc.comicviewer.GalleryExplorer;
+import com.juanvvc.comicviewer.GalleryExplorerActivity;
 import com.juanvvc.comicviewer.MyLog;
 
 /** Manages a reader for drawings on pages of another reader.
@@ -35,7 +35,7 @@ public class DrawingReader extends Reader {
 		this.close();
 		super.load(uri);
 		File u = new File(uri);
-		this.fileDir = new File(u.getParentFile() + File.separator + GalleryExplorer.THUMBNAILS + File.separator + new File(uri).getName());
+		this.fileDir = new File(u.getParentFile() + File.separator + GalleryExplorerActivity.THUMBNAILS + File.separator + new File(uri).getName());
 	}
 
 	@Override

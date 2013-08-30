@@ -16,6 +16,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -116,10 +117,20 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				savedPage = savedInstanceState.getInt("page");
 			}
 		} else {
-			new AlertDialog.Builder(this).setIcon(R.drawable.icon)
-					.setTitle(this.getText(R.string.no_comic))
-					.setPositiveButton(android.R.string.ok, null).show();
-			return;
+			MyLog.d(TAG, "Trying to load from an external intent");
+			// try to load the uri from the data in an external intent
+			uri = null;
+			final Uri data = intent.getData();
+			if (data != null) {
+				uri = data.getPath();
+			}
+			// if no uri, then show an error
+			if (uri == null) {
+				new AlertDialog.Builder(this).setIcon(R.drawable.icon)
+						.setTitle(this.getText(R.string.no_comic))
+						.setPositiveButton(android.R.string.ok, null).show();
+				return;
+			}
 		}
 		
 		// Load preferences. Use the current values as default
@@ -507,6 +518,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 					info.reader.countPages();
 					return info;
 				} catch (ReaderException e) {
+					MyLog.e(TAG, "Cannot load the comic: " + e.toString());
 					return null;
 				}
 			}

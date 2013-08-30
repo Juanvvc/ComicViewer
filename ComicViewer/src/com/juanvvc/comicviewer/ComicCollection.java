@@ -88,7 +88,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 			if (nf.getName().startsWith(".")) {
 				// remove from the list hidden files/directories
 				itr.remove();
-			} else if (!nf.isDirectory() || nf.getName().equals(GalleryExplorer.THUMBNAILS)) {
+			} else if (!nf.isDirectory() || nf.getName().equals(GalleryExplorerActivity.THUMBNAILS)) {
 				// remove from the list normal files and the thumbnails directory
 				itr.remove();
 			} else {
@@ -133,7 +133,7 @@ public class ComicCollection extends ArrayList<ComicInfo> {
 		while (itr.hasNext()) {
 			File nf = itr.next();
 			// remove from the list the thumbnails directory and any other hidden dir/file
-			if (nf.getName().equals(GalleryExplorer.THUMBNAILS) || nf.getName().startsWith(".")) {
+			if (nf.getName().equals(GalleryExplorerActivity.THUMBNAILS) || nf.getName().startsWith(".")) {
 				continue;
 			} else if (!Reader.existsReader(nf.getAbsolutePath())) {
 				// if there is not a manager for the file, continue

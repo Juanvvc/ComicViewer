@@ -20,8 +20,10 @@
   </head>
   <body>
 $ 1.4.2
+  !IMPORTANT: this is a demo project to be used in classroom, not intended for final users!
   % Version 1.4.2
-  _ 2013-08-05
+  _ 2013-08-28
+    * Registers as PDF, CBR and CBZ viewer
     * Show changelog dialog (this message!)
     * Uses a newer version of mupdf: still has memory problems, but errors do not close the app
     * Catalan translation
