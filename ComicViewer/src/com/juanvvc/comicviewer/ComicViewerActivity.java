@@ -33,6 +33,9 @@ import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.widget.ViewSwitcher.ViewFactory;
@@ -132,37 +135,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				return;
 			}
 		}
-		
-		// Load preferences. Use the current values as default
-		// Remember: preferences only manage string value
-		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-		try {
-			ANIMATION_DURATION = Integer.parseInt(sharedPref.getString("pref_changepage_speed", null));
-		} catch(Exception e){
-			MyLog.w(TAG, "Cannot read ANIMATION_DURATION from preferences, reverting to default value");
-		}
-		try {
-			BACK_COLOR = (int)Long.parseLong(sharedPref.getString("pref_back_color", null), 16);
-		} catch(Exception e) {
-			MyLog.w(TAG, "Cannot read BACK_COLOR from preferences, reverting to default value: " + e.toString());
-		}
-		LOAD_NEXT_ISSUE = sharedPref.getBoolean("pref_load_next", LOAD_NEXT_ISSUE);
-		DRAW_MODE_AVAILABLE = sharedPref.getBoolean("pref_draw_mode", DRAW_MODE_AVAILABLE);
-		MyLog.d(TAG, "ANIMATION_DURATION=" + ANIMATION_DURATION);
-		MyLog.d(TAG, "BACK_COLOR=" + BACK_COLOR);
-		MyLog.d(TAG, "LOAD_NEXT_ISSUE=" + LOAD_NEXT_ISSUE);
-		MyLog.d(TAG, "DRAW_MODE_AVAILABLE=" + DRAW_MODE_AVAILABLE);
-		// if set, keep if screen on
-		if (sharedPref.getBoolean("pref_screen_on", true)) {
-			this.findViewById(R.id.comicvieweractivity_layout).setKeepScreenOn(true);
-		}
-		// configure animations
-		this.configureAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
-				R.anim.slide_in_left, R.anim.slide_out_right,
-				ANIMATION_DURATION);
-		// set the factory (and hence, configure back colors)
-		ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
-		imgs.setFactory(this);
 
 		// get the information of this Comic from the database
 		ComicDBHelper db = new ComicDBHelper(this);
@@ -210,6 +182,12 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		
 		// hide the action bar
 		this.getActionBar().hide();
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		loadPreferences();
 	}
 
 	/**
@@ -292,6 +270,49 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	public final void onDestroy() {
 		this.close();
 		super.onDestroy();
+	}
+	
+	// Loads the preferences
+	private final void loadPreferences() {
+		// Load preferences. Use the current values as default
+		// Remember: preferences only manage string value
+		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		try {
+			ANIMATION_DURATION = Integer.parseInt(sharedPref.getString("pref_changepage_speed", null));
+		} catch(Exception e){
+			MyLog.w(TAG, "Cannot read ANIMATION_DURATION from preferences, reverting to default value");
+		}
+		try {
+			BACK_COLOR = (int)Long.parseLong(sharedPref.getString("pref_back_color", null), 16);
+		} catch(Exception e) {
+			MyLog.w(TAG, "Cannot read BACK_COLOR from preferences, reverting to default value: " + e.toString());
+		}
+		LOAD_NEXT_ISSUE = sharedPref.getBoolean("pref_load_next", LOAD_NEXT_ISSUE);
+		DRAW_MODE_AVAILABLE = sharedPref.getBoolean("pref_draw_mode", DRAW_MODE_AVAILABLE);
+		MyLog.d(TAG, "ANIMATION_DURATION=" + ANIMATION_DURATION);
+		MyLog.d(TAG, "BACK_COLOR=" + BACK_COLOR);
+		MyLog.d(TAG, "LOAD_NEXT_ISSUE=" + LOAD_NEXT_ISSUE);
+		MyLog.d(TAG, "DRAW_MODE_AVAILABLE=" + DRAW_MODE_AVAILABLE);
+		// if set, keep if screen on
+		if (sharedPref.getBoolean("pref_screen_on", true)) {
+			this.findViewById(R.id.comicvieweractivity_layout).setKeepScreenOn(true);
+		}
+		// configure animations
+		this.configureAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+				R.anim.slide_in_left, R.anim.slide_out_right,
+				ANIMATION_DURATION);
+		// if not set, hide the status bar
+		if (!sharedPref.getBoolean("pref_show_progress", true)) {
+			LinearLayout statusbar = (LinearLayout) this.findViewById(R.id.statusbar);
+			statusbar.setVisibility(View.GONE);
+		} else {
+			LinearLayout statusbar = (LinearLayout) this.findViewById(R.id.statusbar);
+			statusbar.setVisibility(View.VISIBLE);
+		}
+		// set the factory (and hence, configure back colors)
+		ImageSwitcher imgs = (ImageSwitcher) this.findViewById(R.id.switcher);
+		imgs.removeAllViews();
+		imgs.setFactory(this);
 	}
 
 	/**
@@ -721,10 +742,17 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 		// shows the position of the user in the comic on the screen
 		if (this.comicInfo != null && this.comicInfo.reader != null) {
-			showToast(
-					(this.comicInfo.reader.getCurrentPage() + 1) + "/"
-							+ this.comicInfo.reader.countPages(),
-					Toast.LENGTH_SHORT);
+			int page = this.comicInfo.reader.getCurrentPage() + 1; // first page is 0
+			int total = this.comicInfo.reader.countPages();
+			int percent = (100 * page) / total;
+			
+			showToast(page + "/" + total, Toast.LENGTH_SHORT);
+			
+			// use the progressbar
+			TextView tv = (TextView) this.findViewById(R.id.current_page);
+			tv.setText(page + " " + percent + "%");
+			ProgressBar pb = (ProgressBar) this.findViewById(R.id.progressBar);
+			pb.setProgress(percent);
 		
 			// if the current page is bookmarked, show the bookmark
 			if (this.comicInfo.bookmarks != null && this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
@@ -945,6 +973,10 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				}
 			}
 			return true;
+		case R.id.settings:
+	        Intent intent = new Intent(this.getApplicationContext(), SettingsActivity.class);
+	        this.startActivity(intent);
+	        return true;
 		default:
 		}
 		return super.onOptionsItemSelected(item);

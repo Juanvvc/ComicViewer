@@ -24,7 +24,7 @@
         android:visibility="gone"         
         />
     
-      <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+      <LinearLayout
         android:id="@+id/pentoolbar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -101,5 +101,27 @@
 <!-- 	    android:id="@+id/gestures" -->
 <!-- 	    android:layout_width="fill_parent" -->
 <!-- 	    android:layout_height="0dip" /> -->
+
+      <LinearLayout
+        android:id="@+id/statusbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true">
+        
+       <TextView
+         android:id="@+id/current_page"
+         style="@style/CurrentPage"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content" />
+
+      <ProgressBar
+          android:id="@+id/progressBar"
+          style="?android:attr/progressBarStyleHorizontal"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
+          <!--  android:progressDrawable="@drawable/progressbar" /> -->
+      
+      </LinearLayout>
 
 </RelativeLayout>

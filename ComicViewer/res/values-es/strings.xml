@@ -54,6 +54,8 @@
     <string name="pref_screen_on_sum">Deja la pantalla siempre activa mientras se lee</string>
     <string name="pref_pdf_cover">Muestra cubiertas genéricas en los PDFs</string>
     <string name="pref_pdf_cover_sum">Leer archivos PDF puede ser lento. Marca esta opción para mejorar el rendimiento.</string>
+    <string name="pref_show_progress">Muestra el progreso</string>
+    <string name="pref_show_progress_sum">Muestra la página actual en la esquina derecha</string>
 	<!--  Changelog -->
     <string name="changelog_title">Cambios recientes</string>
     <string name="changelog_full_title">Historia</string>

@@ -46,6 +46,13 @@
             android:summary="@string/pref_pdf_cover_sum"
             android:defaultValue="false"
      />
+     
+     <CheckBoxPreference
+            android:key="pref_show_progress"
+            android:title="@string/pref_show_progress"
+            android:summary="@string/pref_show_progress_sum"
+            android:defaultValue="true"
+     />
     
 
 </PreferenceScreen>

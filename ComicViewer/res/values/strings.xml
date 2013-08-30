@@ -55,6 +55,8 @@
     <string name="pref_screen_on_sum">Keep the screen on while reading</string>
     <string name="pref_pdf_cover">Use a generic cover for PDF files</string>
     <string name="pref_pdf_cover_sum">Reading PDF files may be slow. Use generic covers to improve stability</string>
+    <string name="pref_show_progress">Show progress</string>
+    <string name="pref_show_progress_sum">Show reading progress as a tiny status bar (right corner)</string>
     <!--  Changelog -->
     <string name="changelog_title">Recent changes</string>
     <string name="changelog_full_title">History</string>
