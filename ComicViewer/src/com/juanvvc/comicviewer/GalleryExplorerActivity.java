@@ -5,7 +5,7 @@ check list: before uploading a new version to Google Play:
 
 1.- Create the normal version:
 - List the changes and date in res/raw/changelog.txt
-- Check the version number in the manifiest: it should be higher than the one in Google Play
+- Check the version number in the manifest: it should be higher than the one in Google Play
 - Commit the version to git and set a new flag:
     git commit -a -m blahblahblah
     git tag v2.0
