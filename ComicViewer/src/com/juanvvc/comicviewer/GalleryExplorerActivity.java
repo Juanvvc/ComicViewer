@@ -11,15 +11,16 @@ check list: before uploading a new version to Google Play:
     git tag v2.0
     git push --tags github
     git push --tags linsertel
-- Set DEBUG to false in MyLog.java
+- Set DEBUG_VERSION to false in this file
 - Export the project to ComicViewer.apk
 - Signature: ~/.android/myjuanvvc.keystore
+- Send to Google Play. Remember listing the last changes and updating the description, if necessary
 
 2.- Back to development version:
 - Undo all changes. Easy way:
     Exit Eclipse
     git --hard reset
-- Open Eclipse again, ok to the warning message
+- Open Eclipse again, ok to the warning message (if any)
 - Start a new iteration by updating the version number in the manifest: one higher
     
 ///////////////////////////////////////// */
@@ -97,10 +98,16 @@ public class GalleryExplorerActivity extends Activity implements OnItemClickList
 	private String comicDir = null;
 	/** If true, it is the donate version */
 	private static final boolean DONATE_VERSION = false;
+	/** If true, it is the debug version */
+	private static final boolean DEBUG_VERSION = true;
+
 
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.galleryexplorer);
+		
+		// set the debug version
+		MyLog.setDebug(DEBUG_VERSION);
 
 		// Restore preferences
 		SharedPreferences settings = getPreferences(MODE_PRIVATE);

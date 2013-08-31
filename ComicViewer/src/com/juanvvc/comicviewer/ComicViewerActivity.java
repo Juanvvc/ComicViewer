@@ -93,7 +93,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	/** The color for the background. */
 	public int BACK_COLOR = 0xffaaaaaa;
 
-
 	/** Called when the activity is first created.
 	 * @param savedInstanceState the Bundle to manage the life cycle */
 	@Override
@@ -160,6 +159,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		}
 
 		// load the comic, on the background
+		this.loadPreferences();
 		this.loadComic(info);
 
 		// we listen to the events from the user
@@ -187,11 +187,16 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		this.getActionBar().hide();
 	}
 	
-	@Override
-	public void onStart() {
-		super.onStart();
-		loadPreferences();
-	}
+//	@Override
+//	public void onStart() {
+//		super.onStart();
+//		loadPreferences();
+//		
+//		// load the current page
+//		if (this.comicInfo != null && this.comicInfo.reader != null) {
+//			this.moveToPage(this.comicInfo.reader.getCurrentPage());
+//		}
+//	}
 
 	/**
 	 * Saves the current comic and page. This method updates the internal state
