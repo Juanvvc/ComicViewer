@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -18,6 +19,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.method.DigitsKeyListener;
@@ -30,6 +32,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
@@ -884,6 +887,9 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				switchBookmark();
 			}
 			break;
+		case R.id.show_usage:
+			this.showHelp(this);
+			break;
 		case R.id.bookmarks: // show the bookmark list
 			if (this.comicInfo != null) {
 				// first: if there are not bookmarks... why bother?
@@ -1039,5 +1045,35 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		// In addition, save the current state of the comic
 		this.close();
 		super.finish();
+	}
+	
+	public static void showHelp(Context c) {
+		WebView wv = new WebView(c);
+		String content = null;
+		// fixes a bug in newer versions
+		if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			wv.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+		}
+		wv.setBackgroundColor(0); // transparent
+		
+		// Loads the content of R.raw.helpfile into content. WARNING! the help file must be small!
+		try {
+			Scanner scanner = new Scanner(c.getResources().openRawResource(R.raw.helpfile));
+			content = scanner.useDelimiter("\\A").next();
+			scanner.close();
+		} catch(Exception e) {
+			content = "Cannot read help file: " + e.toString();
+		}
+		
+		if (content != null) {
+			wv.loadDataWithBaseURL(null, content, "text/html", "UTF-8", null);
+		}
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(c);
+		builder.setTitle(
+				c.getResources().getString(R.string.helpfile_title))
+				.setView(wv)
+				.setCancelable(false)
+				.setPositiveButton(android.R.string.ok, null).show();
 	}
 }

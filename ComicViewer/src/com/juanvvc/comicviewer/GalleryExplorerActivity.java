@@ -46,7 +46,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
+import android.os.Environment;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -108,6 +108,10 @@ public class GalleryExplorerActivity extends Activity implements OnItemClickList
 
 		// check preferences
 		if (comicDir == null) {
+			// try to load a standard directory
+			comicDir = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Books";
+			
+			
 			new AlertDialog.Builder(this).setIcon(R.drawable.icon)
 					.setTitle(this.getText(R.string.please_select_directory))
 					.setPositiveButton(android.R.string.ok, null).show();
@@ -576,6 +580,9 @@ public class GalleryExplorerActivity extends Activity implements OnItemClickList
 	        intent = new Intent(this.getApplicationContext(), SettingsActivity.class);
 	        this.startActivity(intent);
 	        return true;
+		case R.id.show_usage:
+			ComicViewerActivity.showHelp(this);
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}

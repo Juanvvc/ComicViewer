@@ -7,6 +7,7 @@
         <item android:id="@+id/go_to_page" android:title="@string/go_to_page"></item><item android:id="@+id/switch_bookmark" android:title="@string/switch_bookmark"></item>
         <item android:id="@+id/bookmarks" android:title="@string/bookmark_list"></item>
         <!--  <item android:id="@+id/settings" android:title="@string/settings"></item> After canging settings, page is not realoaded -->
+        <item android:id="@+id/show_usage" android:title="@string/show_help"></item>
         <item android:id="@+id/close" android:title="@string/close"></item>
         
         

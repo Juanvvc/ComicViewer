@@ -18,13 +18,14 @@
     <string name="newnew">New</string>
     <string name="cover">Book cover</string>
     <string name="bookmark">Bookmark</string>
-    <string name="please_select_directory">Please, select the books directory</string>
+    <string name="please_select_directory">Using default directory "Books". If not adequate, select another directory in the menu.</string>
     <string name="system_directory">" is a system directory and cannot be used. Please, select a subdirectory."</string>
     <string name="no_suitable_reader">Not suitable reader for </string>
     <string name="read">" (read)"</string>
     <string name="in">" in "</string>
     <string name="page">"Page "</string>
     <string name="bookmark_list">Bookmark list&#8230;</string>
+    <string name="show_help">Usage&#8230;</string>
     <string name="no_comic">Book not found</string>
     <string name="cannot_remove_directories">Directories cannot be removed</string>
     <string name="removed">" was removed"</string>
@@ -36,6 +37,7 @@
     <string name="draw_mode_not_available">The draw mode is not available</string>
     <string name="no_bookmarks">No bookmarks defined</string>
     <string name="cannot_read">Cannot read the file</string>
+    <string name="helpfile_title">Usage</string>
     <!--  Settings menu -->
     <string name="black">Black</string>
     <string name="grey">Grey</string>

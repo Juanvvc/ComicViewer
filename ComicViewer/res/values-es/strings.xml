@@ -17,7 +17,7 @@
     <string name="newnew">Nuevo</string>
     <string name="cover">Portada de cómic</string>
     <string name="bookmark">Marca</string>
-    <string name="please_select_directory">Por favor, seleccione el directorio de cómics</string>
+    <string name="please_select_directory">Utilizando el directorio "Books". Si no es adecuado, seleccione otro directorio en el menú</string>
     <string name="system_directory">" es un directorio protegido. Por favor, seleccione un subdirectorio"</string>
     <string name="no_suitable_reader">Archivo no reconocido </string>
     <string name="read">" (leído)"</string>

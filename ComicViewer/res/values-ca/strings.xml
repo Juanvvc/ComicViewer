@@ -17,7 +17,7 @@
     <string name="newnew">Nou</string>
     <string name="cover">Portada del còmic</string>
     <string name="bookmark">Marca</string>
-    <string name="please_select_directory">Per favor, sel·leccione la carpeta de còmics</string>
+    <string name="please_select_directory">Fent servir la carpeta "Books". Si no és adient, sel·leccione una altra en el menú </string>
     <string name="system_directory">" és una carpeta protegida. Per favor, sel·leccione una subcarpeta"</string>
     <string name="no_suitable_reader">Fitxer no reconegut </string>
     <string name="read">" (llegit)"</string>
