@@ -92,6 +92,18 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 	private boolean DRAW_MODE_AVAILABLE = true;
 	/** The color for the background. */
 	public int BACK_COLOR = 0xffaaaaaa;
+	
+	// The next variables are used to guess the remaining reading time
+	// number of MMILISECONDS from the last changePage()
+	private long lastMillis = 0;
+	// accumulated number of SECONDS
+	private int accumulatedSeconds = 0;
+	// accumulated number of read pages in this session
+	private int accumulatedPages = 0;
+	// if the number of SECONDS to read a page is under this limit, this page is not considered
+	private final static int MIN_SECONDS = 5;
+	// if the number of SECONDS to read a page is above this limit, this page is not considered
+	private final static int MAX_SECONDS = 300;
 
 	/** Called when the activity is first created.
 	 * @param savedInstanceState the Bundle to manage the life cycle */
@@ -258,6 +270,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			this.comicInfo.reader.close();
 			this.comicInfo = null;
 		}
+		
+		// reset the guessing system
+		this.accumulatedPages = 0;
+		this.accumulatedSeconds = 0;
+		this.lastMillis = 0;
 	}
 	
 	@Override
@@ -271,6 +288,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				db.close();
 			}
 		}
+		
 		super.onStop();
 	}
 
@@ -574,6 +592,11 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 				}
 			}
 		}).execute(info);
+		
+		// reset the guessing system
+		this.accumulatedPages = 0;
+		this.accumulatedSeconds = 0;
+		this.lastMillis = 0;
 	}
 
 	/** Switches the bookmark in the current page. */
@@ -618,21 +641,6 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 		} else {
 			this.comicInfo.reader.moveTo(page + 1);
 			this.changePage(false);
-		}
-
-		// shows the position of the user in the comic on the screen
-		if (this.comicInfo != null && this.comicInfo.reader != null) {
-			showToast(
-					(this.comicInfo.reader.getCurrentPage() + 1) + "/"
-							+ this.comicInfo.reader.countPages(),
-					Toast.LENGTH_SHORT);
-		}
-
-		// if the page is bookmarked, show the bookmark
-		if (this.comicInfo.bookmarks.contains(this.comicInfo.reader.getCurrentPage())) {
-			this.findViewById(R.id.bookmark).setVisibility(View.VISIBLE);
-		} else {
-			this.findViewById(R.id.bookmark).setVisibility(View.GONE);
 		}
 	}
 
@@ -750,15 +758,42 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 
 		// shows the position of the user in the comic on the screen
 		if (this.comicInfo != null && this.comicInfo.reader != null) {
-			int page = this.comicInfo.reader.getCurrentPage() + 1; // first page is 0
-			int total = this.comicInfo.reader.countPages();
-			int percent = (100 * page) / total;
+			final int page = this.comicInfo.reader.getCurrentPage() + 1; // first page is 0
+			final int total = this.comicInfo.reader.countPages();
+			final int percent = (100 * page) / total;
+			
+			// try to guess the time
+			int remMinutes = -1; // if -1, cannot guess
+			String remTime;
+			if (lastMillis == 0) {
+				lastMillis = System.currentTimeMillis();
+			} else {
+				final long elapsedSeconds = (System.currentTimeMillis() - lastMillis) / 1000;
+				if (elapsedSeconds > MIN_SECONDS && elapsedSeconds < MAX_SECONDS) {
+					this.accumulatedSeconds += elapsedSeconds;
+					this.accumulatedPages += 1;
+				}
+				if (this.accumulatedPages > 0) {
+					remMinutes = (int) Math.floor(((total - page) / (1.0 * accumulatedPages / accumulatedSeconds)) / 60);
+				}
+				lastMillis = System.currentTimeMillis();
+			}
+			// here, remMinutes has the remaining minutes or a negative number (meaning: cannot guess)
+			if (remMinutes < 0) {
+				remTime = " ";
+			} else {
+				if (remMinutes > 60) {
+					remTime = (new StringBuffer()).append(" (remaining: ").append(remMinutes / 60).append("h ").append(remMinutes % 60).append("m) ").toString();
+				} else {
+					remTime = (new StringBuffer()).append(" (remaining: ").append(remMinutes).append("m) ").toString();
+				}
+			}
 			
 			showToast(page + "/" + total, Toast.LENGTH_SHORT);
 			
-			// use the progressbar
+			// update the progressbar
 			TextView tv = (TextView) this.findViewById(R.id.current_page);
-			tv.setText(page + " " + percent + "%");
+			tv.setText((new StringBuffer()).append(page).append(" of ").append(total).append(remTime).append(percent).append("%").toString());
 			ProgressBar pb = (ProgressBar) this.findViewById(R.id.progressBar);
 			pb.setProgress(percent);
 		

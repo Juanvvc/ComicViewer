@@ -21,7 +21,10 @@
   <body>
 $ 1.4.2
   !IMPORTANT: this is a demo project to be used in classroom. Not intended for final users!
-  % Version 1.4.2
+  % Version 1.5.1
+  _ 2013-09-1
+    * Shows a guess of the remaining reading time
+  % Version 1.5.0
   _ 2013-08-31
     * Shows changelog dialog (this message!)
     * Registers as PDF, CBR and CBZ viewer
