@@ -573,7 +573,7 @@ public class GalleryExplorerActivity extends Activity implements OnItemClickList
 			ListView collections = (ListView) findViewById(R.id.collections);
 			collections.invalidate();
 			if (this.comicDir == null) {
-				Toast.makeText(this, R.string.please_select_directory, Toast.LENGTH_LONG);
+				Toast.makeText(this, R.string.please_select_directory, Toast.LENGTH_LONG).show();
 			} else {
 				collections.setAdapter(new CollectionListAdapter(this, new File(this.comicDir)));
 			}

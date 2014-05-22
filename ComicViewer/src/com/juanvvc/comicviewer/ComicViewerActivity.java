@@ -606,7 +606,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			if (cp < 0) {
 				return;
 			} else if (this.comicInfo.bookmarks.contains(cp)) {
-				this.comicInfo.bookmarks.remove(new Integer(cp));
+				this.comicInfo.bookmarks.remove(Integer.valueOf(cp));
 				this.findViewById(R.id.bookmark).setVisibility(View.GONE);
 			} else {
 				this.comicInfo.bookmarks.add(cp);
@@ -928,7 +928,7 @@ public class ComicViewerActivity extends Activity implements ViewFactory, OnTouc
 			}
 			break;
 		case R.id.show_usage:
-			this.showHelp(this);
+			showHelp(this);
 			break;
 		case R.id.bookmarks: // show the bookmark list
 			if (this.comicInfo != null) {
